@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,25 +176,11 @@ class _DatePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final label =
+        '${selected.year}.${selected.month.toString().padLeft(2, '0')}.${selected.day.toString().padLeft(2, '0')}';
+
     return GestureDetector(
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: selected,
-          firstDate: DateTime(2000),
-          lastDate: DateTime.now(),
-          builder: (ctx, child) => Theme(
-            data: Theme.of(ctx).copyWith(
-              colorScheme: const ColorScheme.dark(
-                primary: AppTheme.accent,
-                surface: AppTheme.card,
-              ),
-            ),
-            child: child!,
-          ),
-        );
-        if (picked != null) onChanged(picked);
-      },
+      onTap: () => _showCupertinoPicker(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -202,15 +189,68 @@ class _DatePicker extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today,
+            const Icon(CupertinoIcons.calendar,
                 color: AppTheme.accent, size: 18),
             const SizedBox(width: 12),
             Text(
-              '${selected.year}.${selected.month.toString().padLeft(2, '0')}.${selected.day.toString().padLeft(2, '0')}',
+              label,
               style: const TextStyle(
                   color: AppTheme.textPrimary,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600),
+                  fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+            const Icon(CupertinoIcons.chevron_right,
+                color: AppTheme.textSecondary, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCupertinoPicker(BuildContext context) {
+    DateTime temp = selected;
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: 320,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            // 상단 바
+            Container(
+              color: AppTheme.background,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('취소',
+                        style: TextStyle(color: AppTheme.textSecondary)),
+                  ),
+                  CupertinoButton(
+                    onPressed: () {
+                      onChanged(temp);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('완료',
+                        style: TextStyle(
+                            color: AppTheme.accent,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(
+                height: 0.5, thickness: 0.5, color: AppTheme.separator),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: selected,
+                maximumDate: DateTime.now(),
+                minimumDate: DateTime(2000),
+                onDateTimeChanged: (dt) => temp = dt,
+              ),
             ),
           ],
         ),

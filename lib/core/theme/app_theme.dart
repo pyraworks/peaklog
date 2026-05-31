@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   static const Color background = Color(0xFFF2F2F7);
@@ -19,19 +18,18 @@ class AppTheme {
         onPrimary: Colors.white,
         onSurface: textPrimary,
       ),
-      textTheme: GoogleFonts.spaceGroteskTextTheme(base.textTheme).apply(
+      textTheme: base.textTheme.apply(
         bodyColor: textPrimary,
         displayColor: textPrimary,
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: textPrimary,
         elevation: 0,
-        titleTextStyle: GoogleFonts.spaceGrotesk(
+        titleTextStyle: TextStyle(
           color: textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 2,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
         ),
       ),
       cardTheme: const CardThemeData(
@@ -61,8 +59,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: GoogleFonts.spaceGrotesk(
-              fontWeight: FontWeight.w700, fontSize: 16),
+          textStyle: const TextStyle(
+              fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
       sliderTheme: const SliderThemeData(

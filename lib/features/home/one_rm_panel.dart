@@ -212,8 +212,9 @@ class _OneRmTableScreenState extends State<_OneRmTableScreen> {
   @override
   void initState() {
     super.initState();
-    final offset =
-        ((widget.currentPercent - 1) * _rowHeight - 120).clamp(0.0, double.infinity);
+    // 두 열 모두 60행이므로 나머지로 행 인덱스 계산
+    final rowIndex = (widget.currentPercent - 1) % 60;
+    final offset = (rowIndex * _rowHeight - 120).clamp(0.0, double.infinity);
     _scrollController = ScrollController(initialScrollOffset: offset);
   }
 
@@ -229,75 +230,157 @@ class _OneRmTableScreenState extends State<_OneRmTableScreen> {
       appBar: AppBar(
         title: Text('${widget.exerciseName} — 1RM 표'),
       ),
-      body: ListView.builder(
-        controller: _scrollController,
-        itemCount: 120,
-        itemExtent: _rowHeight,
-        itemBuilder: (_, i) {
-          final percent = i + 1;
-          final weight = widget.bestKg * (percent / 100);
-          final displayWeight =
-              UnitConverter.formatWeight(weight, widget.unit);
-          final isSelected = percent == widget.currentPercent;
-
-          return Container(
-            color: isSelected
-                ? AppTheme.accent.withValues(alpha: 0.08)
-                : Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      body: Column(
+        children: [
+          // 헤더
+          Container(
+            color: AppTheme.background,
+            child: Row(
               children: [
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 64,
-                          child: Text(
-                            '$percent%',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? AppTheme.accent
-                                  : AppTheme.textSecondary,
-                              fontSize: 15,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            displayWeight,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? AppTheme.accent
-                                  : AppTheme.textPrimary,
-                              fontSize: 15,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        if (isSelected)
-                          const Icon(Icons.check,
-                              color: AppTheme.accent, size: 16),
-                      ],
-                    ),
-                  ),
+                  child: _HeaderCell(
+                      left: '1 — 60%',
+                      right: UnitConverter.formatWeight(
+                          widget.bestKg, widget.unit)),
                 ),
-                const Divider(
-                  height: 0.5,
-                  thickness: 0.5,
-                  color: AppTheme.separator,
-                  indent: 20,
+                const VerticalDivider(
+                    width: 1, thickness: 0.5, color: AppTheme.separator),
+                Expanded(
+                  child: _HeaderCell(
+                      left: '61 — 120%',
+                      right: UnitConverter.formatWeight(
+                          widget.bestKg * 1.2, widget.unit)),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+          // 데이터
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: 60,
+              itemExtent: _rowHeight,
+              itemBuilder: (_, i) {
+                final leftPct = i + 1;
+                final rightPct = i + 61;
+                final leftW = UnitConverter.formatWeight(
+                    widget.bestKg * (leftPct / 100), widget.unit);
+                final rightW = UnitConverter.formatWeight(
+                    widget.bestKg * (rightPct / 100), widget.unit);
+                final leftSel = leftPct == widget.currentPercent;
+                final rightSel = rightPct == widget.currentPercent;
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _TableCell(
+                                percent: leftPct,
+                                weight: leftW,
+                                highlighted: leftSel),
+                          ),
+                          const VerticalDivider(
+                              width: 1,
+                              thickness: 0.5,
+                              color: AppTheme.separator),
+                          Expanded(
+                            child: _TableCell(
+                                percent: rightPct,
+                                weight: rightW,
+                                highlighted: rightSel),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(
+                        height: 0.5,
+                        thickness: 0.5,
+                        color: AppTheme.separator),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String left;
+  final String right;
+  const _HeaderCell({required this.left, required this.right});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Text(left,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600)),
+          const Spacer(),
+          Text('(1RM: $right)',
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TableCell extends StatelessWidget {
+  final int percent;
+  final String weight;
+  final bool highlighted;
+  const _TableCell(
+      {required this.percent,
+      required this.weight,
+      required this.highlighted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: highlighted
+          ? AppTheme.accent.withValues(alpha: 0.08)
+          : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              '$percent%',
+              style: TextStyle(
+                color: highlighted ? AppTheme.accent : AppTheme.textSecondary,
+                fontSize: 13,
+                fontWeight:
+                    highlighted ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              weight,
+              style: TextStyle(
+                color: highlighted ? AppTheme.accent : AppTheme.textPrimary,
+                fontSize: 13,
+                fontWeight:
+                    highlighted ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ),
+          if (highlighted)
+            const Icon(Icons.check, color: AppTheme.accent, size: 13),
+        ],
       ),
     );
   }

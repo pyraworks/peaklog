@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/exercises_provider.dart';
+import '../settings/settings_screen.dart';
 import 'exercise_card.dart';
 import 'unit_toggle.dart';
 import 'add_exercise_sheet.dart' show AddExerciseScreen;
@@ -14,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
     final exercisesAsync = ref.watch(exercisesProvider);
 
     return Scaffold(
+      drawer: const _AppDrawer(),
       appBar: AppBar(
         title: const Text('PBPR'),
         actions: const [
@@ -57,6 +59,77 @@ class HomeScreen extends ConsumerWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddExerciseScreen()),
+    );
+  }
+}
+
+class _AppDrawer extends StatelessWidget {
+  const _AppDrawer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: AppTheme.card,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 24, 20, 20),
+              child: Text(
+                'PBPR',
+                style: TextStyle(
+                  color: AppTheme.accent,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
+            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+            _DrawerItem(
+              icon: Icons.fitness_center,
+              label: '운동 목록',
+              onTap: () => Navigator.pop(context),
+            ),
+            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator, indent: 56),
+            _DrawerItem(
+              icon: Icons.settings_outlined,
+              label: '설정',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+              },
+            ),
+            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _DrawerItem(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppTheme.textPrimary, size: 22),
+      title: Text(label,
+          style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w400)),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
     );
   }
 }
