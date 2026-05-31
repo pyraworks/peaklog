@@ -14,10 +14,12 @@ import 'rough_frame.dart';
 class ExportScreen extends ConsumerStatefulWidget {
   final Exercise exercise;
   final double newValue;
+  final DateTime date;
 
   const ExportScreen({
     required this.exercise,
     required this.newValue,
+    required this.date,
     super.key,
   });
 
@@ -36,7 +38,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
     final weightUnit = settings?.weightUnit ?? 'kg';
     final distanceUnit = settings?.distanceUnit ?? 'km';
-    final now = DateTime.now();
+    final date = widget.date;
 
     final frames = [
       RepaintBoundary(
@@ -46,7 +48,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           valueInMetric: widget.newValue,
           weightUnit: weightUnit,
           distanceUnit: distanceUnit,
-          date: now,
+          date: date,
         ),
       ),
       RepaintBoundary(
@@ -56,7 +58,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           valueInMetric: widget.newValue,
           weightUnit: weightUnit,
           distanceUnit: distanceUnit,
-          date: now,
+          date: date,
         ),
       ),
     ];

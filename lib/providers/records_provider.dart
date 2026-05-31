@@ -18,7 +18,9 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, int> {
     final id = await DatabaseHelper.instance.insertRecord(record);
     final saved = record.copyWith(id: id);
     final current = state.valueOrNull ?? [];
-    state = AsyncData([saved, ...current]);
+    final updated = [saved, ...current]
+      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    state = AsyncData(updated);
     return saved;
   }
 

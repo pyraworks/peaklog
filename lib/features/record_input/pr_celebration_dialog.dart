@@ -10,11 +10,13 @@ class PRCelebrationDialog extends ConsumerWidget {
   final Exercise exercise;
   final double newValue;
   final double? previousBest;
+  final DateTime recordedDate;
 
   const PRCelebrationDialog({
     required this.exercise,
     required this.newValue,
     this.previousBest,
+    required this.recordedDate,
     super.key,
   });
 
@@ -112,6 +114,7 @@ class PRCelebrationDialog extends ConsumerWidget {
                           builder: (_) => ExportScreen(
                             exercise: exercise,
                             newValue: newValue,
+                            date: recordedDate,
                           ),
                         ),
                       );

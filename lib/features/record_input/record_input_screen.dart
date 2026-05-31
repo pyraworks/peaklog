@@ -143,6 +143,7 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
           exercise: widget.exercise,
           newValue: inputValueKg,
           previousBest: previousBest,
+          recordedDate: _selectedDate,
         ),
       );
     }
