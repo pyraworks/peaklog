@@ -40,11 +40,11 @@ class Exercise {
   }
 
   factory Exercise.fromMap(Map<String, dynamic> map) => Exercise(
-        id: map['id'] as int?,
+        id: map['id'] != null ? (map['id'] as num).toInt() : null,
         name: map['name'] as String,
         type: ExerciseType.values.byName(map['type'] as String),
-        orderIndex: map['order_index'] as int,
-        createdAt: map['created_at'] as int,
+        orderIndex: (map['order_index'] as num).toInt(),
+        createdAt: (map['created_at'] as num).toInt(),
       );
 
   Exercise copyWith({

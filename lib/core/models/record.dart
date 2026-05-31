@@ -25,10 +25,10 @@ class Record {
   }
 
   factory Record.fromMap(Map<String, dynamic> map) => Record(
-        id: map['id'] as int?,
-        exerciseId: map['exercise_id'] as int,
+        id: map['id'] != null ? (map['id'] as num).toInt() : null,
+        exerciseId: (map['exercise_id'] as num).toInt(),
         value: (map['value'] as num).toDouble(),
-        recordedAt: map['recorded_at'] as int,
+        recordedAt: (map['recorded_at'] as num).toInt(),
         note: map['note'] as String?,
       );
 
