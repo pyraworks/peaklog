@@ -9,7 +9,7 @@ class PbprApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PBPR',
-      theme: AppTheme.dark,
+      theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),
     );

@@ -35,7 +35,7 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
-        color: Color(0xFF222222),
+        color: AppTheme.background,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: Column(

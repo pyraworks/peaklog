@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF1A1A1A);
-  static const Color card = Color(0xFF2C2C2C);
-  static const Color accent = Color(0xFFFF6B35);
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF888888);
+  static const Color background = Color(0xFFF2F2F7);
+  static const Color card = Color(0xFFFFFFFF);
+  static const Color accent = Color(0xFFFF9500);
+  static const Color textPrimary = Color(0xFF000000);
+  static const Color textSecondary = Color(0xFF8E8E93);
+  static const Color separator = Color(0xFFC6C6C8);
 
-  static ThemeData get dark {
-    final base = ThemeData.dark(useMaterial3: true);
+  static ThemeData get light {
+    final base = ThemeData.light(useMaterial3: true);
     return base.copyWith(
       scaffoldBackgroundColor: background,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: accent,
         surface: card,
         onPrimary: Colors.white,
@@ -67,8 +68,8 @@ class AppTheme {
       sliderTheme: const SliderThemeData(
         activeTrackColor: accent,
         thumbColor: accent,
-        inactiveTrackColor: card,
-        overlayColor: Color(0x33FF6B35),
+        inactiveTrackColor: separator,
+        overlayColor: Color(0x33FF9500),
       ),
       dialogTheme: const DialogThemeData(
         backgroundColor: card,

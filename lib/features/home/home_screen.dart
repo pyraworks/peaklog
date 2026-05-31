@@ -4,7 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/exercises_provider.dart';
 import 'exercise_card.dart';
 import 'unit_toggle.dart';
-import 'add_exercise_sheet.dart';
+import 'add_exercise_sheet.dart' show AddExerciseScreen;
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -54,14 +54,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   void _showAddSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => const AddExerciseSheet(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddExerciseScreen()),
     );
   }
 }
