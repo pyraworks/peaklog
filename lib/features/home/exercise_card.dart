@@ -1,5 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
 import '../../core/theme/app_theme.dart';
@@ -24,15 +26,37 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final records = ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
+    final records =
+        ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
 
     final bestRecord = _getBestRecord(records, widget.exercise.type);
-    final displayValue = _formatBestValue(bestRecord, widget.exercise, settings);
+    final displayValue =
+        _formatBestValue(bestRecord, widget.exercise, settings);
     final daysSince = _daysSince(records);
 
-    return GestureDetector(
-      onLongPress: () => _confirmDelete(context),
+    return Slidable(
+      key: ValueKey(widget.exercise.id),
+      endActionPane: ActionPane(
+        motion: const DrawerMotion(),
+        extentRatio: 0.44,
+        children: [
+          SlidableAction(
+            onPressed: (_) => _showRenameDialog(context),
+            backgroundColor: const Color(0xFF007AFF),
+            foregroundColor: Colors.white,
+            icon: CupertinoIcons.pencil,
+            label: '수정',
+          ),
+          SlidableAction(
+            onPressed: (_) => _confirmDelete(context),
+            backgroundColor: const Color(0xFFFF3B30),
+            foregroundColor: Colors.white,
+            icon: CupertinoIcons.trash,
+            label: '삭제',
+          ),
+        ],
+      ),
       child: Column(
         children: [
           GestureDetector(
@@ -73,7 +97,8 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.accent.withValues(alpha: 0.15),
+                                      color: AppTheme.accent
+                                          .withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -100,7 +125,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                         ),
                         if (widget.exercise.type == ExerciseType.weight)
                           Icon(
-                            _expanded ? Icons.expand_less : Icons.expand_more,
+                            _expanded
+                                ? Icons.expand_less
+                                : Icons.expand_more,
                             color: AppTheme.textSecondary,
                           ),
                       ],
@@ -135,7 +162,8 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   horizontal: 12, vertical: 4)),
                           child: const Text('기록 추가',
                               style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w700)),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700)),
                         ),
                         TextButton(
                           onPressed: () => _openHistory(context),
@@ -185,8 +213,8 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
 
   String _daysSince(List<Record> records) {
     if (records.isEmpty) return '기록 없음';
-    final last = DateTime.fromMillisecondsSinceEpoch(
-        records.first.recordedAt * 1000);
+    final last =
+        DateTime.fromMillisecondsSinceEpoch(records.first.recordedAt * 1000);
     final diff = DateTime.now().difference(last).inDays;
     if (diff == 0) return '오늘';
     return '+$diff일';
@@ -206,6 +234,42 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
       context,
       MaterialPageRoute(
         builder: (_) => HistoryScreen(exercise: widget.exercise),
+      ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context) {
+    final controller =
+        TextEditingController(text: widget.exercise.name);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('운동 이름 수정'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: '운동 이름'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.isNotEmpty) {
+                ref
+                    .read(exercisesProvider.notifier)
+                    .renameExercise(widget.exercise.id!, name);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('저장',
+                style: TextStyle(color: AppTheme.accent)),
+          ),
+        ],
       ),
     );
   }
@@ -231,7 +295,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                   .deleteExercise(widget.exercise.id!);
             },
             child: const Text('삭제',
-                style: TextStyle(color: Colors.redAccent)),
+                style: TextStyle(color: Color(0xFFFF3B30))),
           ),
         ],
       ),

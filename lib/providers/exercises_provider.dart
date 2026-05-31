@@ -21,6 +21,14 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
     state = AsyncData([...current, exercise.copyWith(id: id)]);
   }
 
+  Future<void> renameExercise(int id, String name) async {
+    await DatabaseHelper.instance.updateExerciseName(id, name);
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(
+      current.map((e) => e.id == id ? e.copyWith(name: name) : e).toList(),
+    );
+  }
+
   Future<void> deleteExercise(int id) async {
     await DatabaseHelper.instance.deleteExercise(id);
     final current = state.valueOrNull ?? [];

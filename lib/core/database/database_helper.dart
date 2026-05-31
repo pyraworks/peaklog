@@ -75,6 +75,12 @@ class DatabaseHelper {
     return maps.map(Record.fromMap).toList();
   }
 
+  Future<void> updateExerciseName(int id, String name) async {
+    final db = await database;
+    await db.update('exercises', {'name': name},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<void> deleteRecord(int id) async {
     final db = await database;
     await db.delete('records', where: 'id = ?', whereArgs: [id]);

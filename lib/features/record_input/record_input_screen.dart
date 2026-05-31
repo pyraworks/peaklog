@@ -10,7 +10,6 @@ import '../../core/utils/unit_converter.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 import 'pr_celebration_dialog.dart';
-import 'time_input_field.dart';
 
 class RecordInputScreen extends ConsumerStatefulWidget {
   final Exercise exercise;
@@ -23,8 +22,13 @@ class RecordInputScreen extends ConsumerStatefulWidget {
 class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
   final _valueController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  int _timeSeconds = 0;
   bool _saving = false;
+
+  // weight: kg / lbs (로컬 선택, null이면 글로벌 따라감)
+  String? _localWeightUnit;
+
+  // time: 'sec' / 'min' / 'hour'
+  String _timeUnit = 'sec';
 
   @override
   void dispose() {
@@ -35,8 +39,12 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
-    final weightUnit = settings?.weightUnit ?? 'kg';
+    final globalWeightUnit = settings?.weightUnit ?? 'kg';
     final distanceUnit = settings?.distanceUnit ?? 'km';
+
+    // 로컬 단위가 설정되지 않았으면 글로벌 값으로 초기화
+    _localWeightUnit ??= globalWeightUnit;
+    final weightUnit = _localWeightUnit!;
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.exercise.name)),
@@ -50,19 +58,23 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
               onChanged: (d) => setState(() => _selectedDate = d),
             ),
             const SizedBox(height: 24),
-            if (widget.exercise.type == ExerciseType.time) ...[
-              const Text('기록',
-                  style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1)),
-              const SizedBox(height: 8),
-              TimeInputField(
-                initialSeconds: _timeSeconds,
-                onChanged: (s) => setState(() => _timeSeconds = s),
+            if (widget.exercise.type == ExerciseType.weight) ...[
+              _UnitLabel(
+                label: '단위',
+                trailing: CupertinoSlidingSegmentedControl<String>(
+                  groupValue: weightUnit,
+                  thumbColor: AppTheme.card,
+                  backgroundColor: AppTheme.background,
+                  children: {
+                    'kg': _segItem('kg', weightUnit == 'kg'),
+                    'lbs': _segItem('lbs', weightUnit == 'lbs'),
+                  },
+                  onValueChanged: (v) {
+                    if (v != null) setState(() => _localWeightUnit = v);
+                  },
+                ),
               ),
-            ] else ...[
+              const SizedBox(height: 16),
               TextField(
                 controller: _valueController,
                 keyboardType:
@@ -76,9 +88,67 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
                     fontWeight: FontWeight.w700),
                 decoration: InputDecoration(
                   labelText: '기록',
-                  suffixText: widget.exercise.type == ExerciseType.weight
-                      ? weightUnit
-                      : distanceUnit,
+                  suffixText: weightUnit,
+                  suffixStyle: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 16),
+                ),
+              ),
+            ] else if (widget.exercise.type == ExerciseType.time) ...[
+              _UnitLabel(
+                label: '단위',
+                trailing: CupertinoSlidingSegmentedControl<String>(
+                  groupValue: _timeUnit,
+                  thumbColor: AppTheme.card,
+                  backgroundColor: AppTheme.background,
+                  children: {
+                    'sec': _segItem('초', _timeUnit == 'sec'),
+                    'min': _segItem('분', _timeUnit == 'min'),
+                    'hour': _segItem('시간', _timeUnit == 'hour'),
+                  },
+                  onValueChanged: (v) {
+                    if (v != null) setState(() => _timeUnit = v);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _valueController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+                ],
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  labelText: '기록',
+                  suffixText: _timeUnit == 'sec'
+                      ? '초'
+                      : _timeUnit == 'min'
+                          ? '분'
+                          : '시간',
+                  suffixStyle: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 16),
+                ),
+              ),
+            ] else ...[
+              // distance
+              TextField(
+                controller: _valueController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+                ],
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  labelText: '기록',
+                  suffixText: distanceUnit,
                   suffixStyle: const TextStyle(
                       color: AppTheme.textSecondary, fontSize: 16),
                 ),
@@ -86,7 +156,9 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
             ],
             const Spacer(),
             ElevatedButton(
-              onPressed: _saving ? null : () => _save(weightUnit, distanceUnit),
+              onPressed: _saving
+                  ? null
+                  : () => _save(weightUnit, distanceUnit),
               child: _saving
                   ? const SizedBox(
                       height: 20,
@@ -101,24 +173,42 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
     );
   }
 
+  Widget _segItem(String text, bool selected) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? AppTheme.accent : AppTheme.textPrimary,
+          ),
+        ),
+      );
+
   Future<void> _save(String weightUnit, String distanceUnit) async {
     final exerciseId = widget.exercise.id!;
     double inputValueKg;
 
+    final raw = double.tryParse(_valueController.text.trim());
+
     if (widget.exercise.type == ExerciseType.time) {
-      if (_timeSeconds == 0) return;
-      inputValueKg = _timeSeconds.toDouble();
+      if (raw == null || raw <= 0) return;
+      switch (_timeUnit) {
+        case 'min':
+          inputValueKg = raw * 60;
+        case 'hour':
+          inputValueKg = raw * 3600;
+        default:
+          inputValueKg = raw;
+      }
     } else {
-      final raw = double.tryParse(_valueController.text.trim());
       if (raw == null || raw <= 0) return;
       if (widget.exercise.type == ExerciseType.weight) {
-        inputValueKg = weightUnit == 'lbs'
-            ? UnitConverter.lbsToKg(raw)
-            : raw;
+        inputValueKg =
+            weightUnit == 'lbs' ? UnitConverter.lbsToKg(raw) : raw;
       } else {
-        inputValueKg = distanceUnit == 'mi'
-            ? UnitConverter.miToKm(raw)
-            : raw;
+        inputValueKg =
+            distanceUnit == 'mi' ? UnitConverter.miToKm(raw) : raw;
       }
     }
 
@@ -126,11 +216,13 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
 
     final currentRecords =
         ref.read(recordsProvider(exerciseId)).valueOrNull ?? [];
-    final previousBest = _getPreviousBest(currentRecords, widget.exercise.type);
+    final previousBest =
+        _getPreviousBest(currentRecords, widget.exercise.type);
 
     await ref
         .read(recordsProvider(exerciseId).notifier)
-        .addRecord(inputValueKg, _selectedDate.millisecondsSinceEpoch ~/ 1000);
+        .addRecord(inputValueKg,
+            _selectedDate.millisecondsSinceEpoch ~/ 1000);
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -167,6 +259,32 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
         : newValue > previousBest;
   }
 }
+
+// ── 단위 레이블 행 ─────────────────────────────────────────────
+
+class _UnitLabel extends StatelessWidget {
+  final String label;
+  final Widget trailing;
+  const _UnitLabel({required this.label, required this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5)),
+        const Spacer(),
+        trailing,
+      ],
+    );
+  }
+}
+
+// ── 날짜 선택기 ────────────────────────────────────────────────
 
 class _DatePicker extends StatelessWidget {
   final DateTime selected;
@@ -217,7 +335,6 @@ class _DatePicker extends StatelessWidget {
         color: CupertinoColors.systemBackground.resolveFrom(context),
         child: Column(
           children: [
-            // 상단 바
             Container(
               color: AppTheme.background,
               child: Row(
@@ -226,7 +343,8 @@ class _DatePicker extends StatelessWidget {
                   CupertinoButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('취소',
-                        style: TextStyle(color: AppTheme.textSecondary)),
+                        style:
+                            TextStyle(color: AppTheme.textSecondary)),
                   ),
                   CupertinoButton(
                     onPressed: () {
@@ -242,7 +360,9 @@ class _DatePicker extends StatelessWidget {
               ),
             ),
             const Divider(
-                height: 0.5, thickness: 0.5, color: AppTheme.separator),
+                height: 0.5,
+                thickness: 0.5,
+                color: AppTheme.separator),
             Expanded(
               child: CupertinoDatePicker(
                 mode: CupertinoDatePickerMode.date,

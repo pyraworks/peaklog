@@ -15,13 +15,15 @@ class UnitToggle extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _ToggleChip(
-          label: '${settings.weightUnit.toUpperCase()} ⇄ ${settings.weightUnit == 'kg' ? 'LBS' : 'KG'}',
-          onTap: () => ref.read(unitSettingsProvider.notifier).toggleWeightUnit(),
+          label: settings.weightUnit.toUpperCase(),
+          onTap: () =>
+              ref.read(unitSettingsProvider.notifier).toggleWeightUnit(),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _ToggleChip(
-          label: '${settings.distanceUnit.toUpperCase()} ⇄ ${settings.distanceUnit == 'km' ? 'MI' : 'KM'}',
-          onTap: () => ref.read(unitSettingsProvider.notifier).toggleDistanceUnit(),
+          label: settings.distanceUnit.toUpperCase(),
+          onTap: () =>
+              ref.read(unitSettingsProvider.notifier).toggleDistanceUnit(),
         ),
       ],
     );
