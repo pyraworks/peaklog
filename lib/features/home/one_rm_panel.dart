@@ -7,6 +7,10 @@ import '../../core/utils/unit_converter.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 
+// 범위: 50% ~ 120% (71항목)
+const int _kMinPercent = 50;
+const int _kMaxPercent = 120;
+
 class OneRmPanel extends ConsumerStatefulWidget {
   final Exercise exercise;
   const OneRmPanel({required this.exercise, super.key});
@@ -22,7 +26,8 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
   @override
   void initState() {
     super.initState();
-    _scrollController = FixedExtentScrollController(initialItem: _percent - 1);
+    _scrollController =
+        FixedExtentScrollController(initialItem: _percent - _kMinPercent);
   }
 
   @override
@@ -49,88 +54,86 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
         : '—';
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: const BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '1RM %',
-                style: TextStyle(
-                    color: AppTheme.accent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5),
-              ),
-              if (bestKg != null)
-                GestureDetector(
-                  onTap: () => _showTable(context, bestKg!, unit),
-                  child: const Text(
-                    '표로 보기',
-                    style: TextStyle(
-                        color: AppTheme.accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
-                  ),
+          // 헤더 행
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '1RM 계산기',
+                  style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                 ),
-            ],
+                if (bestKg != null)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showTable(context, bestKg!, unit),
+                    child: const Text(
+                      '표로 보기',
+                      style: TextStyle(
+                          color: AppTheme.accent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 140,
-                  child: CupertinoPicker(
-                    scrollController: _scrollController,
-                    itemExtent: 40,
-                    backgroundColor: AppTheme.background,
-                    selectionOverlay: Container(
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                              color: AppTheme.separator, width: 0.8),
-                          bottom: BorderSide(
-                              color: AppTheme.separator, width: 0.8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 드럼롤 피커
+                Expanded(
+                  child: SizedBox(
+                    height: 130,
+                    child: CupertinoPicker(
+                      scrollController: _scrollController,
+                      itemExtent: 38,
+                      backgroundColor: AppTheme.card,
+                      selectionOverlay: Container(
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                                color: AppTheme.separator, width: 0.5),
+                            bottom: BorderSide(
+                                color: AppTheme.separator, width: 0.5),
+                          ),
                         ),
                       ),
-                    ),
-                    onSelectedItemChanged: (index) {
-                      setState(() => _percent = index + 1);
-                    },
-                    children: List.generate(
-                      120,
-                      (i) => Center(
-                        child: Text(
-                          '${i + 1}%',
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 18,
+                      onSelectedItemChanged: (index) {
+                        setState(() => _percent = index + _kMinPercent);
+                      },
+                      children: List.generate(
+                        _kMaxPercent - _kMinPercent + 1,
+                        (i) => Center(
+                          child: Text(
+                            '${i + _kMinPercent}%',
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 17,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.card,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: AppTheme.separator, width: 0.5),
-                  ),
+                const SizedBox(width: 12),
+                // 결과 박스
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -139,7 +142,7 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
                         style: const TextStyle(
                           color: AppTheme.textSecondary,
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -147,25 +150,26 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
                         displayCalc,
                         style: const TextStyle(
                           color: AppTheme.accent,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      if (bestKg == null)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Text(
+                            '기록 추가 후\n사용 가능',
+                            style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (bestKg == null)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                '기록을 먼저 추가해주세요',
-                style: TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 12),
-              ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -186,7 +190,7 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
   }
 }
 
-// ── 표 전체화면 ──────────────────────────────────────────────
+// ── 표 전체화면 (50~120%, 2열) ───────────────────────────────
 
 class _OneRmTableScreen extends StatefulWidget {
   final String exerciseName;
@@ -206,15 +210,26 @@ class _OneRmTableScreen extends StatefulWidget {
 }
 
 class _OneRmTableScreenState extends State<_OneRmTableScreen> {
-  static const double _rowHeight = 48;
+  // 왼쪽: 50-84% (35항목), 오른쪽: 85-120% (36항목) → 36행
+  static const int _totalRows = 36;
+  static const double _rowHeight = 46;
+
   late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
-    // 두 열 모두 60행이므로 나머지로 행 인덱스 계산
-    final rowIndex = (widget.currentPercent - 1) % 60;
-    final offset = (rowIndex * _rowHeight - 120).clamp(0.0, double.infinity);
+    final cp = widget.currentPercent;
+    int rowIndex;
+    if (cp >= 50 && cp <= 84) {
+      rowIndex = cp - 50;
+    } else if (cp >= 85 && cp <= 120) {
+      rowIndex = cp - 85;
+    } else {
+      rowIndex = 0;
+    }
+    final offset =
+        (rowIndex * _rowHeight - 140).clamp(0.0, double.infinity);
     _scrollController = ScrollController(initialScrollOffset: offset);
   }
 
@@ -232,42 +247,37 @@ class _OneRmTableScreenState extends State<_OneRmTableScreen> {
       ),
       body: Column(
         children: [
-          // 헤더
+          // 컬럼 헤더
           Container(
             color: AppTheme.background,
             child: Row(
               children: [
-                Expanded(
-                  child: _HeaderCell(
-                      left: '1 — 60%',
-                      right: UnitConverter.formatWeight(
-                          widget.bestKg, widget.unit)),
-                ),
+                Expanded(child: _columnHeader('50 — 84%')),
                 const VerticalDivider(
                     width: 1, thickness: 0.5, color: AppTheme.separator),
-                Expanded(
-                  child: _HeaderCell(
-                      left: '61 — 120%',
-                      right: UnitConverter.formatWeight(
-                          widget.bestKg * 1.2, widget.unit)),
-                ),
+                Expanded(child: _columnHeader('85 — 120%')),
               ],
             ),
           ),
-          const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+          const Divider(
+              height: 0.5, thickness: 0.5, color: AppTheme.separator),
           // 데이터
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
-              itemCount: 60,
+              itemCount: _totalRows,
               itemExtent: _rowHeight,
               itemBuilder: (_, i) {
-                final leftPct = i + 1;
-                final rightPct = i + 61;
-                final leftW = UnitConverter.formatWeight(
-                    widget.bestKg * (leftPct / 100), widget.unit);
+                final leftPct = (i < 35) ? 50 + i : null;
+                final rightPct = 85 + i; // 85..120
+
+                final leftW = leftPct != null
+                    ? UnitConverter.formatWeight(
+                        widget.bestKg * (leftPct / 100), widget.unit)
+                    : null;
                 final rightW = UnitConverter.formatWeight(
                     widget.bestKg * (rightPct / 100), widget.unit);
+
                 final leftSel = leftPct == widget.currentPercent;
                 final rightSel = rightPct == widget.currentPercent;
 
@@ -278,10 +288,12 @@ class _OneRmTableScreenState extends State<_OneRmTableScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: _TableCell(
-                                percent: leftPct,
-                                weight: leftW,
-                                highlighted: leftSel),
+                            child: leftPct != null
+                                ? _TableCell(
+                                    percent: leftPct,
+                                    weight: leftW!,
+                                    highlighted: leftSel)
+                                : const SizedBox(),
                           ),
                           const VerticalDivider(
                               width: 1,
@@ -309,29 +321,16 @@ class _OneRmTableScreenState extends State<_OneRmTableScreen> {
       ),
     );
   }
-}
 
-class _HeaderCell extends StatelessWidget {
-  final String left;
-  final String right;
-  const _HeaderCell({required this.left, required this.right});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _columnHeader(String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Text(left,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600)),
-          const Spacer(),
-          Text('(1RM: $right)',
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 11)),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+            color: AppTheme.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -341,6 +340,7 @@ class _TableCell extends StatelessWidget {
   final int percent;
   final String weight;
   final bool highlighted;
+
   const _TableCell(
       {required this.percent,
       required this.weight,
@@ -356,14 +356,16 @@ class _TableCell extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 40,
+            width: 38,
             child: Text(
               '$percent%',
               style: TextStyle(
-                color: highlighted ? AppTheme.accent : AppTheme.textSecondary,
+                color: highlighted
+                    ? AppTheme.accent
+                    : AppTheme.textSecondary,
                 fontSize: 13,
                 fontWeight:
-                    highlighted ? FontWeight.w700 : FontWeight.w400,
+                    highlighted ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
@@ -371,10 +373,12 @@ class _TableCell extends StatelessWidget {
             child: Text(
               weight,
               style: TextStyle(
-                color: highlighted ? AppTheme.accent : AppTheme.textPrimary,
+                color: highlighted
+                    ? AppTheme.accent
+                    : AppTheme.textPrimary,
                 fontSize: 13,
                 fontWeight:
-                    highlighted ? FontWeight.w700 : FontWeight.w400,
+                    highlighted ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),

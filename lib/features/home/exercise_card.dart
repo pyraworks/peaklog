@@ -9,47 +9,38 @@ import '../../core/utils/unit_converter.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 import '../../providers/exercises_provider.dart';
-import '../history/history_screen.dart';
+import '../exercise_detail/exercise_detail_screen.dart';
 import '../record_input/record_input_screen.dart';
-import 'one_rm_panel.dart';
 
-class ExerciseCard extends ConsumerStatefulWidget {
+class ExerciseCard extends ConsumerWidget {
   final Exercise exercise;
   const ExerciseCard({required this.exercise, super.key});
 
   @override
-  ConsumerState<ExerciseCard> createState() => _ExerciseCardState();
-}
-
-class _ExerciseCardState extends ConsumerState<ExerciseCard> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final records =
-        ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
+        ref.watch(recordsProvider(exercise.id!)).valueOrNull ?? [];
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
 
-    final bestRecord = _getBestRecord(records, widget.exercise.type);
-    final displayValue =
-        _formatBestValue(bestRecord, widget.exercise, settings);
+    final bestRecord = _getBestRecord(records, exercise.type);
+    final displayValue = _formatBestValue(bestRecord, exercise, settings);
     final daysSince = _daysSince(records);
 
     return Slidable(
-      key: ValueKey(widget.exercise.id),
+      key: ValueKey(exercise.id),
       endActionPane: ActionPane(
         motion: const DrawerMotion(),
-        extentRatio: 0.44,
+        extentRatio: 0.42,
         children: [
           SlidableAction(
-            onPressed: (_) => _showRenameDialog(context),
+            onPressed: (_) => _showRenameDialog(context, ref),
             backgroundColor: const Color(0xFF007AFF),
             foregroundColor: Colors.white,
             icon: CupertinoIcons.pencil,
             label: '수정',
           ),
           SlidableAction(
-            onPressed: (_) => _confirmDelete(context),
+            onPressed: (_) => _confirmDelete(context, ref),
             backgroundColor: const Color(0xFFFF3B30),
             foregroundColor: Colors.white,
             icon: CupertinoIcons.trash,
@@ -57,133 +48,128 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          GestureDetector(
-            onTap: widget.exercise.type == ExerciseType.weight
-                ? () => setState(() => _expanded = !_expanded)
-                : null,
-            child: Card(
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(16),
-                  bottom: Radius.circular(_expanded ? 0 : 16),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    widget.exercise.name.toUpperCase(),
-                                    style: const TextStyle(
-                                        color: AppTheme.textSecondary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 2),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.accent
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      widget.exercise.type.label,
-                                      style: const TextStyle(
-                                          color: AppTheme.accent,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                displayValue,
-                                style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -1),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (widget.exercise.type == ExerciseType.weight)
-                          Icon(
-                            _expanded
-                                ? Icons.expand_less
-                                : Icons.expand_more,
-                            color: AppTheme.textSecondary,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(
-                          daysSince,
-                          style: const TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 12),
-                        ),
-                        if (bestRecord != null) ...[
-                          const SizedBox(width: 8),
-                          const Icon(Icons.star,
-                              color: AppTheme.accent, size: 14),
-                          const SizedBox(width: 2),
-                          const Text(
-                            '최고 기록',
-                            style: TextStyle(
-                                color: AppTheme.accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () => _openRecordInput(context),
-                          style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.accent,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4)),
-                          child: const Text('기록 추가',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700)),
-                        ),
-                        TextButton(
-                          onPressed: () => _openHistory(context),
-                          style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.textSecondary,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4)),
-                          child: const Text('히스토리',
-                              style: TextStyle(fontSize: 12)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      child: Material(
+        color: AppTheme.card,
+        child: InkWell(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  ExerciseDetailScreen(exercise: exercise),
             ),
           ),
-          if (_expanded && widget.exercise.type == ExerciseType.weight)
-            OneRmPanel(exercise: widget.exercise),
-        ],
+          splashColor: Colors.transparent,
+          highlightColor: Colors.black.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 13),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 왼쪽: 운동 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 운동명 + 타입 뱃지
+                      Row(
+                        children: [
+                          Text(
+                            exercise.name.toUpperCase(),
+                            style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accent
+                                  .withValues(alpha: 0.12),
+                              borderRadius:
+                                  BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              exercise.type.label,
+                              style: const TextStyle(
+                                  color: AppTheme.accent,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // 최고 기록값
+                      Text(
+                        displayValue,
+                        style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3),
+                      ),
+                      const SizedBox(height: 4),
+                      // 메타 정보
+                      Row(
+                        children: [
+                          Text(
+                            daysSince,
+                            style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12),
+                          ),
+                          if (bestRecord != null) ...[
+                            const SizedBox(width: 6),
+                            const Icon(CupertinoIcons.star_fill,
+                                color: AppTheme.accent, size: 11),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // 오른쪽: 기록 추가 버튼 + 화살표
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RecordInputScreen(
+                              exercise: exercise),
+                        ),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color:
+                              AppTheme.accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          '기록 추가',
+                          style: TextStyle(
+                              color: AppTheme.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Icon(CupertinoIcons.chevron_right,
+                        color: AppTheme.separator, size: 14),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -217,30 +203,11 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
         DateTime.fromMillisecondsSinceEpoch(records.first.recordedAt * 1000);
     final diff = DateTime.now().difference(last).inDays;
     if (diff == 0) return '오늘';
-    return '+$diff일';
+    return '$diff일 전';
   }
 
-  void _openRecordInput(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RecordInputScreen(exercise: widget.exercise),
-      ),
-    );
-  }
-
-  void _openHistory(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HistoryScreen(exercise: widget.exercise),
-      ),
-    );
-  }
-
-  void _showRenameDialog(BuildContext context) {
-    final controller =
-        TextEditingController(text: widget.exercise.name);
+  void _showRenameDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController(text: exercise.name);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -262,7 +229,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
               if (name.isNotEmpty) {
                 ref
                     .read(exercisesProvider.notifier)
-                    .renameExercise(widget.exercise.id!, name);
+                    .renameExercise(exercise.id!, name);
               }
               Navigator.pop(ctx);
             },
@@ -274,13 +241,12 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     );
   }
 
-  void _confirmDelete(BuildContext context) {
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('운동 삭제'),
-        content: Text(
-            '\'${widget.exercise.name}\' 와(과) 모든 기록을 삭제할까요?'),
+        content: Text('\'${exercise.name}\' 와(과) 모든 기록을 삭제할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -292,7 +258,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
               Navigator.pop(ctx);
               ref
                   .read(exercisesProvider.notifier)
-                  .deleteExercise(widget.exercise.id!);
+                  .deleteExercise(exercise.id!);
             },
             child: const Text('삭제',
                 style: TextStyle(color: Color(0xFFFF3B30))),

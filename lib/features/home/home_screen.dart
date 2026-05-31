@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
@@ -13,52 +14,87 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final exercisesAsync = ref.watch(exercisesProvider);
+    final canAdd = (exercisesAsync.valueOrNull?.length ?? 0) < 6;
 
     return Scaffold(
       drawer: const _AppDrawer(),
       appBar: AppBar(
         title: const Text('PBPR'),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
+        actions: [
+          const Padding(
+            padding: EdgeInsets.only(right: 4),
             child: UnitToggle(),
+          ),
+          if (canAdd)
+            CupertinoButton(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const AddExerciseScreen()),
+              ),
+              child: const Icon(CupertinoIcons.add,
+                  color: AppTheme.accent, size: 22),
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          const Divider(
+              height: 0.5, thickness: 0.5, color: AppTheme.separator),
+          Expanded(
+            child: exercisesAsync.when(
+              loading: () => const Center(
+                child:
+                    CircularProgressIndicator(color: AppTheme.accent),
+              ),
+              error: (e, _) => Center(child: Text('오류: $e')),
+              data: (exercises) {
+                if (exercises.isEmpty) {
+                  return _EmptyState(
+                    onAdd: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const AddExerciseScreen()),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  itemCount: exercises.length,
+                  itemBuilder: (_, i) {
+                    final isFirst = i == 0;
+                    final isLast = i == exercises.length - 1;
+                    return ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: isFirst
+                            ? const Radius.circular(10)
+                            : Radius.zero,
+                        bottom: isLast
+                            ? const Radius.circular(10)
+                            : Radius.zero,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ExerciseCard(exercise: exercises[i]),
+                          if (!isLast)
+                            const Divider(
+                              height: 0.5,
+                              thickness: 0.5,
+                              color: AppTheme.separator,
+                              indent: 16,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
-      body: exercisesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.accent),
-        ),
-        error: (e, _) => Center(child: Text('오류: $e')),
-        data: (exercises) => exercises.isEmpty
-            ? _EmptyState(onAdd: () => _showAddSheet(context, ref))
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                itemCount: exercises.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: ExerciseCard(exercise: exercises[i]),
-                ),
-              ),
-      ),
-      floatingActionButton: exercisesAsync.valueOrNull != null &&
-              exercisesAsync.valueOrNull!.length < 6
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAddSheet(context, ref),
-              backgroundColor: AppTheme.accent,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('운동 추가',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
-            )
-          : null,
-    );
-  }
-
-  void _showAddSheet(BuildContext context, WidgetRef ref) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AddExerciseScreen()),
     );
   }
 }
@@ -75,36 +111,47 @@ class _AppDrawer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Padding(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 20),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Text(
                 'PBPR',
                 style: TextStyle(
                   color: AppTheme.accent,
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
                 ),
               ),
             ),
-            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+            const Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: AppTheme.separator),
             _DrawerItem(
-              icon: Icons.fitness_center,
+              icon: CupertinoIcons.list_bullet,
               label: '운동 목록',
               onTap: () => Navigator.pop(context),
             ),
-            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator, indent: 56),
+            const Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: AppTheme.separator,
+                indent: 52),
             _DrawerItem(
-              icon: Icons.settings_outlined,
+              icon: CupertinoIcons.settings,
               label: '설정',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const SettingsScreen()),
                 );
               },
             ),
-            const Divider(height: 0.5, thickness: 0.5, color: AppTheme.separator),
+            const Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: AppTheme.separator),
           ],
         ),
       ),
@@ -122,14 +169,15 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppTheme.textPrimary, size: 22),
+      leading: Icon(icon, color: AppTheme.textPrimary, size: 20),
       title: Text(label,
           style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w400)),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
     );
   }
 }
@@ -144,15 +192,14 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const Icon(CupertinoIcons.heart,
+              color: AppTheme.textSecondary, size: 40),
+          const SizedBox(height: 12),
           const Text('운동을 추가해보세요',
               style: TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 18)),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add),
-            label: const Text('운동 추가'),
-          ),
+                  color: AppTheme.textSecondary, fontSize: 16)),
+          const SizedBox(height: 20),
+          ElevatedButton(onPressed: onAdd, child: const Text('운동 추가')),
         ],
       ),
     );
