@@ -51,18 +51,13 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
       bestKg = oneReps.map((r) => r.weight!).reduce((a, b) => a > b ? a : b);
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더 행
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -95,7 +90,7 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
               child: CupertinoPicker(
                 scrollController: _scrollController,
                 itemExtent: 38,
-                backgroundColor: AppTheme.card,
+                backgroundColor: Colors.transparent,
                 selectionOverlay: Container(
                   decoration: const BoxDecoration(
                     border: Border(
