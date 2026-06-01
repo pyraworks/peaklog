@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/unit_settings_provider.dart';
+import '../health/health_sync_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -38,6 +39,18 @@ class SettingsScreen extends ConsumerWidget {
                 ref.read(unitSettingsProvider.notifier).toggleDistanceUnit();
               }
             },
+          ),
+          const SizedBox(height: 32),
+          const _SectionHeader('건강 앱'),
+          _NavRow(
+            title: 'Apple Health 연동',
+            subtitle: '러닝 기록 자동 가져오기',
+            icon: CupertinoIcons.heart_fill,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const HealthSyncScreen()),
+            ),
           ),
           const SizedBox(height: 32),
           const _SectionHeader('앱 정보'),
@@ -131,6 +144,64 @@ class _Separator extends StatelessWidget {
       color: AppTheme.card,
       child: const Divider(
           height: 0.5, thickness: 0.5, color: AppTheme.separator, indent: 16),
+    );
+  }
+}
+
+class _NavRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _NavRow({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.card,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: AppTheme.accent, size: 16),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            color: AppTheme.textPrimary, fontSize: 16)),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(CupertinoIcons.chevron_right,
+                  color: AppTheme.separator, size: 14),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

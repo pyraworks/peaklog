@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../models/exercise.dart';
 import '../models/record.dart';
+import '../models/health_import.dart';
 import '../models/personal_best.dart';
 
 const _uuid = Uuid();
@@ -21,9 +22,10 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pbpr.db'),
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute('DROP TABLE IF EXISTS health_imports');
         await db.execute('DROP TABLE IF EXISTS sync_tasks');
         await db.execute('DROP TABLE IF EXISTS personal_bests');
         await db.execute('DROP TABLE IF EXISTS records');
@@ -90,6 +92,13 @@ class DatabaseHelper {
         retry_count INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL,
         sync_status TEXT NOT NULL DEFAULT 'pending'
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE health_imports (
+        id TEXT PRIMARY KEY,
+        record_id TEXT,
+        imported_at INTEGER NOT NULL
       )
     ''');
     await db.execute('CREATE INDEX idx_records_exercise_id ON records(exercise_id)');
@@ -253,6 +262,36 @@ class DatabaseHelper {
       'updated_at': now,
       'sync_status': SyncStatus.pending.name,
     });
+  }
+
+  // ── HEALTH IMPORTS ─────────────────────────────────────────
+
+  Future<bool> hasHealthImport(String hash) async {
+    final db = await database;
+    final result = await db.query('health_imports',
+        where: 'id = ?', whereArgs: [hash], limit: 1);
+    return result.isNotEmpty;
+  }
+
+  Future<void> insertHealthImport(HealthImport imp) async {
+    final db = await database;
+    await db.insert('health_imports', imp.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<int?> getBestDurationForExercise(String exerciseId) async {
+    final db = await database;
+    final rows = await db.query(
+      'records',
+      columns: ['duration_seconds'],
+      where:
+          'exercise_id = ? AND is_deleted = 0 AND duration_seconds IS NOT NULL',
+      whereArgs: [exerciseId],
+      orderBy: 'duration_seconds ASC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return (rows.first['duration_seconds'] as num).toInt();
   }
 
   Future<void> close() async {
