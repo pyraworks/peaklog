@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>운동 기록을 저장하고 미디어를 선택하기 위해 갤러리 접근 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>운동 기록 이미지를 갤러리에 저장합니다.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

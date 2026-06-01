@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/unit_converter.dart';
+import 'export_models.dart';
 
 class RoughFrame extends StatelessWidget {
   final Exercise exercise;
@@ -10,6 +11,8 @@ class RoughFrame extends StatelessWidget {
   final String weightUnit;
   final String distanceUnit;
   final DateTime date;
+  final String daysSinceStr;
+  final OverlayOptions options;
 
   const RoughFrame({
     required this.exercise,
@@ -17,6 +20,8 @@ class RoughFrame extends StatelessWidget {
     required this.weightUnit,
     required this.distanceUnit,
     required this.date,
+    this.daysSinceStr = '',
+    this.options = const OverlayOptions(),
     super.key,
   });
 
@@ -82,35 +87,49 @@ class RoughFrame extends StatelessWidget {
                     color: AppTheme.accent,
                     margin: const EdgeInsets.only(bottom: 10),
                   ),
-                  Text(
-                    '// ${exercise.displayName.toUpperCase()}',
-                    style: GoogleFonts.spaceGrotesk(
-                        color: AppTheme.accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2),
-                  ),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      displayValue,
+                  if (options.showName)
+                    Text(
+                      '// ${exercise.displayName.toUpperCase()}',
                       style: GoogleFonts.spaceGrotesk(
-                          color: AppTheme.textPrimary,
-                          fontSize: 64,
+                          color: AppTheme.accent,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: -1),
+                          letterSpacing: 2),
                     ),
-                  ),
+                  if (options.showPr) ...[
+                    const SizedBox(height: 8),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        displayValue,
+                        style: GoogleFonts.spaceGrotesk(
+                            color: AppTheme.textPrimary,
+                            fontSize: 64,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1),
+                      ),
+                    ),
+                  ],
+                  if (options.showDaysSince && daysSinceStr.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      daysSinceStr,
+                      style: GoogleFonts.spaceGrotesk(
+                          color: AppTheme.accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
                   const Spacer(),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(
-                        color: Color(0xFF555555),
-                        fontSize: 10,
-                        fontFamily: 'monospace'),
-                  ),
+                  if (options.showDate)
+                    Text(
+                      dateStr,
+                      style: const TextStyle(
+                          color: Color(0xFF555555),
+                          fontSize: 10,
+                          fontFamily: 'monospace'),
+                    ),
                 ],
               ),
             ),
