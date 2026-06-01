@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/exercises_provider.dart';
-import 'exercise_card.dart';
 import 'add_exercise_sheet.dart' show AddExerciseScreen;
+import 'category_drawer.dart';
+import 'exercise_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +19,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _editMode = false;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  ExerciseCategory? _filterCategory;
 
   @override
   void dispose() {
@@ -27,21 +30,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final exercisesAsync = ref.watch(exercisesProvider);
-    final canAdd = (exercisesAsync.valueOrNull?.length ?? 0) < 6;
+    final allExercises = exercisesAsync.valueOrNull ?? [];
+    final canAdd = allExercises.length < 6;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
+      drawer: CategoryDrawer(
+        selected: _filterCategory,
+        exercises: allExercises,
+        onCategorySelected: (cat) =>
+            setState(() => _filterCategory = cat),
+      ),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         toolbarHeight: 60,
-        title: const Text(
-          'PBPR',
-          style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
-            color: AppTheme.textPrimary,
+        leading: Builder(
+          builder: (ctx) => CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            child: const Icon(
+              CupertinoIcons.line_horizontal_3,
+              color: AppTheme.textPrimary,
+              size: 22,
+            ),
           ),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'PBPR',
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            if (_filterCategory != null)
+              Text(
+                _filterCategory!.label,
+                style: const TextStyle(
+                    color: AppTheme.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600),
+              ),
+          ],
         ),
         actions: [
           CupertinoButton(
@@ -69,16 +104,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               error: (e, _) => Center(child: Text('오류: $e')),
               data: (exercises) {
-                final filtered = _searchQuery.isEmpty
-                    ? exercises
-                    : exercises
-                        .where((e) => e.displayName
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase()))
-                        .toList();
+                var filtered = exercises;
+                if (_filterCategory != null) {
+                  filtered = filtered
+                      .where((e) => e.category == _filterCategory)
+                      .toList();
+                }
+                if (_searchQuery.isNotEmpty) {
+                  filtered = filtered
+                      .where((e) => e.displayName
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()))
+                      .toList();
+                }
 
                 if (exercises.isEmpty) {
                   return const _EmptyState();
+                }
+                if (filtered.isEmpty) {
+                  return _EmptyFilterState(
+                    category: _filterCategory,
+                    onClear: () =>
+                        setState(() => _filterCategory = null),
+                  );
                 }
 
                 return ListView.builder(
@@ -165,8 +213,8 @@ class _BottomToolbar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppTheme.card,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: AppTheme.separator, width: 0.5),
+                border:
+                    Border.all(color: AppTheme.separator, width: 0.5),
               ),
               child: TextField(
                 controller: searchController,
@@ -219,12 +267,42 @@ class _EmptyState extends StatelessWidget {
               color: AppTheme.textSecondary, size: 40),
           SizedBox(height: 12),
           Text('운동을 추가해보세요',
-              style: TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 16)),
+              style:
+                  TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
           SizedBox(height: 8),
           Text('하단 연필 버튼을 눌러 추가하세요',
               style: TextStyle(
                   color: AppTheme.textSecondary, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyFilterState extends StatelessWidget {
+  final ExerciseCategory? category;
+  final VoidCallback onClear;
+
+  const _EmptyFilterState(
+      {required this.category, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${category?.label ?? ''} 운동 없음',
+            style: const TextStyle(
+                color: AppTheme.textSecondary, fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          CupertinoButton(
+            onPressed: onClear,
+            child: const Text('전체 보기',
+                style: TextStyle(color: AppTheme.accent)),
+          ),
         ],
       ),
     );
