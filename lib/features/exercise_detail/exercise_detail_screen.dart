@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
+import '../compare/compare_screen.dart';
 import '../home/one_rm_panel.dart';
 import '../record_input/record_input_screen.dart';
 
@@ -26,6 +27,21 @@ class ExerciseDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(exercise.displayName),
         actions: [
+          CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => CompareScreen(exercise: exercise)),
+            ),
+            child: const Text(
+              '비교',
+              style: TextStyle(
+                  color: AppTheme.accent,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500),
+            ),
+          ),
           CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             onPressed: () => Navigator.push(
