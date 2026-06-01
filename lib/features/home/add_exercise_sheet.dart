@@ -13,12 +13,14 @@ class AddExerciseScreen extends ConsumerStatefulWidget {
 
 class _AddExerciseScreenState extends ConsumerState<AddExerciseScreen> {
   final _controller = TextEditingController();
-  ExerciseType _selectedType = ExerciseType.weight;
+  ExerciseCategory _selectedCategory = ExerciseCategory.strength;
   bool _saving = false;
 
-  final _types = [
-    (ExerciseType.weight, '무게', '스쿼트, 데드리프트 등'),
-    (ExerciseType.time, '시간', '5km 달리기, 플랭크 등'),
+  static const _categories = [
+    (ExerciseCategory.strength, '무게', '스쿼트, 데드리프트 등'),
+    (ExerciseCategory.running,  '러닝', '5km, 10km 달리기 등'),
+    (ExerciseCategory.workout,  '와드', 'Fran, Murph 등'),
+    (ExerciseCategory.custom,   '커스텀', '기타 운동'),
   ];
 
   @override
@@ -42,25 +44,23 @@ class _AddExerciseScreenState extends ConsumerState<AddExerciseScreen> {
               style: const TextStyle(color: AppTheme.textPrimary),
               decoration: const InputDecoration(
                 labelText: '운동 이름',
-                hintText: '예: 스쿼트, 5km 달리기',
+                hintText: '예: Back Squat, 5km Run',
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              '운동 타입',
-              style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1),
-            ),
+            const Text('운동 카테고리',
+                style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1)),
             const SizedBox(height: 12),
-            ..._types.map((t) => _TypeTile(
-                  type: t.$1,
+            ..._categories.map((t) => _CategoryTile(
+                  category: t.$1,
                   label: t.$2,
                   description: t.$3,
-                  selected: _selectedType == t.$1,
-                  onTap: () => setState(() => _selectedType = t.$1),
+                  selected: _selectedCategory == t.$1,
+                  onTap: () => setState(() => _selectedCategory = t.$1),
                 )),
             const Spacer(),
             ElevatedButton(
@@ -84,20 +84,22 @@ class _AddExerciseScreenState extends ConsumerState<AddExerciseScreen> {
     final name = _controller.text.trim();
     if (name.isEmpty) return;
     setState(() => _saving = true);
-    await ref.read(exercisesProvider.notifier).addExercise(name, _selectedType);
+    await ref
+        .read(exercisesProvider.notifier)
+        .addExercise(name, _selectedCategory);
     if (mounted) Navigator.pop(context);
   }
 }
 
-class _TypeTile extends StatelessWidget {
-  final ExerciseType type;
+class _CategoryTile extends StatelessWidget {
+  final ExerciseCategory category;
   final String label;
   final String description;
   final bool selected;
   final VoidCallback onTap;
 
-  const _TypeTile({
-    required this.type,
+  const _CategoryTile({
+    required this.category,
     required this.label,
     required this.description,
     required this.selected,
@@ -128,19 +130,15 @@ class _TypeTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                        color: selected
-                            ? AppTheme.accent
-                            : AppTheme.textPrimary,
-                        fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 12),
-                  ),
+                  Text(label,
+                      style: TextStyle(
+                          color: selected
+                              ? AppTheme.accent
+                              : AppTheme.textPrimary,
+                          fontWeight: FontWeight.w700)),
+                  Text(description,
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 12)),
                 ],
               ),
             ),

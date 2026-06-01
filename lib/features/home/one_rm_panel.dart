@@ -39,19 +39,17 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
   @override
   Widget build(BuildContext context) {
     final records =
-        ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
+        ref.watch(recordsProvider(widget.exercise.id)).valueOrNull ?? [];
     final unit =
         ref.watch(unitSettingsProvider).valueOrNull?.weightUnit ?? 'kg';
 
     double? bestKg;
-    if (records.isNotEmpty) {
-      bestKg = records.map((r) => r.value).reduce((a, b) => a > b ? a : b);
+    final oneReps = records
+        .where((r) => r.weight != null && (r.reps == null || r.reps == 1))
+        .toList();
+    if (oneReps.isNotEmpty) {
+      bestKg = oneReps.map((r) => r.weight!).reduce((a, b) => a > b ? a : b);
     }
-
-    final calculated = bestKg != null ? bestKg * (_percent / 100) : null;
-    final displayCalc = calculated != null
-        ? UnitConverter.formatWeight(calculated, unit)
-        : '—';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -91,83 +89,64 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 드럼롤 피커
-                Expanded(
-                  child: SizedBox(
-                    height: 130,
-                    child: CupertinoPicker(
-                      scrollController: _scrollController,
-                      itemExtent: 38,
-                      backgroundColor: AppTheme.card,
-                      selectionOverlay: Container(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            top: BorderSide(
-                                color: AppTheme.separator, width: 0.5),
-                            bottom: BorderSide(
-                                color: AppTheme.separator, width: 0.5),
-                          ),
-                        ),
-                      ),
-                      onSelectedItemChanged: (index) {
-                        setState(() => _percent = index + _kMinPercent);
-                      },
-                      children: List.generate(
-                        _kMaxPercent - _kMinPercent + 1,
-                        (i) => Center(
-                          child: Text(
-                            '${i + _kMinPercent}%',
+            padding: const EdgeInsets.fromLTRB(0, 6, 0, 8),
+            child: SizedBox(
+              height: 130,
+              child: CupertinoPicker(
+                scrollController: _scrollController,
+                itemExtent: 38,
+                backgroundColor: AppTheme.card,
+                selectionOverlay: Container(
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                          color: AppTheme.separator, width: 0.5),
+                      bottom: BorderSide(
+                          color: AppTheme.separator, width: 0.5),
+                    ),
+                  ),
+                ),
+                onSelectedItemChanged: (index) {
+                  setState(() => _percent = index + _kMinPercent);
+                },
+                children: List.generate(
+                  _kMaxPercent - _kMinPercent + 1,
+                  (i) {
+                    final pct = i + _kMinPercent;
+                    final wt = bestKg != null
+                        ? UnitConverter.formatWeight(
+                            bestKg * (pct / 100), unit)
+                        : '—';
+                    return Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '$pct%',
                             style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 17,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 결과 박스
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$_percent%',
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        displayCalc,
-                        style: const TextStyle(
-                          color: AppTheme.accent,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (bestKg == null)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 6),
-                          child: Text(
-                            '기록 추가 후\n사용 가능',
+                          Text(
+                            wt,
                             style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12),
+                              color: bestKg != null
+                                  ? AppTheme.accent
+                                  : AppTheme.textSecondary,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -180,7 +159,7 @@ class _OneRmPanelState extends ConsumerState<OneRmPanel> {
       context,
       MaterialPageRoute(
         builder: (_) => _OneRmTableScreen(
-          exerciseName: widget.exercise.name,
+          exerciseName: widget.exercise.displayName,
           bestKg: bestKg,
           unit: unit,
           currentPercent: _percent,

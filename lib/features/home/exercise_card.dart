@@ -10,21 +10,22 @@ import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../exercise_detail/exercise_detail_screen.dart';
-import '../record_input/record_input_screen.dart';
 
 class ExerciseCard extends ConsumerWidget {
   final Exercise exercise;
-  const ExerciseCard({required this.exercise, super.key});
+  final bool editMode;
+  const ExerciseCard(
+      {required this.exercise, this.editMode = false, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final records =
-        ref.watch(recordsProvider(exercise.id!)).valueOrNull ?? [];
+        ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
 
-    final bestRecord = _getBestRecord(records, exercise.type);
+    final bestRecord = _getBestRecord(records, exercise.category);
     final displayValue = _formatBestValue(bestRecord, exercise, settings);
-    final daysSince = _daysSince(records);
+    final daysSince = _daysSince(records, exercise.category);
 
     return Slidable(
       key: ValueKey(exercise.id),
@@ -32,50 +33,95 @@ class ExerciseCard extends ConsumerWidget {
         motion: const DrawerMotion(),
         extentRatio: 0.42,
         children: [
-          SlidableAction(
+          CustomSlidableAction(
             onPressed: (_) => _showRenameDialog(context, ref),
-            backgroundColor: const Color(0xFF007AFF),
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.pencil,
-            label: '수정',
+            backgroundColor: AppTheme.background,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFF007AFF), shape: BoxShape.circle),
+                  child: const Icon(CupertinoIcons.pencil,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(height: 5),
+                const Text('수정',
+                    style: TextStyle(
+                        color: Color(0xFF007AFF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
-          SlidableAction(
+          CustomSlidableAction(
             onPressed: (_) => _confirmDelete(context, ref),
-            backgroundColor: const Color(0xFFFF3B30),
-            foregroundColor: Colors.white,
-            icon: CupertinoIcons.trash,
-            label: '삭제',
+            backgroundColor: AppTheme.background,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: const BoxDecoration(
+                      color: Color(0xFFFF3B30), shape: BoxShape.circle),
+                  child: const Icon(CupertinoIcons.trash,
+                      color: Colors.white, size: 20),
+                ),
+                const SizedBox(height: 5),
+                const Text('삭제',
+                    style: TextStyle(
+                        color: Color(0xFFFF3B30),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
           ),
         ],
       ),
       child: Material(
         color: AppTheme.card,
         child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  ExerciseDetailScreen(exercise: exercise),
-            ),
-          ),
+          onTap: editMode
+              ? null
+              : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ExerciseDetailScreen(exercise: exercise),
+                    ),
+                  ),
           splashColor: Colors.transparent,
           highlightColor: Colors.black.withValues(alpha: 0.04),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 13),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 왼쪽: 운동 정보
+                if (editMode)
+                  GestureDetector(
+                    onTap: () => _confirmDelete(context, ref),
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: const BoxDecoration(
+                          color: Color(0xFFFF3B30), shape: BoxShape.circle),
+                      child: const Icon(Icons.remove,
+                          color: Colors.white, size: 14),
+                    ),
+                  ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 운동명 + 타입 뱃지
                       Row(
                         children: [
                           Text(
-                            exercise.name.toUpperCase(),
+                            exercise.displayName.toUpperCase(),
                             style: const TextStyle(
                                 color: AppTheme.textSecondary,
                                 fontSize: 11,
@@ -87,13 +133,12 @@ class ExerciseCard extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: AppTheme.accent
-                                  .withValues(alpha: 0.12),
-                              borderRadius:
-                                  BorderRadius.circular(4),
+                              color:
+                                  AppTheme.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              exercise.type.label,
+                              exercise.category.label,
                               style: const TextStyle(
                                   color: AppTheme.accent,
                                   fontSize: 9,
@@ -103,7 +148,6 @@ class ExerciseCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // 최고 기록값
                       Text(
                         displayValue,
                         style: const TextStyle(
@@ -113,15 +157,12 @@ class ExerciseCard extends ConsumerWidget {
                             letterSpacing: -0.3),
                       ),
                       const SizedBox(height: 4),
-                      // 메타 정보
                       Row(
                         children: [
-                          Text(
-                            daysSince,
-                            style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12),
-                          ),
+                          Text(daysSince,
+                              style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12)),
                           if (bestRecord != null) ...[
                             const SizedBox(width: 6),
                             const Icon(CupertinoIcons.star_fill,
@@ -132,36 +173,15 @@ class ExerciseCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // 오른쪽: 기록 추가 버튼 + 화살표
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RecordInputScreen(
-                              exercise: exercise),
-                        ),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color:
-                              AppTheme.accent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          '기록 추가',
-                          style: TextStyle(
-                              color: AppTheme.accent,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500),
-                        ),
-                      ),
+                    Text(
+                      '${records.length}개',
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 14),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(width: 4),
                     const Icon(CupertinoIcons.chevron_right,
                         color: AppTheme.separator, size: 14),
                   ],
@@ -174,40 +194,78 @@ class ExerciseCard extends ConsumerWidget {
     );
   }
 
-  Record? _getBestRecord(List<Record> records, ExerciseType type) {
+  Record? _getBestRecord(List<Record> records, ExerciseCategory category) {
     if (records.isEmpty) return null;
-    if (type == ExerciseType.time) {
-      return records.reduce((a, b) => a.value < b.value ? a : b);
+    switch (category) {
+      case ExerciseCategory.strength:
+        final oneRep = records
+            .where(
+                (r) => r.weight != null && (r.reps == null || r.reps == 1))
+            .toList();
+        if (oneRep.isEmpty) return null;
+        return oneRep.reduce(
+            (a, b) => (a.weight ?? 0) >= (b.weight ?? 0) ? a : b);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        final withTime =
+            records.where((r) => r.durationSeconds != null).toList();
+        if (withTime.isEmpty) return null;
+        return withTime.reduce((a, b) =>
+            (a.durationSeconds ?? 0) <= (b.durationSeconds ?? 0) ? a : b);
+      case ExerciseCategory.custom:
+        return records.first;
     }
-    return records.reduce((a, b) => a.value > b.value ? a : b);
   }
 
   String _formatBestValue(
       Record? best, Exercise exercise, UnitSettings? settings) {
     if (best == null) return '—';
-    switch (exercise.type) {
-      case ExerciseType.weight:
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatWeight(
-            best.value, settings?.weightUnit ?? 'kg');
-      case ExerciseType.time:
-        return UnitConverter.secondsToDisplay(best.value.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(
-            best.value, settings?.distanceUnit ?? 'km');
+            best.weight ?? 0, settings?.weightUnit ?? 'kg');
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        return UnitConverter.secondsToDisplay(best.durationSeconds ?? 0);
+      case ExerciseCategory.custom:
+        if (best.weight != null) {
+          return UnitConverter.formatWeight(
+              best.weight!, settings?.weightUnit ?? 'kg');
+        }
+        if (best.durationSeconds != null) {
+          return UnitConverter.secondsToDisplay(best.durationSeconds!);
+        }
+        return '—';
     }
   }
 
-  String _daysSince(List<Record> records) {
+  String _daysSince(List<Record> records, ExerciseCategory category) {
     if (records.isEmpty) return '기록 없음';
+    if (category == ExerciseCategory.strength) {
+      final oneRep = records
+          .where(
+              (r) => r.weight != null && (r.reps == null || r.reps == 1))
+          .toList();
+      if (oneRep.isEmpty) return '기록 없음';
+      final best = oneRep.reduce(
+          (a, b) => (a.weight ?? 0) >= (b.weight ?? 0) ? a : b);
+      final diff = DateTime.now()
+          .difference(
+              DateTime.fromMillisecondsSinceEpoch(best.performedAt))
+          .inDays;
+      if (diff == 0) return '오늘 PR';
+      return 'PR $diff일 전';
+    }
     final last =
-        DateTime.fromMillisecondsSinceEpoch(records.first.recordedAt * 1000);
+        DateTime.fromMillisecondsSinceEpoch(records.first.performedAt);
     final diff = DateTime.now().difference(last).inDays;
     if (diff == 0) return '오늘';
     return '$diff일 전';
   }
 
   void _showRenameDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController(text: exercise.name);
+    final controller =
+        TextEditingController(text: exercise.displayName);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -229,7 +287,7 @@ class ExerciseCard extends ConsumerWidget {
               if (name.isNotEmpty) {
                 ref
                     .read(exercisesProvider.notifier)
-                    .renameExercise(exercise.id!, name);
+                    .renameExercise(exercise.id, name);
               }
               Navigator.pop(ctx);
             },
@@ -246,7 +304,7 @@ class ExerciseCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('운동 삭제'),
-        content: Text('\'${exercise.name}\' 와(과) 모든 기록을 삭제할까요?'),
+        content: Text("'${exercise.displayName}' 와(과) 모든 기록을 삭제할까요?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -258,7 +316,7 @@ class ExerciseCard extends ConsumerWidget {
               Navigator.pop(ctx);
               ref
                   .read(exercisesProvider.notifier)
-                  .deleteExercise(exercise.id!);
+                  .deleteExercise(exercise.id);
             },
             child: const Text('삭제',
                 style: TextStyle(color: Color(0xFFFF3B30))),

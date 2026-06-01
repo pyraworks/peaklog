@@ -133,7 +133,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
-        subject: 'PBPR - ${widget.exercise.name} 신기록!',
+        subject: 'PBPR - ${widget.exercise.displayName} 신기록!',
       );
     } finally {
       if (mounted) setState(() => _exporting = false);

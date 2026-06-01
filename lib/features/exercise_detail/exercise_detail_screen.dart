@@ -18,14 +18,13 @@ class ExerciseDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final records =
-        ref.watch(recordsProvider(exercise.id!)).valueOrNull ?? [];
+        ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
-
-    final bestValue = _getBestValue(records, exercise.type);
+    final bestValue = _getBestValue(records, exercise.category);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(exercise.name),
+        title: Text(exercise.displayName),
         actions: [
           CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -52,7 +51,6 @@ class ExerciseDetailScreen extends ConsumerWidget {
           Expanded(
             child: CustomScrollView(
               slivers: [
-                // ── 현황 카드 ──────────────────────────────────
                 SliverToBoxAdapter(
                   child: _StatsCard(
                     exercise: exercise,
@@ -61,37 +59,30 @@ class ExerciseDetailScreen extends ConsumerWidget {
                     bestValue: bestValue,
                   ),
                 ),
-
-                // ── 1RM 계산기 (무게 타입만) ────────────────────
-                if (exercise.type == ExerciseType.weight) ...[
+                if (exercise.category == ExerciseCategory.strength) ...[
                   const SliverToBoxAdapter(child: SizedBox(height: 28)),
                   SliverToBoxAdapter(
-                    child: OneRmPanel(exercise: exercise),
-                  ),
+                      child: OneRmPanel(exercise: exercise)),
                 ],
-
-                // ── 기록 히스토리 ───────────────────────────────
                 const SliverToBoxAdapter(
-                  child: _SectionLabel('기록 히스토리'),
-                ),
+                    child: _SectionLabel('기록 히스토리')),
                 if (records.isEmpty)
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                           horizontal: 16, vertical: 24),
                       child: Center(
-                        child: Text(
-                          '아직 기록이 없어요',
-                          style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 15),
-                        ),
+                        child: Text('아직 기록이 없어요',
+                            style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 15)),
                       ),
                     ),
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, i) {
@@ -99,20 +90,20 @@ class ExerciseDetailScreen extends ConsumerWidget {
                           return _HistoryTile(
                             record: r,
                             exercise: exercise,
-                            isBest: r.value == bestValue,
+                            isBest: _isBestRecord(
+                                r, records, exercise.category),
                             settings: settings,
                             isLast: i == records.length - 1,
                             onDelete: () => ref
-                                .read(recordsProvider(exercise.id!)
+                                .read(recordsProvider(exercise.id)
                                     .notifier)
-                                .deleteRecord(r.id!),
+                                .deleteRecord(r.id),
                           );
                         },
                         childCount: records.length,
                       ),
                     ),
                   ),
-
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
@@ -122,16 +113,56 @@ class ExerciseDetailScreen extends ConsumerWidget {
     );
   }
 
-  double? _getBestValue(List<Record> records, ExerciseType type) {
+  double? _getBestValue(
+      List<Record> records, ExerciseCategory category) {
     if (records.isEmpty) return null;
-    if (type == ExerciseType.time) {
-      return records.map((r) => r.value).reduce(min);
+    switch (category) {
+      case ExerciseCategory.strength:
+        final oneRep = records
+            .where((r) =>
+                r.weight != null && (r.reps == null || r.reps == 1))
+            .toList();
+        if (oneRep.isEmpty) return null;
+        return oneRep.map((r) => r.weight!).reduce(max);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        final withTime =
+            records.where((r) => r.durationSeconds != null).toList();
+        if (withTime.isEmpty) return null;
+        return withTime
+            .map((r) => r.durationSeconds!.toDouble())
+            .reduce(min);
+      case ExerciseCategory.custom:
+        return null;
     }
-    return records.map((r) => r.value).reduce(max);
+  }
+
+  bool _isBestRecord(
+      Record r, List<Record> all, ExerciseCategory category) {
+    switch (category) {
+      case ExerciseCategory.strength:
+        if (r.weight == null) return false;
+        final oneRep = all
+            .where((x) =>
+                x.weight != null && (x.reps == null || x.reps == 1))
+            .toList();
+        if (oneRep.isEmpty) return false;
+        final best = oneRep.map((x) => x.weight!).reduce(max);
+        return r.weight == best && (r.reps == null || r.reps == 1);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        if (r.durationSeconds == null) return false;
+        final withTime =
+            all.where((x) => x.durationSeconds != null).toList();
+        if (withTime.isEmpty) return false;
+        final best =
+            withTime.map((x) => x.durationSeconds!).reduce(min);
+        return r.durationSeconds == best;
+      case ExerciseCategory.custom:
+        return false;
+    }
   }
 }
-
-// ── 현황 카드 ─────────────────────────────────────────────────
 
 class _StatsCard extends StatelessWidget {
   final Exercise exercise;
@@ -164,7 +195,7 @@ class _StatsCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                exercise.type.label.toUpperCase(),
+                exercise.category.label.toUpperCase(),
                 style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 11,
@@ -173,19 +204,17 @@ class _StatsCard extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppTheme.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
-                  '최고 기록',
-                  style: TextStyle(
-                      color: AppTheme.accent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600),
-                ),
+                child: const Text('최고 기록',
+                    style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -200,11 +229,9 @@ class _StatsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            daysSince,
-            style: const TextStyle(
-                color: AppTheme.textSecondary, fontSize: 13),
-          ),
+          Text(daysSince,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 13)),
         ],
       ),
     );
@@ -212,29 +239,42 @@ class _StatsCard extends StatelessWidget {
 
   String _formatValue(double? v) {
     if (v == null) return '—';
-    switch (exercise.type) {
-      case ExerciseType.weight:
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatWeight(
             v, settings?.weightUnit ?? 'kg');
-      case ExerciseType.time:
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
         return UnitConverter.secondsToDisplay(v.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(
-            v, settings?.distanceUnit ?? 'km');
+      case ExerciseCategory.custom:
+        return v.toStringAsFixed(1);
     }
   }
 
   String _daysSince() {
     if (records.isEmpty) return '기록 없음';
+    if (exercise.category == ExerciseCategory.strength) {
+      final oneRep = records
+          .where((r) =>
+              r.weight != null && (r.reps == null || r.reps == 1))
+          .toList();
+      if (oneRep.isEmpty) return '기록 없음';
+      final best = oneRep.reduce(
+          (a, b) => (a.weight ?? 0) >= (b.weight ?? 0) ? a : b);
+      final diff = DateTime.now()
+          .difference(
+              DateTime.fromMillisecondsSinceEpoch(best.performedAt))
+          .inDays;
+      if (diff == 0) return 'PR 오늘 갱신됨';
+      return 'PR $diff일 전 갱신';
+    }
     final last = DateTime.fromMillisecondsSinceEpoch(
-        records.first.recordedAt * 1000);
+        records.first.performedAt);
     final diff = DateTime.now().difference(last).inDays;
     if (diff == 0) return '오늘 업데이트됨';
     return '$diff일 전';
   }
 }
-
-// ── 섹션 레이블 ───────────────────────────────────────────────
 
 class _SectionLabel extends StatelessWidget {
   final String title;
@@ -257,8 +297,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-// ── 히스토리 타일 ──────────────────────────────────────────────
-
 class _HistoryTile extends StatelessWidget {
   final Record record;
   final Exercise exercise;
@@ -279,7 +317,7 @@ class _HistoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date =
-        DateTime.fromMillisecondsSinceEpoch(record.recordedAt * 1000);
+        DateTime.fromMillisecondsSinceEpoch(record.performedAt);
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
 
@@ -294,7 +332,8 @@ class _HistoryTile extends StatelessWidget {
         background: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
-          color: const Color(0xFFFF3B30).withValues(alpha: 0.12),
+          color:
+              const Color(0xFFFF3B30).withValues(alpha: 0.12),
           child: const Icon(CupertinoIcons.trash,
               color: Color(0xFFFF3B30), size: 18),
         ),
@@ -313,8 +352,7 @@ class _HistoryTile extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 child: const Text('삭제',
-                    style: TextStyle(
-                        color: Color(0xFFFF3B30))),
+                    style: TextStyle(color: Color(0xFFFF3B30))),
               ),
             ],
           ),
@@ -384,15 +422,37 @@ class _HistoryTile extends StatelessWidget {
   }
 
   String _formatValue() {
-    switch (exercise.type) {
-      case ExerciseType.weight:
-        return UnitConverter.formatWeight(
-            record.value, settings?.weightUnit ?? 'kg');
-      case ExerciseType.time:
-        return UnitConverter.secondsToDisplay(record.value.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(
-            record.value, settings?.distanceUnit ?? 'km');
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
+        final w = UnitConverter.formatWeight(
+            record.weight ?? 0, settings?.weightUnit ?? 'kg');
+        return (record.reps != null && record.reps! > 1)
+            ? '$w × ${record.reps}회'
+            : w;
+      case ExerciseCategory.running:
+        final parts = <String>[];
+        if (record.distance != null) {
+          parts.add(UnitConverter.formatDistance(
+              record.distance!, settings?.distanceUnit ?? 'km'));
+        }
+        if (record.durationSeconds != null) {
+          parts.add(
+              UnitConverter.secondsToDisplay(record.durationSeconds!));
+        }
+        return parts.join('  ');
+      case ExerciseCategory.workout:
+        return UnitConverter.secondsToDisplay(
+            record.durationSeconds ?? 0);
+      case ExerciseCategory.custom:
+        if (record.weight != null) {
+          return UnitConverter.formatWeight(
+              record.weight!, settings?.weightUnit ?? 'kg');
+        }
+        if (record.durationSeconds != null) {
+          return UnitConverter.secondsToDisplay(
+              record.durationSeconds!);
+        }
+        return '—';
     }
   }
 }

@@ -26,8 +26,10 @@ class PRCelebrationDialog extends ConsumerWidget {
     final weightUnit = settings?.weightUnit ?? 'kg';
     final distanceUnit = settings?.distanceUnit ?? 'km';
 
-    final displayNew = _formatValue(newValue, exercise.type, weightUnit, distanceUnit);
-    final displayDiff = _formatDiff(newValue, previousBest, exercise.type, weightUnit, distanceUnit);
+    final displayNew =
+        _formatValue(newValue, exercise.category, weightUnit, distanceUnit);
+    final displayDiff = _formatDiff(
+        newValue, previousBest, exercise.category, weightUnit, distanceUnit);
 
     return Dialog(
       child: Padding(
@@ -56,13 +58,14 @@ class PRCelebrationDialog extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              exercise.name,
+              exercise.displayName,
               style: const TextStyle(
                   color: AppTheme.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
                 color: AppTheme.background,
                 borderRadius: BorderRadius.circular(12),
@@ -133,28 +136,30 @@ class PRCelebrationDialog extends ConsumerWidget {
     );
   }
 
-  String _formatValue(double value, ExerciseType type, String weightUnit,
-      String distanceUnit) {
-    switch (type) {
-      case ExerciseType.weight:
+  String _formatValue(double value, ExerciseCategory category,
+      String weightUnit, String distanceUnit) {
+    switch (category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatWeight(value, weightUnit);
-      case ExerciseType.time:
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
         return UnitConverter.secondsToDisplay(value.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(value, distanceUnit);
+      case ExerciseCategory.custom:
+        return value.toStringAsFixed(1);
     }
   }
 
-  String? _formatDiff(double newVal, double? prev, ExerciseType type,
+  String? _formatDiff(double newVal, double? prev, ExerciseCategory category,
       String weightUnit, String distanceUnit) {
     if (prev == null) return null;
-    switch (type) {
-      case ExerciseType.weight:
+    switch (category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatDiffWeight(newVal - prev, weightUnit);
-      case ExerciseType.time:
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
         return UnitConverter.formatDiffTime((newVal - prev).toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDiffDistance(newVal - prev, distanceUnit);
+      case ExerciseCategory.custom:
+        return null;
     }
   }
 }

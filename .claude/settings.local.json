@@ -11,7 +11,13 @@
       "Bash(flutter pub *)",
       "Bash(git *)",
       "Bash(flutter test *)",
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "Bash(flutter devices *)",
+      "Bash(flutter run *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(xcrun simctl *)",
+      "Bash(mkdir -p /Users/ida-eun/projects/pbpr/docs/superpowers/plans)",
+      "Bash(mkdir -p /Users/ida-eun/projects/pbpr/docs/superpowers/specs)"
     ]
   }
 }

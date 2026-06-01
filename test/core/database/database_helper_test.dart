@@ -24,74 +24,128 @@ void main() {
   });
 
   test('insert and retrieve exercise', () async {
-    const exercise = Exercise(
-      name: '스쿼트',
-      type: ExerciseType.weight,
+    final exercise = Exercise.create(
+      displayName: '스쿼트',
+      category: ExerciseCategory.strength,
       orderIndex: 0,
-      createdAt: 1000000,
     );
-    final id = await helper.insertExercise(exercise);
-    expect(id, greaterThan(0));
+    await helper.insertExercise(exercise);
 
     final list = await helper.getExercises();
     expect(list.length, 1);
-    expect(list.first.name, '스쿼트');
-    expect(list.first.id, id);
+    expect(list.first.displayName, '스쿼트');
+    expect(list.first.id, exercise.id);
   });
 
   test('exercises ordered by order_index', () async {
-    await helper.insertExercise(const Exercise(
-      name: 'B', type: ExerciseType.weight, orderIndex: 1, createdAt: 0));
-    await helper.insertExercise(const Exercise(
-      name: 'A', type: ExerciseType.weight, orderIndex: 0, createdAt: 0));
+    await helper.insertExercise(Exercise.create(
+        displayName: 'B',
+        category: ExerciseCategory.strength,
+        orderIndex: 1));
+    await helper.insertExercise(Exercise.create(
+        displayName: 'A',
+        category: ExerciseCategory.strength,
+        orderIndex: 0));
 
     final list = await helper.getExercises();
-    expect(list[0].name, 'A');
-    expect(list[1].name, 'B');
+    expect(list[0].displayName, 'A');
+    expect(list[1].displayName, 'B');
   });
 
-  test('delete exercise also deletes its records', () async {
-    final exId = await helper.insertExercise(const Exercise(
-      name: 'X', type: ExerciseType.time, orderIndex: 0, createdAt: 0));
-    await helper.insertRecord(Record(exerciseId: exId, value: 100, recordedAt: 1000));
-    await helper.deleteExercise(exId);
+  test('archive exercise soft-deletes records', () async {
+    final ex = Exercise.create(
+        displayName: 'X',
+        category: ExerciseCategory.workout,
+        orderIndex: 0);
+    await helper.insertExercise(ex);
+    final record = Record.create(
+        exerciseId: ex.id,
+        performedAt: 1000000,
+        durationSeconds: 300);
+    await helper.insertRecord(record);
+
+    await helper.archiveExercise(ex.id);
 
     final exercises = await helper.getExercises();
-    expect(exercises.where((e) => e.id == exId), isEmpty);
-    final records = await helper.getRecordsForExercise(exId);
+    expect(exercises.where((e) => e.id == ex.id), isEmpty);
+    final records = await helper.getRecordsForExercise(ex.id);
     expect(records, isEmpty);
   });
 
   test('insert and retrieve records', () async {
-    final exId = await helper.insertExercise(const Exercise(
-      name: 'Run', type: ExerciseType.distance, orderIndex: 0, createdAt: 0));
-    final record = Record(exerciseId: exId, value: 5.0, recordedAt: 1000000);
-    final rId = await helper.insertRecord(record);
-    expect(rId, greaterThan(0));
+    final ex = Exercise.create(
+        displayName: 'Run',
+        category: ExerciseCategory.running,
+        orderIndex: 0);
+    await helper.insertExercise(ex);
+    final record = Record.create(
+        exerciseId: ex.id,
+        performedAt: 1000000,
+        distance: 5.0,
+        durationSeconds: 1500);
+    await helper.insertRecord(record);
 
-    final records = await helper.getRecordsForExercise(exId);
+    final records = await helper.getRecordsForExercise(ex.id);
     expect(records.length, 1);
-    expect(records.first.value, 5.0);
+    expect(records.first.distance, 5.0);
+    expect(records.first.durationSeconds, 1500);
   });
 
   test('records ordered newest first', () async {
-    final exId = await helper.insertExercise(const Exercise(
-      name: 'Run', type: ExerciseType.distance, orderIndex: 0, createdAt: 0));
-    await helper.insertRecord(Record(exerciseId: exId, value: 5.0, recordedAt: 1000));
-    await helper.insertRecord(Record(exerciseId: exId, value: 6.0, recordedAt: 2000));
+    final ex = Exercise.create(
+        displayName: 'Run',
+        category: ExerciseCategory.running,
+        orderIndex: 0);
+    await helper.insertExercise(ex);
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id, performedAt: 1000, distance: 5.0));
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id, performedAt: 2000, distance: 6.0));
 
-    final records = await helper.getRecordsForExercise(exId);
-    expect(records[0].recordedAt, 2000);
-    expect(records[1].recordedAt, 1000);
+    final records = await helper.getRecordsForExercise(ex.id);
+    expect(records[0].performedAt, 2000);
+    expect(records[1].performedAt, 1000);
   });
 
-  test('delete record', () async {
-    final exId = await helper.insertExercise(const Exercise(
-      name: 'R', type: ExerciseType.weight, orderIndex: 0, createdAt: 0));
-    final rId = await helper.insertRecord(
-        Record(exerciseId: exId, value: 100, recordedAt: 1000));
-    await helper.deleteRecord(rId);
-    final records = await helper.getRecordsForExercise(exId);
+  test('soft delete record hides it from queries', () async {
+    final ex = Exercise.create(
+        displayName: 'Squat',
+        category: ExerciseCategory.strength,
+        orderIndex: 0);
+    await helper.insertExercise(ex);
+    final record = Record.create(
+        exerciseId: ex.id,
+        performedAt: 1000000,
+        weight: 100.0,
+        reps: 1);
+    await helper.insertRecord(record);
+
+    await helper.softDeleteRecord(record.id, ex.id);
+
+    final records = await helper.getRecordsForExercise(ex.id);
     expect(records, isEmpty);
+  });
+
+  test('personal best auto-calculated on insert', () async {
+    final ex = Exercise.create(
+        displayName: 'Deadlift',
+        category: ExerciseCategory.strength,
+        orderIndex: 0);
+    await helper.insertExercise(ex);
+
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id,
+        performedAt: 1000000,
+        weight: 100.0,
+        reps: 1));
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id,
+        performedAt: 2000000,
+        weight: 120.0,
+        reps: 1));
+
+    final pbs = await helper.getPersonalBestsForExercise(ex.id);
+    expect(pbs.length, 1);
+    expect(pbs.first.value, 120.0);
   });
 }

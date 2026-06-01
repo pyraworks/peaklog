@@ -14,34 +14,35 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recordsAsync = ref.watch(recordsProvider(exercise.id!));
+    final recordsAsync = ref.watch(recordsProvider(exercise.id));
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(title: Text(exercise.name)),
+      appBar: AppBar(title: Text(exercise.displayName)),
       body: recordsAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: AppTheme.accent)),
         error: (e, _) => Center(child: Text('오류: $e')),
         data: (records) {
           if (records.isEmpty) {
             return const Center(
               child: Text('기록이 없습니다',
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 16)),
             );
           }
-          final bestValue = _getBestValue(records, exercise.type);
+          final bestValue = _getBestValue(records, exercise.category);
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: records.length,
             itemBuilder: (_, i) => _RecordTile(
               record: records[i],
               exercise: exercise,
-              isBest: records[i].value == bestValue,
+              isBest: _isBest(records[i], bestValue, exercise.category),
               settings: settings,
               onDelete: () => ref
-                  .read(recordsProvider(exercise.id!).notifier)
-                  .deleteRecord(records[i].id!),
+                  .read(recordsProvider(exercise.id).notifier)
+                  .deleteRecord(records[i].id),
             ),
           );
         },
@@ -49,12 +50,42 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
-  double? _getBestValue(List<Record> records, ExerciseType type) {
+  double? _getBestValue(List<Record> records, ExerciseCategory category) {
     if (records.isEmpty) return null;
-    if (type == ExerciseType.time) {
-      return records.map((r) => r.value).reduce(min);
+    switch (category) {
+      case ExerciseCategory.strength:
+        final oneRep = records
+            .where(
+                (r) => r.weight != null && (r.reps == null || r.reps == 1))
+            .toList();
+        if (oneRep.isEmpty) return null;
+        return oneRep.map((r) => r.weight!).reduce(max);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        final withTime =
+            records.where((r) => r.durationSeconds != null).toList();
+        if (withTime.isEmpty) return null;
+        return withTime
+            .map((r) => r.durationSeconds!.toDouble())
+            .reduce(min);
+      case ExerciseCategory.custom:
+        return null;
     }
-    return records.map((r) => r.value).reduce(max);
+  }
+
+  bool _isBest(
+      Record r, double? bestValue, ExerciseCategory category) {
+    if (bestValue == null) return false;
+    switch (category) {
+      case ExerciseCategory.strength:
+        return r.weight == bestValue &&
+            (r.reps == null || r.reps == 1);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        return r.durationSeconds?.toDouble() == bestValue;
+      case ExerciseCategory.custom:
+        return false;
+    }
   }
 }
 
@@ -75,7 +106,8 @@ class _RecordTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = DateTime.fromMillisecondsSinceEpoch(record.recordedAt * 1000);
+    final date =
+        DateTime.fromMillisecondsSinceEpoch(record.performedAt);
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
     final displayValue = _formatValue();
@@ -102,7 +134,8 @@ class _RecordTile extends StatelessWidget {
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: const Text('취소',
-                      style: TextStyle(color: AppTheme.textSecondary))),
+                      style:
+                          TextStyle(color: AppTheme.textSecondary))),
               TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: const Text('삭제',
@@ -114,12 +147,14 @@ class _RecordTile extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.card,
           borderRadius: BorderRadius.circular(12),
           border: isBest
-              ? Border.all(color: AppTheme.accent.withValues(alpha: 0.5))
+              ? Border.all(
+                  color: AppTheme.accent.withValues(alpha: 0.5))
               : null,
         ),
         child: Row(
@@ -130,7 +165,8 @@ class _RecordTile extends StatelessWidget {
                 children: [
                   Text(dateStr,
                       style: const TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 12)),
+                          color: AppTheme.textSecondary,
+                          fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(displayValue,
                       style: const TextStyle(
@@ -142,8 +178,8 @@ class _RecordTile extends StatelessWidget {
             ),
             if (isBest)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
@@ -161,15 +197,37 @@ class _RecordTile extends StatelessWidget {
   }
 
   String _formatValue() {
-    switch (exercise.type) {
-      case ExerciseType.weight:
-        return UnitConverter.formatWeight(
-            record.value, settings?.weightUnit ?? 'kg');
-      case ExerciseType.time:
-        return UnitConverter.secondsToDisplay(record.value.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(
-            record.value, settings?.distanceUnit ?? 'km');
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
+        final w = UnitConverter.formatWeight(
+            record.weight ?? 0, settings?.weightUnit ?? 'kg');
+        return (record.reps != null && record.reps! > 1)
+            ? '$w × ${record.reps}회'
+            : w;
+      case ExerciseCategory.running:
+        final parts = <String>[];
+        if (record.distance != null) {
+          parts.add(UnitConverter.formatDistance(
+              record.distance!, settings?.distanceUnit ?? 'km'));
+        }
+        if (record.durationSeconds != null) {
+          parts.add(
+              UnitConverter.secondsToDisplay(record.durationSeconds!));
+        }
+        return parts.join('  ');
+      case ExerciseCategory.workout:
+        return UnitConverter.secondsToDisplay(
+            record.durationSeconds ?? 0);
+      case ExerciseCategory.custom:
+        if (record.weight != null) {
+          return UnitConverter.formatWeight(
+              record.weight!, settings?.weightUnit ?? 'kg');
+        }
+        if (record.durationSeconds != null) {
+          return UnitConverter.secondsToDisplay(
+              record.durationSeconds!);
+        }
+        return '—';
     }
   }
 }

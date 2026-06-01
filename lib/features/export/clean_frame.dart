@@ -57,7 +57,7 @@ class CleanFrame extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              exercise.name.toUpperCase(),
+              exercise.displayName.toUpperCase(),
               style: GoogleFonts.spaceGrotesk(
                   color: const Color(0xFF444444),
                   fontSize: 12,
@@ -80,11 +80,7 @@ class CleanFrame extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Container(
-                  width: 4,
-                  height: 16,
-                  color: AppTheme.accent,
-                ),
+                Container(width: 4, height: 16, color: AppTheme.accent),
                 const SizedBox(width: 8),
                 Text(
                   '개인 최고 기록',
@@ -105,8 +101,7 @@ class CleanFrame extends StatelessWidget {
                   style: const TextStyle(
                       color: Color(0xFF333333), fontSize: 11),
                 ),
-                Container(
-                    width: 32, height: 2, color: AppTheme.accent),
+                Container(width: 32, height: 2, color: AppTheme.accent),
               ],
             ),
           ],
@@ -116,13 +111,14 @@ class CleanFrame extends StatelessWidget {
   }
 
   String _formatValue() {
-    switch (exercise.type) {
-      case ExerciseType.weight:
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case ExerciseType.time:
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
         return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(valueInMetric, distanceUnit);
+      case ExerciseCategory.custom:
+        return valueInMetric.toStringAsFixed(1);
     }
   }
 }

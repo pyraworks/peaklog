@@ -83,7 +83,7 @@ class RoughFrame extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 10),
                   ),
                   Text(
-                    '// ${exercise.name.toUpperCase()}',
+                    '// ${exercise.displayName.toUpperCase()}',
                     style: GoogleFonts.spaceGrotesk(
                         color: AppTheme.accent,
                         fontSize: 12,
@@ -121,13 +121,14 @@ class RoughFrame extends StatelessWidget {
   }
 
   String _formatValue() {
-    switch (exercise.type) {
-      case ExerciseType.weight:
+    switch (exercise.category) {
+      case ExerciseCategory.strength:
         return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case ExerciseType.time:
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
         return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-      case ExerciseType.distance:
-        return UnitConverter.formatDistance(valueInMetric, distanceUnit);
+      case ExerciseCategory.custom:
+        return valueInMetric.toStringAsFixed(1);
     }
   }
 }

@@ -20,19 +20,20 @@ class RecordInputScreen extends ConsumerStatefulWidget {
 }
 
 class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
-  final _valueController = TextEditingController();
+  final _primaryController = TextEditingController();
+  final _repsController = TextEditingController(text: '1');
+  final _timeController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   bool _saving = false;
-
-  // weight: kg / lbs (로컬 선택, null이면 글로벌 따라감)
   String? _localWeightUnit;
-
-  // time: 'sec' / 'min' / 'hour'
+  String _distanceUnit = 'km';
   String _timeUnit = 'sec';
 
   @override
   void dispose() {
-    _valueController.dispose();
+    _primaryController.dispose();
+    _repsController.dispose();
+    _timeController.dispose();
     super.dispose();
   }
 
@@ -40,14 +41,12 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
     final globalWeightUnit = settings?.weightUnit ?? 'kg';
-    final distanceUnit = settings?.distanceUnit ?? 'km';
-
-    // 로컬 단위가 설정되지 않았으면 글로벌 값으로 초기화
     _localWeightUnit ??= globalWeightUnit;
+    _distanceUnit = settings?.distanceUnit ?? 'km';
     final weightUnit = _localWeightUnit!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.exercise.name)),
+      appBar: AppBar(title: Text(widget.exercise.displayName)),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -58,107 +57,10 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
               onChanged: (d) => setState(() => _selectedDate = d),
             ),
             const SizedBox(height: 24),
-            if (widget.exercise.type == ExerciseType.weight) ...[
-              _UnitLabel(
-                label: '단위',
-                trailing: CupertinoSlidingSegmentedControl<String>(
-                  groupValue: weightUnit,
-                  thumbColor: AppTheme.card,
-                  backgroundColor: AppTheme.background,
-                  children: {
-                    'kg': _segItem('kg', weightUnit == 'kg'),
-                    'lbs': _segItem('lbs', weightUnit == 'lbs'),
-                  },
-                  onValueChanged: (v) {
-                    if (v != null) setState(() => _localWeightUnit = v);
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _valueController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-                ],
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700),
-                decoration: InputDecoration(
-                  labelText: '기록',
-                  suffixText: weightUnit,
-                  suffixStyle: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 16),
-                ),
-              ),
-            ] else if (widget.exercise.type == ExerciseType.time) ...[
-              _UnitLabel(
-                label: '단위',
-                trailing: CupertinoSlidingSegmentedControl<String>(
-                  groupValue: _timeUnit,
-                  thumbColor: AppTheme.card,
-                  backgroundColor: AppTheme.background,
-                  children: {
-                    'sec': _segItem('초', _timeUnit == 'sec'),
-                    'min': _segItem('분', _timeUnit == 'min'),
-                    'hour': _segItem('시간', _timeUnit == 'hour'),
-                  },
-                  onValueChanged: (v) {
-                    if (v != null) setState(() => _timeUnit = v);
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _valueController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-                ],
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700),
-                decoration: InputDecoration(
-                  labelText: '기록',
-                  suffixText: _timeUnit == 'sec'
-                      ? '초'
-                      : _timeUnit == 'min'
-                          ? '분'
-                          : '시간',
-                  suffixStyle: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 16),
-                ),
-              ),
-            ] else ...[
-              // distance
-              TextField(
-                controller: _valueController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-                ],
-                style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700),
-                decoration: InputDecoration(
-                  labelText: '기록',
-                  suffixText: distanceUnit,
-                  suffixStyle: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 16),
-                ),
-              ),
-            ],
+            _buildInputFields(weightUnit),
             const Spacer(),
             ElevatedButton(
-              onPressed: _saving
-                  ? null
-                  : () => _save(weightUnit, distanceUnit),
+              onPressed: _saving ? null : () => _save(weightUnit),
               child: _saving
                   ? const SizedBox(
                       height: 20,
@@ -173,7 +75,138 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
     );
   }
 
-  Widget _segItem(String text, bool selected) => Padding(
+  Widget _buildInputFields(String weightUnit) {
+    switch (widget.exercise.category) {
+      case ExerciseCategory.strength:
+        return Column(
+          children: [
+            _UnitRow(
+              label: '단위',
+              child: CupertinoSlidingSegmentedControl<String>(
+                groupValue: weightUnit,
+                thumbColor: AppTheme.card,
+                backgroundColor: AppTheme.background,
+                children: {
+                  'kg': _seg('kg', weightUnit == 'kg'),
+                  'lbs': _seg('lbs', weightUnit == 'lbs'),
+                },
+                onValueChanged: (v) {
+                  if (v != null) setState(() => _localWeightUnit = v);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: _NumField(
+                    controller: _primaryController,
+                    label: '무게',
+                    suffix: weightUnit,
+                    decimal: true,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 88,
+                  child: _NumField(
+                    controller: _repsController,
+                    label: '렙수',
+                    suffix: '회',
+                    decimal: false,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+
+      case ExerciseCategory.running:
+        return Column(
+          children: [
+            _NumField(
+              controller: _primaryController,
+              label: '거리',
+              suffix: _distanceUnit,
+              decimal: true,
+            ),
+            const SizedBox(height: 16),
+            _UnitRow(
+              label: '시간 단위',
+              child: CupertinoSlidingSegmentedControl<String>(
+                groupValue: _timeUnit,
+                thumbColor: AppTheme.card,
+                backgroundColor: AppTheme.background,
+                children: {
+                  'sec': _seg('초', _timeUnit == 'sec'),
+                  'min': _seg('분', _timeUnit == 'min'),
+                  'hour': _seg('시간', _timeUnit == 'hour'),
+                },
+                onValueChanged: (v) {
+                  if (v != null) setState(() => _timeUnit = v);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            _NumField(
+              controller: _timeController,
+              label: '시간 (선택)',
+              suffix: _timeUnit == 'sec'
+                  ? '초'
+                  : _timeUnit == 'min'
+                      ? '분'
+                      : '시간',
+              decimal: true,
+            ),
+          ],
+        );
+
+      case ExerciseCategory.workout:
+        return Column(
+          children: [
+            _UnitRow(
+              label: '단위',
+              child: CupertinoSlidingSegmentedControl<String>(
+                groupValue: _timeUnit,
+                thumbColor: AppTheme.card,
+                backgroundColor: AppTheme.background,
+                children: {
+                  'sec': _seg('초', _timeUnit == 'sec'),
+                  'min': _seg('분', _timeUnit == 'min'),
+                  'hour': _seg('시간', _timeUnit == 'hour'),
+                },
+                onValueChanged: (v) {
+                  if (v != null) setState(() => _timeUnit = v);
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            _NumField(
+              controller: _primaryController,
+              label: '기록',
+              suffix: _timeUnit == 'sec'
+                  ? '초'
+                  : _timeUnit == 'min'
+                      ? '분'
+                      : '시간',
+              decimal: true,
+            ),
+          ],
+        );
+
+      case ExerciseCategory.custom:
+        return _NumField(
+          controller: _primaryController,
+          label: '기록',
+          suffix: '',
+          decimal: true,
+        );
+    }
+  }
+
+  Widget _seg(String text, bool selected) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Text(
           text,
@@ -185,56 +218,74 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
         ),
       );
 
-  Future<void> _save(String weightUnit, String distanceUnit) async {
-    final exerciseId = widget.exercise.id!;
-    double inputValueKg;
+  int _toSeconds(double val, String unit) {
+    switch (unit) {
+      case 'min':
+        return (val * 60).round();
+      case 'hour':
+        return (val * 3600).round();
+      default:
+        return val.round();
+    }
+  }
 
-    final raw = double.tryParse(_valueController.text.trim());
+  Future<void> _save(String weightUnit) async {
+    final raw = double.tryParse(_primaryController.text.trim());
+    if (raw == null || raw <= 0) return;
 
-    if (widget.exercise.type == ExerciseType.time) {
-      if (raw == null || raw <= 0) return;
-      switch (_timeUnit) {
-        case 'min':
-          inputValueKg = raw * 60;
-        case 'hour':
-          inputValueKg = raw * 3600;
-        default:
-          inputValueKg = raw;
-      }
-    } else {
-      if (raw == null || raw <= 0) return;
-      if (widget.exercise.type == ExerciseType.weight) {
-        inputValueKg =
-            weightUnit == 'lbs' ? UnitConverter.lbsToKg(raw) : raw;
-      } else {
-        inputValueKg =
-            distanceUnit == 'mi' ? UnitConverter.miToKm(raw) : raw;
-      }
+    double? weight;
+    int? reps;
+    int? durationSeconds;
+    double? distance;
+
+    switch (widget.exercise.category) {
+      case ExerciseCategory.strength:
+        weight = weightUnit == 'lbs' ? UnitConverter.lbsToKg(raw) : raw;
+        reps = max(1, int.tryParse(_repsController.text.trim()) ?? 1);
+
+      case ExerciseCategory.running:
+        distance = _distanceUnit == 'mi' ? UnitConverter.miToKm(raw) : raw;
+        final rawTime = double.tryParse(_timeController.text.trim());
+        if (rawTime != null && rawTime > 0) {
+          durationSeconds = _toSeconds(rawTime, _timeUnit);
+        }
+
+      case ExerciseCategory.workout:
+        durationSeconds = _toSeconds(raw, _timeUnit);
+
+      case ExerciseCategory.custom:
+        weight = raw;
     }
 
     setState(() => _saving = true);
 
     final currentRecords =
-        ref.read(recordsProvider(exerciseId)).valueOrNull ?? [];
+        ref.read(recordsProvider(widget.exercise.id)).valueOrNull ?? [];
     final previousBest =
-        _getPreviousBest(currentRecords, widget.exercise.type);
+        _getPreviousBest(currentRecords, widget.exercise.category);
 
-    await ref
-        .read(recordsProvider(exerciseId).notifier)
-        .addRecord(inputValueKg,
-            _selectedDate.millisecondsSinceEpoch ~/ 1000);
+    await ref.read(recordsProvider(widget.exercise.id).notifier).addRecord(
+          performedAt: _selectedDate.millisecondsSinceEpoch,
+          weight: weight,
+          reps: reps,
+          durationSeconds: durationSeconds,
+          distance: distance,
+        );
 
     if (!mounted) return;
     setState(() => _saving = false);
 
-    final isPb = _isPb(inputValueKg, previousBest, widget.exercise.type);
-    if (isPb) {
+    final newBestValue =
+        weight ?? durationSeconds?.toDouble() ?? distance;
+    final isPb = _isPb(
+        newBestValue, previousBest, widget.exercise.category, reps);
+    if (isPb && newBestValue != null) {
       await showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => PRCelebrationDialog(
           exercise: widget.exercise,
-          newValue: inputValueKg,
+          newValue: newBestValue,
           previousBest: previousBest,
           recordedDate: _selectedDate,
         ),
@@ -244,28 +295,53 @@ class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
     if (mounted) Navigator.pop(context);
   }
 
-  double? _getPreviousBest(List<Record> records, ExerciseType type) {
+  double? _getPreviousBest(
+      List<Record> records, ExerciseCategory category) {
     if (records.isEmpty) return null;
-    if (type == ExerciseType.time) {
-      return records.map((r) => r.value).reduce(min);
+    switch (category) {
+      case ExerciseCategory.strength:
+        final oneRep = records
+            .where(
+                (r) => r.weight != null && (r.reps == null || r.reps == 1))
+            .toList();
+        if (oneRep.isEmpty) return null;
+        return oneRep.map((r) => r.weight!).reduce(max);
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        final withTime =
+            records.where((r) => r.durationSeconds != null).toList();
+        if (withTime.isEmpty) return null;
+        return withTime
+            .map((r) => r.durationSeconds!.toDouble())
+            .reduce(min);
+      case ExerciseCategory.custom:
+        return null;
     }
-    return records.map((r) => r.value).reduce(max);
   }
 
-  bool _isPb(double newValue, double? previousBest, ExerciseType type) {
+  bool _isPb(double? newValue, double? previousBest,
+      ExerciseCategory category, int? reps) {
+    if (newValue == null) return false;
+    if (category == ExerciseCategory.strength && (reps ?? 1) != 1) {
+      return false;
+    }
     if (previousBest == null) return true;
-    return type == ExerciseType.time
-        ? newValue < previousBest
-        : newValue > previousBest;
+    switch (category) {
+      case ExerciseCategory.strength:
+        return newValue > previousBest;
+      case ExerciseCategory.running:
+      case ExerciseCategory.workout:
+        return newValue < previousBest;
+      case ExerciseCategory.custom:
+        return false;
+    }
   }
 }
 
-// ── 단위 레이블 행 ─────────────────────────────────────────────
-
-class _UnitLabel extends StatelessWidget {
+class _UnitRow extends StatelessWidget {
   final String label;
-  final Widget trailing;
-  const _UnitLabel({required this.label, required this.trailing});
+  final Widget child;
+  const _UnitRow({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -278,29 +354,62 @@ class _UnitLabel extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5)),
         const Spacer(),
-        trailing,
+        child,
       ],
     );
   }
 }
 
-// ── 날짜 선택기 ────────────────────────────────────────────────
+class _NumField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String suffix;
+  final bool decimal;
+  const _NumField(
+      {required this.controller,
+      required this.label,
+      required this.suffix,
+      required this.decimal});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+      inputFormatters: [
+        if (decimal)
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+        else
+          FilteringTextInputFormatter.digitsOnly,
+      ],
+      style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.w700),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixText: suffix.isEmpty ? null : suffix,
+        suffixStyle:
+            const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+      ),
+    );
+  }
+}
 
 class _DatePicker extends StatelessWidget {
   final DateTime selected;
   final ValueChanged<DateTime> onChanged;
-
   const _DatePicker({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final label =
         '${selected.year}.${selected.month.toString().padLeft(2, '0')}.${selected.day.toString().padLeft(2, '0')}';
-
     return GestureDetector(
-      onTap: () => _showCupertinoPicker(context),
+      onTap: () => _showPicker(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.card,
           borderRadius: BorderRadius.circular(12),
@@ -310,13 +419,11 @@ class _DatePicker extends StatelessWidget {
             const Icon(CupertinoIcons.calendar,
                 color: AppTheme.accent, size: 18),
             const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500),
-            ),
+            Text(label,
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500)),
             const Spacer(),
             const Icon(CupertinoIcons.chevron_right,
                 color: AppTheme.textSecondary, size: 14),
@@ -326,7 +433,7 @@ class _DatePicker extends StatelessWidget {
     );
   }
 
-  void _showCupertinoPicker(BuildContext context) {
+  void _showPicker(BuildContext context) {
     DateTime temp = selected;
     showCupertinoModalPopup<void>(
       context: context,
