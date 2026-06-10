@@ -768,7 +768,8 @@ class _ExportActions extends StatelessWidget {
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Primary actions: [Save Image] [Share] — equal width, equal priority
+                  // Actions: Share = primary (filled), Save Image = secondary (outlined).
+                  // Share is the user's primary intent on this screen; Save is a convenience.
                   Row(
                     children: [
                       Expanded(
@@ -776,6 +777,7 @@ class _ExportActions extends StatelessWidget {
                           label: 'Save Image',
                           icon: AppIcons.download,
                           onTap: onSaveImage,
+                          secondary: true,
                         ),
                       ),
                       const SizedBox(width: 8),

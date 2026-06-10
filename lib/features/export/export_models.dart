@@ -18,7 +18,9 @@ extension ExportAspectRatioX on ExportAspectRatio {
     ExportAspectRatio.feed      => 4.0 / 5.0,
     ExportAspectRatio.square    => 1.0,
     ExportAspectRatio.landscape => 4.0 / 3.0,
-    ExportAspectRatio.original  => 9.0 / 16.0, // defaults to story; media-adaptive sizing is a future enhancement
+    // TODO(future): Original should match the source media's aspect ratio when
+    // background media is loaded. For now it falls back to Story (9:16).
+    ExportAspectRatio.original  => 9.0 / 16.0,
   };
 
   /// Full-resolution export canvas size.
