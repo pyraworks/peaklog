@@ -20,10 +20,13 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'pbpr.db'),
-      version: 8,
+      version: 13,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
+        await _addColumnIfMissing(db, 'exercises', 'best_type', 'TEXT');
+        await _addColumnIfMissing(
+            db, 'exercises', 'base_unit', "TEXT NOT NULL DEFAULT 'kg'");
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -50,6 +53,7 @@ class DatabaseHelper {
       CREATE TABLE categories (
         id          TEXT PRIMARY KEY,
         name        TEXT NOT NULL,
+        color       TEXT NOT NULL DEFAULT 'gray',
         sort_order  INTEGER NOT NULL DEFAULT 0,
         created_at  INTEGER NOT NULL,
         updated_at  INTEGER NOT NULL,
@@ -65,9 +69,12 @@ class DatabaseHelper {
         category         TEXT NOT NULL DEFAULT 'strength',
         category_id      TEXT REFERENCES categories(id),
         record_type      TEXT,
+        best_type        TEXT,
+        base_unit        TEXT NOT NULL DEFAULT 'kg',
         is_system_preset INTEGER NOT NULL DEFAULT 0,
         visibility       TEXT NOT NULL DEFAULT 'private',
         is_archived      INTEGER NOT NULL DEFAULT 0,
+        has_pr_baseline  INTEGER NOT NULL DEFAULT 0,
         order_index      INTEGER NOT NULL DEFAULT 0,
         created_at       INTEGER NOT NULL,
         updated_at       INTEGER NOT NULL,
@@ -90,6 +97,7 @@ class DatabaseHelper {
         note             TEXT,
         metadata_json    TEXT,
         is_deleted       INTEGER NOT NULL DEFAULT 0,
+        is_pr_candidate  INTEGER NOT NULL DEFAULT 1,
         created_at       INTEGER NOT NULL,
         updated_at       INTEGER NOT NULL,
         sync_status      TEXT NOT NULL DEFAULT 'pending'
@@ -322,6 +330,43 @@ class DatabaseHelper {
           )
       ''');
     }
+
+    if (oldVersion < 9) {
+      await _addColumnIfMissing(
+          db, 'records', 'is_pr_candidate', 'INTEGER NOT NULL DEFAULT 1');
+    }
+
+    if (oldVersion < 10) {
+      await _addColumnIfMissing(
+          db, 'exercises', 'base_unit', "TEXT NOT NULL DEFAULT 'kg'");
+    }
+
+    if (oldVersion < 12) {
+      await _addColumnIfMissing(
+          db, 'exercises', 'has_pr_baseline', 'INTEGER NOT NULL DEFAULT 0');
+      // Exercises that already have active records implicitly have a baseline.
+      await db.execute('''
+        UPDATE exercises SET has_pr_baseline = 1
+        WHERE id IN (
+          SELECT DISTINCT exercise_id FROM records WHERE is_deleted = 0
+        )
+      ''');
+    }
+
+    if (oldVersion < 13) {
+      // Add color column; existing rows default to 'gray'.
+      await _addColumnIfMissing(
+          db, 'categories', 'color', "TEXT NOT NULL DEFAULT 'gray'");
+      // Set correct colors for the legacy preset IDs that existing users have.
+      await db.execute(
+          "UPDATE categories SET color = 'amber' WHERE id = '${Category.weightliftingId}'");
+      await db.execute(
+          "UPDATE categories SET color = 'blue'  WHERE id = '${Category.runId}'");
+      await db.execute(
+          "UPDATE categories SET color = 'green' WHERE id = '${Category.wodId}'");
+      // 'preset-category-custom' keeps 'gray' — already correct from the DEFAULT.
+    }
+
   }
 
   Future<void> _addColumnIfMissing(
@@ -392,6 +437,40 @@ class DatabaseHelper {
     );
   }
 
+  Future<Exercise?> findExerciseByNormalizedName(String normalizedName) async {
+    final db = await database;
+    final maps = await db.query(
+      'exercises',
+      where: 'normalized_name = ?',
+      whereArgs: [normalizedName],
+      limit: 1,
+    );
+    if (maps.isEmpty) return null;
+    return Exercise.fromMap(maps.first);
+  }
+
+  Future<void> unarchiveExercise(String id) async {
+    final db = await database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.update(
+      'exercises',
+      {'is_archived': 0, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> setPrBaseline(String id) async {
+    final db = await database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.update(
+      'exercises',
+      {'has_pr_baseline': 1, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<void> archiveExercise(String id) async {
     final db = await database;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -409,6 +488,22 @@ class DatabaseHelper {
 
   Future<void> insertRecord(Record record) async {
     final db = await database;
+    // DEBUG: verify exercise exists before insert
+    final exerciseRows = await db.query(
+      'exercises',
+      columns: ['id', 'is_archived'],
+      where: 'id = ?',
+      whereArgs: [record.exerciseId],
+      limit: 1,
+    );
+    if (exerciseRows.isEmpty) {
+      throw StateError(
+        'insertRecord: exercise not found in DB — exerciseId=${record.exerciseId}',
+      );
+    }
+    // ignore: avoid_print
+    print('[DB] insertRecord: exerciseId=${record.exerciseId} '
+        'is_archived=${exerciseRows.first['is_archived']}');
     await db.insert('records', record.toMap());
   }
 
