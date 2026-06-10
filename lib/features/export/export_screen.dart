@@ -1,36 +1,45 @@
 import 'dart:io';
-import 'package:ffmpeg_kit_flutter_full_gpl/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_full_gpl/return_code.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:flutter/material.dart';
+import '../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gal/gal.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/models/exercise.dart';
+import '../../core/models/health_workout.dart';
 import '../../core/models/record.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/design/app_colors.dart';
+import '../../core/design/app_radius.dart';
+import '../../core/design/app_spacing.dart';
+import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
+import '../../widgets/screen_header.dart';
 import 'clean_frame.dart';
 import 'export_models.dart';
 import 'frame_painter.dart';
 import 'rough_frame.dart';
 
 class ExportScreen extends ConsumerStatefulWidget {
-  final Exercise exercise;
+  final Exercise? exercise;      // PBPR Record mode: non-null
+  final HealthWorkout? activity; // Activity mode: non-null
   final double newValue;
   final DateTime date;
 
   const ExportScreen({
-    required this.exercise,
+    this.exercise,
+    this.activity,
     required this.newValue,
     required this.date,
     super.key,
-  });
+  }) : assert(exercise != null || activity != null,
+            'Either exercise or activity must be provided');
 
   @override
   ConsumerState<ExportScreen> createState() => _ExportScreenState();
@@ -52,338 +61,205 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     super.dispose();
   }
 
+  bool get _isActivityMode => widget.activity != null;
+
+  Exercise _effectiveExercise() {
+    if (widget.exercise != null) return widget.exercise!;
+    final act = widget.activity!;
+    final hasDistance = act.distanceKm > 0;
+    final label = _activityLabel(act.activityType);
+    final displayName = hasDistance
+        ? '$label  ${act.distanceKm.toStringAsFixed(2)} km'
+        : label;
+    return Exercise(
+      id: '',
+      displayName: displayName,
+      normalizedName: '',
+      recordType: hasDistance ? RecordType.distance : RecordType.forTime,
+      createdAt: 0,
+      updatedAt: 0,
+    );
+  }
+
+  String _activityLabel(HealthActivityType type) {
+    switch (type) {
+      case HealthActivityType.running:  return 'Running';
+      case HealthActivityType.cycling:  return 'Cycling';
+      case HealthActivityType.swimming: return 'Swimming';
+      case HealthActivityType.other:    return 'Workout';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
-    final weightUnit = settings?.weightUnit ?? 'kg';
     final distanceUnit = settings?.distanceUnit ?? 'km';
-    final records =
-        ref.watch(recordsProvider(widget.exercise.id)).valueOrNull ?? [];
+
+    final exercise = _effectiveExercise();
+    final weightUnit = exercise.baseUnit;
+
+    final records = _isActivityMode
+        ? <Record>[]
+        : ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
 
     final prValueStr = _formatValue(
-        widget.newValue, widget.exercise.category, weightUnit, distanceUnit);
+        widget.newValue, exercise.recordType!, weightUnit, distanceUnit);
     final dateStr = _dateStr(widget.date);
-    final daysSinceStr = _calcDaysSince(
-        records, widget.exercise.category, widget.newValue, widget.date);
+    final daysSinceStr = _isActivityMode
+        ? ''
+        : _calcDaysSince(records, exercise.recordType!, widget.newValue, widget.date);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('공유하기')),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const Divider(
-              height: 0.5, thickness: 0.5, color: AppTheme.separator),
-          // ── Preview ─────────────────────────────────────────
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 16),
-                child: AspectRatio(
-                  aspectRatio: _aspectRatio.ratio,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Media background
-                        if (_mediaFile != null && !_isVideo)
-                          Image.file(_mediaFile!, fit: BoxFit.cover)
-                        else if (_mediaFile != null &&
-                            _isVideo &&
-                            _videoCtrl != null &&
-                            _videoCtrl!.value.isInitialized)
-                          FittedBox(
-                            fit: BoxFit.cover,
-                            child: SizedBox(
-                              width: _videoCtrl!.value.size.width,
-                              height: _videoCtrl!.value.size.height,
-                              child: VideoPlayer(_videoCtrl!),
-                            ),
-                          ),
-                        // Frame overlay (widget-based preview)
-                        IgnorePointer(
-                          child: _frameStyle == FrameStyle.clean
-                              ? CleanFrame(
-                                  exercise: widget.exercise,
-                                  valueInMetric: widget.newValue,
-                                  weightUnit: weightUnit,
-                                  distanceUnit: distanceUnit,
-                                  date: widget.date,
-                                  daysSinceStr: daysSinceStr,
-                                  options: _overlay,
-                                )
-                              : RoughFrame(
-                                  exercise: widget.exercise,
-                                  valueInMetric: widget.newValue,
-                                  weightUnit: weightUnit,
-                                  distanceUnit: distanceUnit,
-                                  date: widget.date,
-                                  daysSinceStr: daysSinceStr,
-                                  options: _overlay,
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          ScreenHeader(
+            backLabel: 'Back',
+            title: 'Share',
+            onBack: () => context.pop(),
           ),
-          // ── Options panel ────────────────────────────────────
-          Container(
-            decoration: const BoxDecoration(
-              color: AppTheme.background,
-              border: Border(
-                  top: BorderSide(
-                      color: AppTheme.separator, width: 0.5)),
-            ),
+          Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                // 비율
-                _OptionRow(
-                  label: '비율',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: ExportAspectRatio.values.map((r) {
-                      final sel = _aspectRatio == r;
-                      return GestureDetector(
-                        onTap: () =>
-                            setState(() => _aspectRatio = r),
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? AppTheme.accent
-                                : AppTheme.card,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: sel
-                                  ? AppTheme.accent
-                                  : AppTheme.separator,
-                            ),
-                          ),
-                          child: Text(r.label,
-                              style: TextStyle(
-                                  color: sel
-                                      ? Colors.white
-                                      : AppTheme.textPrimary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const Divider(
-                    height: 0.5,
-                    thickness: 0.5,
-                    color: AppTheme.separator,
-                    indent: 16),
-                // 미디어
-                _OptionRow(
-                  label: '미디어',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _PickerChip(
-                        label: '사진',
-                        icon: CupertinoIcons.photo,
-                        onTap: () => _pickMedia(video: false),
-                      ),
-                      const SizedBox(width: 8),
-                      _PickerChip(
-                        label: '영상',
-                        icon: CupertinoIcons.video_camera,
-                        onTap: () => _pickMedia(video: true),
-                      ),
-                      if (_mediaFile != null) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            _videoCtrl?.dispose();
-                            setState(() {
-                              _mediaFile = null;
-                              _videoCtrl = null;
-                            });
-                          },
-                          child: const Icon(
-                              CupertinoIcons.xmark_circle_fill,
-                              color: AppTheme.textSecondary,
-                              size: 20),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const Divider(
-                    height: 0.5,
-                    thickness: 0.5,
-                    color: AppTheme.separator,
-                    indent: 16),
-                // 프레임
-                _OptionRow(
-                  label: '프레임',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: FrameStyle.values.map((s) {
-                      final sel = _frameStyle == s;
-                      return GestureDetector(
-                        onTap: () =>
-                            setState(() => _frameStyle = s),
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: sel
-                                ? AppTheme.accent
-                                : AppTheme.card,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: sel
-                                  ? AppTheme.accent
-                                  : AppTheme.separator,
-                            ),
-                          ),
-                          child: Text(
-                            s == FrameStyle.clean
-                                ? 'CLEAN'
-                                : 'ROUGH',
-                            style: TextStyle(
-                                color: sel
-                                    ? Colors.white
-                                    : AppTheme.textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                const Divider(
-                    height: 0.5,
-                    thickness: 0.5,
-                    color: AppTheme.separator,
-                    indent: 16),
-                // 데이터 토글
-                _OptionRow(
-                  label: '데이터',
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _Toggle(
-                        label: '운동명',
-                        value: _overlay.showName,
-                        onTap: () => setState(() => _overlay =
-                            _overlay.copyWith(
-                                showName: !_overlay.showName)),
-                      ),
-                      const SizedBox(width: 6),
-                      _Toggle(
-                        label: 'PR',
-                        value: _overlay.showPr,
-                        onTap: () => setState(() => _overlay =
-                            _overlay.copyWith(
-                                showPr: !_overlay.showPr)),
-                      ),
-                      const SizedBox(width: 6),
-                      _Toggle(
-                        label: '날짜',
-                        value: _overlay.showDate,
-                        onTap: () => setState(() => _overlay =
-                            _overlay.copyWith(
-                                showDate: !_overlay.showDate)),
-                      ),
-                      const SizedBox(width: 6),
-                      _Toggle(
-                        label: '+N일',
-                        value: _overlay.showDaysSince,
-                        onTap: () => setState(() => _overlay =
-                            _overlay.copyWith(
-                                showDaysSince:
-                                    !_overlay.showDaysSince)),
-                      ),
-                    ],
-                  ),
-                ),
-                // ── Action buttons ─────────────────────────────
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    child: _exporting
-                        ? Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                // ── Preview area ──────────────────────────────────────────
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (ctx, constraints) {
+                      final ratio = _aspectRatio.ratio;
+                      final maxW = constraints.maxWidth - 40.0;
+                      final maxH = constraints.maxHeight - 32.0;
+                      double w, h;
+                      if (maxW / ratio <= maxH) {
+                        w = maxW;
+                        h = w / ratio;
+                      } else {
+                        h = maxH;
+                        w = h * ratio;
+                      }
+                      // Cap width for readability on large screens.
+                      if (w > 320) { w = 320; h = w / ratio; }
+                      return Center(
+                        child: SizedBox(
+                          width: w,
+                          height: h,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            child: Stack(
+                              fit: StackFit.expand,
                               children: [
-                                const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppTheme.accent),
+                                if (_mediaFile != null && !_isVideo)
+                                  Image.file(_mediaFile!, fit: BoxFit.cover)
+                                else if (_mediaFile != null &&
+                                    _isVideo &&
+                                    _videoCtrl != null &&
+                                    _videoCtrl!.value.isInitialized)
+                                  FittedBox(
+                                    fit: BoxFit.cover,
+                                    child: SizedBox(
+                                      width: _videoCtrl!.value.size.width,
+                                      height: _videoCtrl!.value.size.height,
+                                      child: VideoPlayer(_videoCtrl!),
+                                    ),
+                                  ),
+                                IgnorePointer(
+                                  child: _frameStyle == FrameStyle.clean
+                                      ? CleanFrame(
+                                          exercise: exercise,
+                                          valueInMetric: widget.newValue,
+                                          weightUnit: weightUnit,
+                                          distanceUnit: distanceUnit,
+                                          date: widget.date,
+                                          daysSinceStr: daysSinceStr,
+                                          options: _overlay,
+                                          showPrBadge: !_isActivityMode,
+                                        )
+                                      : RoughFrame(
+                                          exercise: exercise,
+                                          valueInMetric: widget.newValue,
+                                          weightUnit: weightUnit,
+                                          distanceUnit: distanceUnit,
+                                          date: widget.date,
+                                          daysSinceStr: daysSinceStr,
+                                          options: _overlay,
+                                          showPrBadge: !_isActivityMode,
+                                        ),
                                 ),
-                                const SizedBox(width: 10),
-                                Text(_exportLabel,
-                                    style: const TextStyle(
-                                        color:
-                                            AppTheme.textSecondary,
-                                        fontSize: 14)),
                               ],
                             ),
-                          )
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: _ActionBtn(
-                                  label: '이미지 저장',
-                                  icon: CupertinoIcons
-                                      .arrow_down_to_line,
-                                  onTap: () => _saveImage(
-                                    prValueStr: prValueStr,
-                                    dateStr: dateStr,
-                                    daysSinceStr: daysSinceStr,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _ActionBtn(
-                                  label: '영상 저장',
-                                  icon: CupertinoIcons.videocam,
-                                  onTap:
-                                      (_mediaFile != null && _isVideo)
-                                          ? () => _saveVideo(
-                                                prValueStr:
-                                                    prValueStr,
-                                                dateStr: dateStr,
-                                                daysSinceStr:
-                                                    daysSinceStr,
-                                              )
-                                          : null,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _ActionBtn(
-                                  label: '공유',
-                                  icon: CupertinoIcons.share,
-                                  accent: true,
-                                  onTap: () => _share(
-                                    prValueStr: prValueStr,
-                                    dateStr: dateStr,
-                                    daysSinceStr: daysSinceStr,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // ── Controls panel ────────────────────────────────────────
+                Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.background,
+                    border: Border(top: BorderSide(color: AppColors.separatorAlt)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Aspect Ratio
+                      _RatioRow(
+                        selected: _aspectRatio,
+                        onChanged: (r) => setState(() => _aspectRatio = r),
+                      ),
+                      const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
+                      // Frame
+                      _OptionRow(
+                        label: 'Frame',
+                        child: _FrameSelector(
+                          selected: _frameStyle,
+                          onChanged: (s) => setState(() => _frameStyle = s),
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
+                      // Background media
+                      _OptionRow(
+                        label: 'Background',
+                        child: _MediaPicker(
+                          mediaFile: _mediaFile,
+                          onPickImage: () => _pickMedia(video: false),
+                          onPickVideo: () => _pickMedia(video: true),
+                          onClear: () {
+                            _videoCtrl?.dispose();
+                            setState(() { _mediaFile = null; _videoCtrl = null; });
+                          },
+                        ),
+                      ),
+                      const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
+                      // Sticker (overlay toggles)
+                      _StickerRow(
+                        overlay: _overlay,
+                        onChanged: (o) => setState(() => _overlay = o),
+                      ),
+                      // Export actions
+                      _ExportActions(
+                        isExporting: _exporting,
+                        exportLabel: _exportLabel,
+                        canSaveVideo: _mediaFile != null && _isVideo,
+                        onSaveImage: () => _saveImage(
+                          prValueStr: prValueStr,
+                          dateStr: dateStr,
+                          daysSinceStr: daysSinceStr,
+                        ),
+                        onSaveVideo: (_mediaFile != null && _isVideo)
+                            ? () => _saveVideo(
+                                  prValueStr: prValueStr,
+                                  dateStr: dateStr,
+                                  daysSinceStr: daysSinceStr,
+                                )
+                            : null,
+                        onShare: () => _share(
+                          prValueStr: prValueStr,
+                          dateStr: dateStr,
+                          daysSinceStr: daysSinceStr,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -394,7 +270,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     );
   }
 
-  // ── Media picker ─────────────────────────────────────────────
+  // ── Media picker ──────────────────────────────────────────────
 
   Future<void> _pickMedia({required bool video}) async {
     final picker = ImagePicker();
@@ -421,35 +297,30 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     });
   }
 
-  // ── Export ───────────────────────────────────────────────────
+  // ── Export ────────────────────────────────────────────────────
 
   Future<void> _saveImage({
     required String prValueStr,
     required String dateStr,
     required String daysSinceStr,
   }) async {
-    setState(() {
-      _exporting = true;
-      _exportLabel = '이미지 저장 중...';
-    });
+    setState(() { _exporting = true; _exportLabel = 'Saving image...'; });
     try {
+      final ex = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
-        style: _frameStyle,
-        aspectRatio: _aspectRatio,
-        exerciseName: widget.exercise.displayName,
-        prValue: prValueStr,
-        dateStr: dateStr,
-        daysSinceStr: daysSinceStr,
-        options: _overlay,
+        style: _frameStyle, aspectRatio: _aspectRatio,
+        exerciseName: ex.displayName,
+        prValue: prValueStr, dateStr: dateStr,
+        daysSinceStr: daysSinceStr, options: _overlay,
+        badgeLabel: ex.bestTypeLabel,
       );
       final tempDir = await getTemporaryDirectory();
-      final path =
-          '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.png';
+      final path = '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(path).writeAsBytes(bytes);
       await Gal.putImage(path, album: 'PBPR');
-      if (mounted) _showSnack('갤러리에 저장됐습니다');
+      if (mounted) _showSnack('Saved to Photos');
     } catch (e) {
-      if (mounted) _showSnack('저장 실패: $e');
+      if (mounted) _showSnack('Save failed: $e');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -461,36 +332,29 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String daysSinceStr,
   }) async {
     if (_mediaFile == null) return;
-    setState(() {
-      _exporting = true;
-      _exportLabel = '저장 중...';
-    });
+    setState(() { _exporting = true; _exportLabel = 'Saving video...'; });
     try {
       final tempDir = await getTemporaryDirectory();
+      final exV = widget.exercise ?? _effectiveExercise();
       final overlayBytes = await renderFrameToBytes(
-        style: _frameStyle,
-        aspectRatio: _aspectRatio,
-        exerciseName: widget.exercise.displayName,
-        prValue: prValueStr,
-        dateStr: dateStr,
-        daysSinceStr: daysSinceStr,
-        options: _overlay,
-        overlayOnly: true,
+        style: _frameStyle, aspectRatio: _aspectRatio,
+        exerciseName: exV.displayName,
+        prValue: prValueStr, dateStr: dateStr,
+        daysSinceStr: daysSinceStr, options: _overlay, overlayOnly: true,
+        badgeLabel: exV.bestTypeLabel,
       );
-      final overlayPath =
-          '${tempDir.path}/overlay_${DateTime.now().millisecondsSinceEpoch}.png';
+      final overlayPath = '${tempDir.path}/overlay_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(overlayPath).writeAsBytes(overlayBytes);
 
-      final outputPath =
-          '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final outputPath = '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.mp4';
       final exportW = _aspectRatio.exportSize.width.toInt();
       final exportH = _aspectRatio.exportSize.height.toInt();
 
       final cmd = '-i "${_mediaFile!.path}" '
           '-i "$overlayPath" '
           '-filter_complex '
-          '"[0:v]scale=${exportW}:${exportH}:force_original_aspect_ratio=increase,'
-          'crop=${exportW}:${exportH}[bg];'
+          '"[0:v]scale=$exportW:$exportH:force_original_aspect_ratio=increase,'
+          'crop=$exportW:$exportH[bg];'
           '[bg][1:v]overlay=0:0:format=auto,format=yuv420p[out]" '
           '-map "[out]" -map 0:a? '
           '-c:v libx264 -crf 20 -preset veryfast '
@@ -501,14 +365,13 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final rc = await session.getReturnCode();
       if (ReturnCode.isSuccess(rc)) {
         await Gal.putVideo(outputPath, album: 'PBPR');
-        if (mounted) _showSnack('갤러리에 저장됐습니다');
+        if (mounted) _showSnack('Saved to Photos');
       } else {
-        if (mounted) _showSnack('영상 저장 실패');
-        debugPrint(
-            'ffmpeg failed: ${(await session.getLogs()).map((l) => l.getMessage()).join('\n')}');
+        if (mounted) _showSnack('Video save failed');
+        debugPrint('ffmpeg failed: ${(await session.getLogs()).map((l) => l.getMessage()).join('\n')}');
       }
     } catch (e) {
-      if (mounted) _showSnack('오류: $e');
+      if (mounted) _showSnack('Error: $e');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -519,68 +382,68 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String dateStr,
     required String daysSinceStr,
   }) async {
-    setState(() {
-      _exporting = true;
-      _exportLabel = '준비 중...';
-    });
+    setState(() { _exporting = true; _exportLabel = 'Preparing...'; });
     try {
+      final exS = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
-        style: _frameStyle,
-        aspectRatio: _aspectRatio,
-        exerciseName: widget.exercise.displayName,
-        prValue: prValueStr,
-        dateStr: dateStr,
-        daysSinceStr: daysSinceStr,
-        options: _overlay,
+        style: _frameStyle, aspectRatio: _aspectRatio,
+        exerciseName: exS.displayName,
+        prValue: prValueStr, dateStr: dateStr,
+        daysSinceStr: daysSinceStr, options: _overlay,
+        badgeLabel: exS.bestTypeLabel,
       );
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/pbpr_share.png';
       await File(path).writeAsBytes(bytes);
+
+      final box = context.findRenderObject() as RenderBox?;
+      final exerciseName = (widget.exercise ?? _effectiveExercise()).displayName;
       await Share.shareXFiles(
         [XFile(path, mimeType: 'image/png')],
-        subject: 'PBPR — ${widget.exercise.displayName} 신기록!',
+        subject: 'PBPR — $exerciseName${_isActivityMode ? '' : ' New PR!'}',
+        sharePositionOrigin:
+            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
+    } catch (e) {
+      if (mounted) _showSnack('Share error: $e');
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────
 
-  String _formatValue(double v, ExerciseCategory cat,
-      String weightUnit, String distanceUnit) {
-    switch (cat) {
-      case ExerciseCategory.strength:
+  String _formatValue(
+      double v, RecordType recordType, String weightUnit, String distanceUnit) {
+    switch (recordType) {
+      case RecordType.weight:
         return UnitConverter.formatWeight(v, weightUnit);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
+      case RecordType.distance:
+      case RecordType.forTime:
+      case RecordType.amrap:
         return UnitConverter.secondsToDisplay(v.toInt());
-      case ExerciseCategory.custom:
-        return v.toStringAsFixed(1);
     }
   }
 
   String _dateStr(DateTime d) =>
       '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
 
-  String _calcDaysSince(List<Record> records, ExerciseCategory cat,
+  String _calcDaysSince(List<Record> records, RecordType recordType,
       double newValue, DateTime date) {
     final beforeMs = date.millisecondsSinceEpoch;
-    final previous =
-        records.where((r) => r.performedAt < beforeMs).toList();
+    final previous = records.where((r) => r.performedAt < beforeMs).toList();
     if (previous.isEmpty) return '';
 
     double? valOf(Record r) {
-      switch (cat) {
-        case ExerciseCategory.strength:
+      switch (recordType) {
+        case RecordType.weight:
           return (r.weight != null && (r.reps == null || r.reps == 1))
               ? r.weight
               : null;
-        case ExerciseCategory.running:
-        case ExerciseCategory.workout:
+        case RecordType.distance:
+        case RecordType.forTime:
+        case RecordType.amrap:
           return r.durationSeconds?.toDouble();
-        case ExerciseCategory.custom:
-          return r.weight;
       }
     }
 
@@ -588,37 +451,166 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     if (valid.isEmpty) return '';
 
     Record prevBest;
-    switch (cat) {
-      case ExerciseCategory.strength:
-      case ExerciseCategory.custom:
-        prevBest = valid
-            .reduce((a, b) => (valOf(a) ?? 0) >= (valOf(b) ?? 0) ? a : b);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
+    switch (recordType) {
+      case RecordType.weight:
+        prevBest =
+            valid.reduce((a, b) => (valOf(a) ?? 0) >= (valOf(b) ?? 0) ? a : b);
+      case RecordType.distance:
+      case RecordType.forTime:
+      case RecordType.amrap:
         prevBest = valid.reduce((a, b) =>
-            (valOf(a) ?? double.maxFinite) <=
-                    (valOf(b) ?? double.maxFinite)
+            (valOf(a) ?? double.maxFinite) <= (valOf(b) ?? double.maxFinite)
                 ? a
                 : b);
     }
 
-    final prevDate =
-        DateTime.fromMillisecondsSinceEpoch(prevBest.performedAt);
+    final prevDate = DateTime.fromMillisecondsSinceEpoch(prevBest.performedAt);
     final days = date.difference(prevDate).inDays;
     if (days <= 0) return '';
-    return '+${days}일 만에';
+    return '+$days일 만에';
   }
 
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(msg),
-          duration: const Duration(seconds: 2)),
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
     );
   }
 }
 
-// ── Reusable sub-widgets ──────────────────────────────────────
+// ── Section widgets ───────────────────────────────────────────
+
+/// Aspect ratio row: fixed "Ratio" label on left, horizontally scrollable
+/// chips on the right. Handles any number of ratios without overflow.
+class _RatioRow extends StatelessWidget {
+  final ExportAspectRatio selected;
+  final ValueChanged<ExportAspectRatio> onChanged;
+  const _RatioRow({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: AppSpacing.s16),
+            child: Text(
+              'Ratio',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.label2,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: ExportAspectRatio.values.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 6),
+              itemBuilder: (context, i) {
+                final r = ExportAspectRatio.values[i];
+                final sel = selected == r;
+                return GestureDetector(
+                  onTap: () => onChanged(r),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    decoration: BoxDecoration(
+                      color: sel ? AppColors.actionDark : AppColors.card,
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
+                      border: Border.all(
+                        color: sel ? AppColors.actionDarkBorder : AppColors.separator,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        r.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: sel ? Colors.white : AppColors.label1,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s16),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sticker row: fixed "Sticker" label on left, horizontally scrollable overlay
+/// toggles on the right.
+class _StickerRow extends StatelessWidget {
+  final OverlayOptions overlay;
+  final ValueChanged<OverlayOptions> onChanged;
+  const _StickerRow({required this.overlay, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: Row(
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(left: AppSpacing.s16),
+            child: Text(
+              'Sticker',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.label2,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _Toggle(
+                  label: 'Name',
+                  value: overlay.showName,
+                  onTap: () => onChanged(overlay.copyWith(showName: !overlay.showName)),
+                ),
+                const SizedBox(width: 6),
+                _Toggle(
+                  label: 'Value',
+                  value: overlay.showValue,
+                  onTap: () => onChanged(overlay.copyWith(showValue: !overlay.showValue)),
+                ),
+                const SizedBox(width: 6),
+                _Toggle(
+                  label: 'Date',
+                  value: overlay.showDate,
+                  onTap: () => onChanged(overlay.copyWith(showDate: !overlay.showDate)),
+                ),
+                const SizedBox(width: 6),
+                _Toggle(
+                  label: 'Days',
+                  value: overlay.showDaysSince,
+                  onTap: () => onChanged(overlay.copyWith(showDaysSince: !overlay.showDaysSince)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s16),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Generic option row ────────────────────────────────────────
 
 class _OptionRow extends StatelessWidget {
   final String label;
@@ -628,15 +620,18 @@ class _OptionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16, vertical: AppSpacing.s8),
       child: Row(
         children: [
-          Text(label,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppColors.label2,
+            ),
+          ),
           const Spacer(),
           child,
         ],
@@ -645,35 +640,200 @@ class _OptionRow extends StatelessWidget {
   }
 }
 
+// ── Frame selector ────────────────────────────────────────────
+
+class _FrameSelector extends StatelessWidget {
+  final FrameStyle selected;
+  final ValueChanged<FrameStyle> onChanged;
+  const _FrameSelector({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: FrameStyle.values.map((s) {
+          final sel = selected == s;
+          return GestureDetector(
+            onTap: () => onChanged(s),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: sel ? AppColors.actionDark : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                s == FrameStyle.clean ? 'Clean' : 'Rough',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: sel ? Colors.white : AppColors.label1,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// ── Background media picker ───────────────────────────────────
+
+class _MediaPicker extends StatelessWidget {
+  final File? mediaFile;
+  final VoidCallback onPickImage;
+  final VoidCallback onPickVideo;
+  final VoidCallback onClear;
+  const _MediaPicker({
+    required this.mediaFile,
+    required this.onPickImage,
+    required this.onPickVideo,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PickerChip(label: 'Photo', icon: AppIcons.image, onTap: onPickImage),
+        const SizedBox(width: 8),
+        _PickerChip(label: 'Video', icon: AppIcons.video, onTap: onPickVideo),
+        if (mediaFile != null) ...[
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onClear,
+            child: Icon(AppIcons.xCircle, color: AppColors.label2, size: 20),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ── Export actions ────────────────────────────────────────────
+
+class _ExportActions extends StatelessWidget {
+  final bool isExporting;
+  final String exportLabel;
+  final bool canSaveVideo;
+  final VoidCallback onSaveImage;
+  final VoidCallback? onSaveVideo;
+  final VoidCallback onShare;
+
+  const _ExportActions({
+    required this.isExporting,
+    required this.exportLabel,
+    required this.canSaveVideo,
+    required this.onSaveImage,
+    required this.onSaveVideo,
+    required this.onShare,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: isExporting
+            ? Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: AppColors.actionDark),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      exportLabel,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.label2,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Primary actions: [Save Image] [Share] — equal width, equal priority
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PrimaryButton(
+                          label: 'Save Image',
+                          icon: AppIcons.download,
+                          onTap: onSaveImage,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _PrimaryButton(
+                          label: 'Share',
+                          icon: AppIcons.share,
+                          onTap: onShare,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Secondary: Save Video — only visible when a video is loaded
+                  if (canSaveVideo) ...[
+                    const SizedBox(height: 8),
+                    _PrimaryButton(
+                      label: 'Save Video',
+                      icon: AppIcons.video,
+                      onTap: onSaveVideo,
+                      secondary: true,
+                    ),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+// ── Primitive sub-widgets ─────────────────────────────────────
+
 class _PickerChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
   const _PickerChip(
-      {required this.label,
-      required this.icon,
-      required this.onTap});
+      {required this.label, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
         decoration: BoxDecoration(
-          color: AppTheme.card,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.separator),
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.separator),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: AppTheme.textSecondary),
-            const SizedBox(width: 4),
+            Icon(icon, size: 14, color: AppColors.label2),
+            const SizedBox(width: AppSpacing.s4),
             Text(label,
-                style: const TextStyle(
-                    color: AppTheme.textPrimary, fontSize: 12)),
+                style: AppTypography.caption
+                    .copyWith(color: AppColors.label1)),
           ],
         ),
       ),
@@ -686,86 +846,83 @@ class _Toggle extends StatelessWidget {
   final bool value;
   final VoidCallback onTap;
   const _Toggle(
-      {required this.label,
-      required this.value,
-      required this.onTap});
+      {required this.label, required this.value, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8, vertical: AppSpacing.s4),
         decoration: BoxDecoration(
-          color: value
-              ? AppTheme.accent.withValues(alpha: 0.12)
-              : AppTheme.card,
-          borderRadius: BorderRadius.circular(7),
+          color: value ? AppColors.actionDark : AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.badge),
           border: Border.all(
-              color: value ? AppTheme.accent : AppTheme.separator),
+              color: value ? AppColors.actionDarkBorder : AppColors.separator),
         ),
-        child: Text(label,
-            style: TextStyle(
-                color:
-                    value ? AppTheme.accent : AppTheme.textSecondary,
-                fontSize: 11,
-                fontWeight: value
-                    ? FontWeight.w600
-                    : FontWeight.w400)),
+        child: Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: value ? Colors.white : AppColors.label2,
+            fontWeight: value ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
       ),
     );
   }
 }
 
-class _ActionBtn extends StatelessWidget {
+/// Equal-priority action button. `secondary: true` uses an outlined style.
+class _PrimaryButton extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final IconData? icon;
   final VoidCallback? onTap;
-  final bool accent;
-  const _ActionBtn({
+  final bool secondary;
+
+  const _PrimaryButton({
     required this.label,
-    required this.icon,
+    this.icon,
     required this.onTap,
-    this.accent = false,
+    this.secondary = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
+    final Color bg = secondary
+        ? AppColors.card
+        : (enabled ? AppColors.actionDark : AppColors.separator);
+    final Color border = secondary ? AppColors.separator : AppColors.actionDarkBorder;
+    final Color fg = secondary
+        ? (enabled ? AppColors.label1 : AppColors.label2)
+        : (enabled ? Colors.white : AppColors.label2);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        height: 52,
         decoration: BoxDecoration(
-          color: accent
-              ? (enabled ? AppTheme.accent : AppTheme.separator)
-              : AppTheme.card,
-          borderRadius: BorderRadius.circular(10),
-          border: accent
-              ? null
-              : Border.all(color: AppTheme.separator),
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.button),
+          border: Border.all(color: border),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                size: 18,
-                color: accent
-                    ? Colors.white
-                    : enabled
-                        ? AppTheme.textPrimary
-                        : AppTheme.textSecondary),
-            const SizedBox(height: 3),
-            Text(label,
-                style: TextStyle(
-                    color: accent
-                        ? Colors.white
-                        : enabled
-                            ? AppTheme.textPrimary
-                            : AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500)),
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: fg),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
+            ),
           ],
         ),
       ),

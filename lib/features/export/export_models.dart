@@ -1,51 +1,87 @@
 import 'dart:ui';
 
-enum ExportAspectRatio { square, portrait, story }
+/// Display order matches the chip row: Story → Feed → Square → Landscape → Original.
+enum ExportAspectRatio { story, feed, square, landscape, original }
 
 extension ExportAspectRatioX on ExportAspectRatio {
-  String get label => const ['1:1', '4:5', '9:16'][index];
+  String get label => switch (this) {
+    ExportAspectRatio.story     => '9:16',
+    ExportAspectRatio.feed      => '4:5',
+    ExportAspectRatio.square    => '1:1',
+    ExportAspectRatio.landscape => '4:3',
+    ExportAspectRatio.original  => 'Original',
+  };
 
-  double get ratio {
-    switch (this) {
-      case ExportAspectRatio.square:   return 1.0;
-      case ExportAspectRatio.portrait: return 4.0 / 5.0;
-      case ExportAspectRatio.story:    return 9.0 / 16.0;
-    }
-  }
+  /// Width / height ratio used for preview sizing and layout.
+  double get ratio => switch (this) {
+    ExportAspectRatio.story     => 9.0 / 16.0,
+    ExportAspectRatio.feed      => 4.0 / 5.0,
+    ExportAspectRatio.square    => 1.0,
+    ExportAspectRatio.landscape => 4.0 / 3.0,
+    ExportAspectRatio.original  => 9.0 / 16.0, // defaults to story; media-adaptive sizing is a future enhancement
+  };
 
-  Size get exportSize {
-    switch (this) {
-      case ExportAspectRatio.square:   return const Size(1080, 1080);
-      case ExportAspectRatio.portrait: return const Size(1080, 1350);
-      case ExportAspectRatio.story:    return const Size(1080, 1920);
-    }
-  }
+  /// Full-resolution export canvas size.
+  Size get exportSize => switch (this) {
+    ExportAspectRatio.story     => const Size(1080, 1920),
+    ExportAspectRatio.feed      => const Size(1080, 1350),
+    ExportAspectRatio.square    => const Size(1080, 1080),
+    ExportAspectRatio.landscape => const Size(1080,  810),
+    ExportAspectRatio.original  => const Size(1080, 1920),
+  };
 }
 
 enum FrameStyle { clean, rough }
 
+/// Ephemeral share creation state — never persisted to DB.
+class ShareCreationState {
+  final String recordId;
+  final String exerciseId;
+  final FrameStyle mode;
+  final ExportAspectRatio ratio;
+  final String? mediaPath;
+  final bool isVideo;
+  final bool showExerciseName;
+  final bool showValue;
+  final bool showDate;
+  final bool showDaysSincePB;
+
+  const ShareCreationState({
+    required this.recordId,
+    required this.exerciseId,
+    this.mode = FrameStyle.clean,
+    this.ratio = ExportAspectRatio.story,
+    this.mediaPath,
+    this.isVideo = false,
+    this.showExerciseName = true,
+    this.showValue = true,
+    this.showDate = true,
+    this.showDaysSincePB = true,
+  });
+}
+
 class OverlayOptions {
   final bool showName;
-  final bool showPr;
+  final bool showValue;
   final bool showDate;
   final bool showDaysSince;
 
   const OverlayOptions({
     this.showName = true,
-    this.showPr = true,
+    this.showValue = true,
     this.showDate = true,
     this.showDaysSince = true,
   });
 
   OverlayOptions copyWith({
     bool? showName,
-    bool? showPr,
+    bool? showValue,
     bool? showDate,
     bool? showDaysSince,
   }) =>
       OverlayOptions(
         showName: showName ?? this.showName,
-        showPr: showPr ?? this.showPr,
+        showValue: showValue ?? this.showValue,
         showDate: showDate ?? this.showDate,
         showDaysSince: showDaysSince ?? this.showDaysSince,
       );
