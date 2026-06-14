@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pbpr/core/utils/unit_converter.dart';
+import 'package:peaklog/core/utils/unit_converter.dart';
 
 void main() {
   group('weight conversion', () {
@@ -74,6 +74,17 @@ void main() {
     });
     test('negative diff', () {
       expect(UnitConverter.formatDiffWeight(-5.0, 'kg'), '-5 kg');
+    });
+    test('positive kg diff converts to lbs when unit is lbs', () {
+      // 10 kg diff → 22.0462 lbs → displayed as '+22 lbs'
+      expect(UnitConverter.formatDiffWeight(10, 'lbs'), '+22 lbs');
+    });
+    test('negative kg diff converts to lbs when unit is lbs', () {
+      expect(UnitConverter.formatDiffWeight(-10, 'lbs'), '-22 lbs');
+    });
+    test('fractional lbs diff is formatted to one decimal', () {
+      // 1 kg ≈ 2.2 lbs
+      expect(UnitConverter.formatDiffWeight(1, 'lbs'), '+2.2 lbs');
     });
   });
 }

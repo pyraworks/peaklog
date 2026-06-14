@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/database/database_helper.dart';
 import '../core/models/record.dart';
-import 'personal_best_provider.dart';
+import '../data/repositories/record_repository_impl.dart';
 
 class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
   @override
@@ -12,21 +12,28 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
     required int performedAt,
     double? weight,
     int? reps,
+    int? rounds,
     int? durationSeconds,
+    int? durationMinutes,
     double? distance,
+    String distanceUnit = 'km',
     String? note,
+    String? metadataJson,
   }) async {
     final record = Record.create(
       exerciseId: arg,
       performedAt: performedAt,
       weight: weight,
       reps: reps,
+      rounds: rounds,
       durationSeconds: durationSeconds,
+      durationMinutes: durationMinutes,
       distance: distance,
+      distanceUnit: distanceUnit,
       note: note,
+      metadataJson: metadataJson,
     );
-    await DatabaseHelper.instance.insertRecord(record);
-    ref.invalidate(personalBestProvider(arg));
+    await RecordRepositoryImpl.instance.insert(record);
     final current = state.valueOrNull ?? [];
     final updated = [record, ...current]
       ..sort((a, b) => b.performedAt.compareTo(a.performedAt));
@@ -34,9 +41,17 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
     return record;
   }
 
+  Future<void> updateRecord(Record record) async {
+    await RecordRepositoryImpl.instance.update(record);
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(
+      (current.map((r) => r.id == record.id ? record : r).toList())
+        ..sort((a, b) => b.performedAt.compareTo(a.performedAt)),
+    );
+  }
+
   Future<void> deleteRecord(String id) async {
-    await DatabaseHelper.instance.softDeleteRecord(id, arg);
-    ref.invalidate(personalBestProvider(arg));
+    await RecordRepositoryImpl.instance.softDelete(id);
     final current = state.valueOrNull ?? [];
     state = AsyncData(current.where((r) => r.id != id).toList());
   }
