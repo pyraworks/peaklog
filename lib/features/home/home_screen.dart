@@ -18,7 +18,8 @@ import '../../widgets/swipeable_row.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocus;
-  const HomeScreen({super.key, this.searchFocus});
+  final Widget? swipeHint;
+  const HomeScreen({super.key, this.searchFocus, this.swipeHint});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -63,7 +64,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           if (pb.weight != null) {
             return UnitConverter.formatWeight(pb.weight!, exercise.baseUnit);
           }
-        case RecordType.distance:
+        case RecordType.etc:
+          if (pb.etcValue != null) {
+            return UnitConverter.formatEtc(pb.etcValue!, exercise.baseUnit);
+          }
         case RecordType.forTime:
           if (pb.durationSeconds != null) {
             return UnitConverter.secondsToDisplay(pb.durationSeconds!);
@@ -81,11 +85,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final best = active.where((r) => r.weight != null)
             .fold<Record?>(null, (b, r) => b == null || r.weight! > b.weight! ? r : b);
         return best != null ? UnitConverter.formatWeight(best.weight!, exercise.baseUnit) : '—';
-      case RecordType.distance:
+      case RecordType.etc:
+        final best = active.where((r) => r.distance != null)
+            .fold<Record?>(null, (b, r) => b == null || r.distance! > b.distance! ? r : b);
+        return best != null ? UnitConverter.formatEtc(best.distance!, exercise.baseUnit) : '—';
       case RecordType.forTime:
-        final best = active.where((r) => r.durationSeconds != null)
+        final best2 = active.where((r) => r.durationSeconds != null)
             .fold<Record?>(null, (b, r) => b == null || r.durationSeconds! < b.durationSeconds! ? r : b);
-        return best != null ? UnitConverter.secondsToDisplay(best.durationSeconds!) : '—';
+        return best2 != null ? UnitConverter.secondsToDisplay(best2.durationSeconds!) : '—';
       case RecordType.amrap:
         final best = active.where((r) => r.rounds != null)
             .fold<Record?>(null, (b, r) => b == null || r.rounds! > b.rounds! ? r : b);
@@ -145,15 +152,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
                 children: [
+                  Text(
+                    'PeakLog',
+                    style: AppTypography.appTitle.copyWith(color: AppColors.label1),
+                  ),
                   Expanded(
-                    child: Text(
-                      'PBPR',
-                      style: AppTypography.appTitle.copyWith(color: AppColors.label1),
+                    child: Center(
+                      child: widget.swipeHint ?? const SizedBox.shrink(),
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => context.push('/profile'),
-                    child: _IconButton(icon: AppIcons.person),
+                    onTap: () => context.push('/calculators'),
+                    child: _IconButton(icon: AppIcons.calculator),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
