@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/database/database_helper.dart';
 import '../../domain/models/category.dart';
 import '../../providers/categories_provider.dart';
+import '../../widgets/screen_header.dart';
+import '../../widgets/swipeable_row.dart';
 
 class CategoryManagementScreen extends ConsumerStatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -27,7 +28,28 @@ class _CategoryManagementScreenState
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildHeader(context),
+          ScreenHeader(
+            backLabel: 'Settings',
+            title: 'Categories',
+            trailing: GestureDetector(
+              onTap: () => _showAddSheet(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.actionDark,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '+ Add',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: categories.isEmpty
                 ? const Center(
@@ -38,20 +60,22 @@ class _CategoryManagementScreenState
                   )
                 : ReorderableListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    buildDefaultDragHandles: false,
                     itemCount: categories.length,
                     onReorderItem: (oldIdx, newIdx) =>
                         _reorder(categories, oldIdx, newIdx),
                     proxyDecorator: (child, _, animation) => Material(
                       elevation: 4,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       child: child,
                     ),
                     itemBuilder: (context, i) {
                       final cat = categories[i];
                       return _CategoryTile(
                         key: ValueKey(cat.id),
+                        index: i,
                         category: cat,
-                        isPreset: _isPreset(cat.id),
+                        isUncategorized: cat.id == Category.uncategorizedId,
                         onEdit: () => _showEditSheet(context, cat),
                         onDelete: () => _confirmDelete(context, cat),
                       );
@@ -63,74 +87,9 @@ class _CategoryManagementScreenState
     );
   }
 
-  // Matches all current and legacy preset IDs ('preset-category-*').
-  bool _isPreset(String id) => id.startsWith('preset-category-');
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => context.pop(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(AppIcons.back, size: 18, color: AppColors.primary),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'Settings',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Categories',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimaryAlt,
-                        letterSpacing: -0.24,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _showAddSheet(context),
-                    child: const Text(
-                      '+ Add',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Divider(height: 1, thickness: 1, color: AppColors.separatorAlt),
-        ],
-      ),
-    );
-  }
 
   Future<void> _reorder(List<Category> cats, int oldIdx, int newIdx) async {
+    if (cats[oldIdx].id == Category.uncategorizedId) return;
     final reordered = List<Category>.from(cats);
     final moved = reordered.removeAt(oldIdx);
     reordered.insert(newIdx, moved);
@@ -209,9 +168,9 @@ class _CategoryManagementScreenState
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Category'),
-        content: Text(
-            '"${cat.name}" will be deleted. Exercises in this category will be uncategorized.'),
+        title: const Text('Delete Category?'),
+        content: const Text(
+            'Exercises in this category will be moved to Uncategorized.'),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
@@ -411,43 +370,50 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
 // ── Category tile ─────────────────────────────────────────────────────────────
 
 class _CategoryTile extends StatelessWidget {
+  final int index;
   final Category category;
-  final bool isPreset;
+  final bool isUncategorized;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CategoryTile({
+    required this.index,
     required this.category,
-    required this.isPreset,
+    required this.isUncategorized,
     required this.onEdit,
     required this.onDelete,
     super.key,
   });
 
+  Widget _colorDot() => Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: CategoryColor.toColor(category.color),
+          shape: BoxShape.circle,
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.separatorAlt),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    // Row content — identical structure for all tiles.
+    // Uncategorized: drag handle visible, no swipe actions.
+    // Normal: drag handle + swipe (edit + delete).
+    final content = ColoredBox(
+      color: Colors.white,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),
+            isUncategorized
+                ? Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18)
+                : ReorderableDragStartListener(
+                    index: index,
+                    child: Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),
+                  ),
             const SizedBox(width: 10),
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: CategoryColor.toColor(category.color),
-                shape: BoxShape.circle,
-              ),
-            ),
+            _colorDot(),
           ],
         ),
         title: Text(
@@ -458,31 +424,29 @@ class _CategoryTile extends StatelessWidget {
             color: Color(0xFF1F2328),
           ),
         ),
-        subtitle: isPreset
-            ? const Text('System',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondaryAlt))
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: onEdit,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Icon(AppIcons.edit, size: 18, color: AppColors.textTertiary),
-              ),
-            ),
-            if (!isPreset)
-              GestureDetector(
-                onTap: onDelete,
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(AppIcons.delete, size: 18, color: const Color(0xFFCF222E)),
-                ),
-              ),
-          ],
-        ),
       ),
+    );
+
+    final inner = isUncategorized
+        ? content
+        : SwipeableRow(
+            id: category.id,
+            onEdit: onEdit,
+            onSwipeEdit: onEdit,
+            onDelete: onDelete,
+            child: content,
+          );
+
+    // Outer container: border radius + clip matches History card (radius 12,
+    // hardEdge), so swiped action pane rendering is identical.
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.separatorAlt),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: inner,
     );
   }
 }
