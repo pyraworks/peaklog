@@ -8,21 +8,37 @@ import '../../providers/personal_best_provider.dart';
 import '../../widgets/screen_header.dart';
 
 class OneRMTableScreen extends ConsumerWidget {
-  final String exerciseId;
-  const OneRMTableScreen({required this.exerciseId, super.key});
+  final String? exerciseId;
+  final double? directWeightKg;
+  final String? directWeightUnit;
+
+  const OneRMTableScreen({
+    this.exerciseId,
+    this.directWeightKg,
+    this.directWeightUnit,
+    super.key,
+  }) : assert(
+          exerciseId != null || directWeightKg != null,
+          'Either exerciseId or directWeightKg must be provided',
+        );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pb = ref.watch(personalBestProvider(exerciseId));
-    final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
-    final exercise =
-        exercises.where((e) => e.id == exerciseId).firstOrNull;
-    final weightUnit = exercise?.baseUnit ?? 'kg';
-    final title = exercise != null
-        ? '${exercise.displayName} — 1RM Table'
-        : '1RM Table';
+    double? pbKg = directWeightKg;
+    String weightUnit = directWeightUnit ?? 'kg';
+    String title = '1RM Table';
 
-    final pbKg = pb?.weight;
+    if (exerciseId != null) {
+      final pb = ref.watch(personalBestProvider(exerciseId!));
+      final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
+      final exercise =
+          exercises.where((e) => e.id == exerciseId).firstOrNull;
+      weightUnit = exercise?.baseUnit ?? 'kg';
+      title = exercise != null
+          ? '${exercise.displayName} — 1RM Table'
+          : '1RM Table';
+      pbKg = pb?.weight;
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
