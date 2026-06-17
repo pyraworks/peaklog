@@ -206,7 +206,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                             Text(
                               _unitLabel,
                               style: AppTypography.inputValue
-                                  .copyWith(color: AppColors.label2),
+                                  .copyWith(color: AppColors.label1),
                             ),
                           ],
                         ),

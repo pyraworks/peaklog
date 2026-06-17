@@ -114,6 +114,22 @@ void main() {
     });
   });
 
+  group('generateSplits — 1km at 4:00/km', () {
+    late List<(String, int)> splits;
+    setUp(() {
+      splits = PaceCalculatorLogic.generateSplits(1.0, 240.0);
+    });
+    test('has 10 splits (100m increments)', () {
+      expect(splits.length, 10);
+    });
+    test('first split is 100m = 24s', () {
+      expect(splits.first, ('100m', 24));
+    });
+    test('last split is 1000m = 240s', () {
+      expect(splits.last, ('1000m', 240));
+    });
+  });
+
   group('generateSplits — empty when invalid', () {
     test('returns empty for zero distance', () {
       expect(PaceCalculatorLogic.generateSplits(0, 240), isEmpty);

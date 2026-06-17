@@ -66,7 +66,7 @@ class PaceCalculatorLogic {
     if (distanceKm <= 0 || paceSecPerKm <= 0) return [];
     final result = <(String, int)>[];
 
-    if (distanceKm < 1.0) {
+    if (distanceKm <= 1.0) {
       for (int i = 1; i * 0.1 <= distanceKm + 1e-9; i++) {
         final d = i * 0.1;
         result.add(('${i * 100}m', (d * paceSecPerKm).round()));

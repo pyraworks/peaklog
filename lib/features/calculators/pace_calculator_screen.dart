@@ -160,7 +160,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        IntrinsicWidth(
+                        SizedBox(
+                          width: 140,
                           child: TextField(
                             controller: _distCtrl,
                             keyboardType: const TextInputType.numberWithOptions(
@@ -179,11 +180,11 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                             onChanged: _onDistChanged,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           'km',
                           style: AppTypography.inputValue
-                              .copyWith(color: AppColors.label2),
+                              .copyWith(color: AppColors.label1),
                         ),
                       ],
                     ),
@@ -218,7 +219,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        IntrinsicWidth(
+                        SizedBox(
+                          width: 120,
                           child: TextField(
                             controller: _paceCtrl,
                             keyboardType: TextInputType.datetime,
@@ -236,11 +238,11 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                             onChanged: _onPaceChanged,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           '/km',
                           style: AppTypography.inputValue
-                              .copyWith(color: AppColors.label2),
+                              .copyWith(color: AppColors.label1),
                         ),
                       ],
                     ),
@@ -299,12 +301,14 @@ class _InputCard extends StatelessWidget {
 }
 
 // ── Split table ───────────────────────────────────────────────────────────────
-// Structure: primary split (always) → toggle (always) → detail rows (expanded)
+// Flat split list. Shows first 10 rows; "More ▼" / "Hide ▲" for longer lists.
 
 class _SplitTable extends StatelessWidget {
   final List<(String, int)> splits;
   final bool expanded;
   final VoidCallback onToggle;
+
+  static const _previewCount = 10;
 
   const _SplitTable({
     required this.splits,
@@ -314,9 +318,9 @@ class _SplitTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = splits.first;
-    final primaryLabel = '${primary.$1} Split';
-    final primaryTime = PaceCalculatorLogic.formatTime(primary.$2);
+    final showToggle = splits.length > _previewCount;
+    final visibleSplits =
+        (expanded || !showToggle) ? splits : splits.sublist(0, _previewCount);
 
     return Container(
       decoration: BoxDecoration(
@@ -327,51 +331,45 @@ class _SplitTable extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: Column(
         children: [
-          // Primary split — always visible
-          _SplitRow(label: primaryLabel, time: primaryTime),
-
-          // Toggle — always visible
-          const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
-          GestureDetector(
-            onTap: onToggle,
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    expanded ? 'Hide Splits' : 'Show Detailed Splits',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+          for (int i = 0; i < visibleSplits.length; i++) ...[
+            if (i > 0)
+              const Divider(
+                  height: 1, thickness: 0.5, color: AppColors.separator),
+            _SplitRow(
+              label: visibleSplits[i].$1,
+              time: PaceCalculatorLogic.formatTime(visibleSplits[i].$2),
+            ),
+          ],
+          if (showToggle) ...[
+            const Divider(
+                height: 1, thickness: 0.5, color: AppColors.separator),
+            GestureDetector(
+              onTap: onToggle,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      expanded ? 'Hide' : 'More',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.label2,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      expanded ? AppIcons.caretUp : AppIcons.caretDown,
+                      size: 16,
                       color: AppColors.label2,
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    expanded ? AppIcons.caretUp : AppIcons.caretDown,
-                    size: 16,
-                    color: AppColors.label2,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-
-          // Detail rows — only when expanded
-          if (expanded) ...[
-            const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
-            for (int i = 0; i < splits.length; i++) ...[
-              if (i > 0)
-                const Divider(
-                    height: 1, thickness: 0.5, color: AppColors.separator),
-              _SplitRow(
-                label: splits[i].$1,
-                time: PaceCalculatorLogic.formatTime(splits[i].$2),
-              ),
-            ],
           ],
         ],
       ),
