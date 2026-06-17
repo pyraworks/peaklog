@@ -70,16 +70,16 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
   String _categoryLabel(String id, List<Category> categories) {
     return categories.firstWhere(
       (c) => c.id == id,
-      orElse: () => categories.isNotEmpty ? categories.first : Category.presets.first,
+      orElse: () => categories.isNotEmpty ? categories.first : const Category(id: Category.uncategorizedId, name: 'Uncategorized', color: 'gray', sortOrder: 0, createdAt: 0, updatedAt: 0),
     ).name;
   }
 
   String get _effectiveCategoryId =>
-      _selectedCategoryId ?? Category.weightliftingId;
+      _selectedCategoryId ?? Category.uncategorizedId;
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoriesProvider).valueOrNull ?? Category.presets;
+    final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
     final nameEmpty = _nameCtrl.text.trim().isEmpty;
 
     return Scaffold(

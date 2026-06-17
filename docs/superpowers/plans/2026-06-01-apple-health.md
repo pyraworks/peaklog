@@ -419,7 +419,7 @@ class _HealthSyncScreenState extends State<HealthSyncScreen> {
       // Permission request happens here (on feature entry, never on app start)
       final granted = await healthSyncService.requestPermission();
       if (!granted) {
-        setState(() => _errorMsg = '건강 앱 접근 권한이 필요합니다.\n설정 앱에서 PBPR의 건강 데이터 접근을 허용해주세요.');
+        setState(() => _errorMsg = '건강 앱 접근 권한이 필요합니다.\n설정 앱에서 PeakLog의 건강 데이터 접근을 허용해주세요.');
         return;
       }
       final result = await healthSyncService.syncRunningWorkouts();

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pbpr/providers/unit_settings_provider.dart';
+import 'package:peaklog/providers/unit_settings_provider.dart';
 
 void main() {
   setUp(() {

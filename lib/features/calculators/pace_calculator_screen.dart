@@ -7,23 +7,6 @@ import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'pace_calculator_logic.dart';
 
-class _Preset {
-  final String label;
-  final double km;
-  const _Preset(this.label, this.km);
-}
-
-const _presets = [
-  _Preset('1 km', 1.0),
-  _Preset('2 km', 2.0),
-  _Preset('3 km', 3.0),
-  _Preset('5 km', 5.0),
-  _Preset('10 km', 10.0),
-  _Preset('Half', PaceCalculatorLogic.halfMarathonKm),
-  _Preset('Marathon', PaceCalculatorLogic.marathonKm),
-  _Preset('Custom', -1.0),
-];
-
 class PaceCalculatorScreen extends StatefulWidget {
   const PaceCalculatorScreen({super.key});
 
@@ -32,13 +15,12 @@ class PaceCalculatorScreen extends StatefulWidget {
 }
 
 class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
+  final _distCtrl = TextEditingController();
   final _timeCtrl = TextEditingController();
   final _paceCtrl = TextEditingController();
-  final _customDistCtrl = TextEditingController();
 
-  String _selectedPreset = '5 km';
   double _distanceKm = 5.0;
-  String _lastEdited = ''; // 'time' or 'pace'
+  String _lastEdited = '';
   bool _splitsExpanded = false;
   bool _loaded = false;
 
@@ -49,20 +31,16 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
   }
 
   Future<void> _loadPrefs() async {
-    final preset = await CalculatorPrefs.getPacePreset();
     final distKm = await CalculatorPrefs.getPaceDistanceKm();
     final timeText = await CalculatorPrefs.getPaceTimeText();
     final paceText = await CalculatorPrefs.getPacePaceText();
     final lastEdited = await CalculatorPrefs.getPaceLastEdited();
     if (!mounted) return;
     setState(() {
-      _selectedPreset = preset;
       _distanceKm = distKm;
-      if (_selectedPreset == 'Custom') {
-        _customDistCtrl.text = distKm == distKm.roundToDouble()
-            ? distKm.toInt().toString()
-            : distKm.toStringAsFixed(2);
-      }
+      _distCtrl.text = distKm == distKm.roundToDouble()
+          ? distKm.toInt().toString()
+          : distKm.toStringAsFixed(2);
       _timeCtrl.text = timeText;
       _paceCtrl.text = paceText;
       _lastEdited = lastEdited;
@@ -72,26 +50,13 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 
   @override
   void dispose() {
+    _distCtrl.dispose();
     _timeCtrl.dispose();
     _paceCtrl.dispose();
-    _customDistCtrl.dispose();
     super.dispose();
   }
 
-  void _selectPreset(String label) {
-    final preset = _presets.firstWhere((p) => p.label == label);
-    setState(() {
-      _selectedPreset = label;
-      if (preset.km > 0) _distanceKm = preset.km;
-    });
-    CalculatorPrefs.setPacePreset(label);
-    if (preset.km > 0) {
-      CalculatorPrefs.setPaceDistanceKm(preset.km);
-      _recompute();
-    }
-  }
-
-  void _onCustomDistChanged(String val) {
+  void _onDistChanged(String val) {
     final d = double.tryParse(val);
     if (d != null && d > 0) {
       setState(() => _distanceKm = d);
@@ -189,80 +154,45 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                   vertical: AppSpacing.s24,
                 ),
                 children: [
-                  // ── Distance presets ─────────────────────────────────
-                  const _SectionLabel('DISTANCE'),
-                  const SizedBox(height: AppSpacing.s8),
-                  SizedBox(
-                    height: 32,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _presets.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (_, i) {
-                        final p = _presets[i];
-                        final active = _selectedPreset == p.label;
-                        return GestureDetector(
-                          onTap: () => _selectPreset(p.label),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: active
-                                  ? AppColors.chipSelected
-                                  : AppColors.chip,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              p.label,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: active
-                                    ? Colors.white
-                                    : AppColors.textPrimaryAlt,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  if (_selectedPreset == 'Custom') ...[
-                    const SizedBox(height: AppSpacing.s8),
-                    _InputCard(
-                      label: 'CUSTOM DISTANCE',
-                      child: TextField(
-                        controller: _customDistCtrl,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        style: AppTypography.inputValue
-                            .copyWith(color: AppColors.label1),
-                        cursorColor: AppColors.label1,
-                        decoration: InputDecoration(
-                          hintText: '5.0',
-                          hintStyle: AppTypography.inputValue
-                              .copyWith(color: AppColors.label2),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          suffix: Text(
-                            'km',
+                  // ── Distance input ────────────────────────────────────
+                  _InputCard(
+                    label: 'DISTANCE',
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IntrinsicWidth(
+                          child: TextField(
+                            controller: _distCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             style: AppTypography.inputValue
-                                .copyWith(color: AppColors.label2),
+                                .copyWith(color: AppColors.label1),
+                            cursorColor: AppColors.label1,
+                            decoration: InputDecoration(
+                              hintText: '5',
+                              hintStyle: AppTypography.inputValue
+                                  .copyWith(color: AppColors.label2),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onChanged: _onDistChanged,
                           ),
                         ),
-                        onChanged: _onCustomDistChanged,
-                      ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'km',
+                          style: AppTypography.inputValue
+                              .copyWith(color: AppColors.label2),
+                        ),
+                      ],
                     ),
-                  ],
-                  const SizedBox(height: AppSpacing.s16),
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
 
                   // ── Time input ────────────────────────────────────────
-                  const _SectionLabel('TARGET TIME'),
-                  const SizedBox(height: AppSpacing.s8),
                   _InputCard(
-                    label: 'H:MM:SS or MM:SS',
+                    label: 'TIME',
                     child: TextField(
                       controller: _timeCtrl,
                       keyboardType: TextInputType.datetime,
@@ -283,30 +213,36 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                   const SizedBox(height: AppSpacing.s12),
 
                   // ── Pace input ────────────────────────────────────────
-                  const _SectionLabel('TARGET PACE'),
-                  const SizedBox(height: AppSpacing.s8),
                   _InputCard(
-                    label: 'M:SS /km',
-                    child: TextField(
-                      controller: _paceCtrl,
-                      keyboardType: TextInputType.datetime,
-                      style: AppTypography.inputValue
-                          .copyWith(color: AppColors.label1),
-                      cursorColor: AppColors.label1,
-                      decoration: InputDecoration(
-                        hintText: '4:00',
-                        hintStyle: AppTypography.inputValue
-                            .copyWith(color: AppColors.label2),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                        suffix: Text(
+                    label: 'PACE',
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IntrinsicWidth(
+                          child: TextField(
+                            controller: _paceCtrl,
+                            keyboardType: TextInputType.datetime,
+                            style: AppTypography.inputValue
+                                .copyWith(color: AppColors.label1),
+                            cursorColor: AppColors.label1,
+                            decoration: InputDecoration(
+                              hintText: '4:00',
+                              hintStyle: AppTypography.inputValue
+                                  .copyWith(color: AppColors.label2),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onChanged: _onPaceChanged,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
                           '/km',
                           style: AppTypography.inputValue
                               .copyWith(color: AppColors.label2),
                         ),
-                      ),
-                      onChanged: _onPaceChanged,
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s24),
@@ -358,20 +294,6 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          text,
-          style: AppTypography.sectionLabel.copyWith(color: AppColors.label2),
-        ),
-      );
-}
 
 class _InputCard extends StatelessWidget {
   final String label;
@@ -434,6 +356,9 @@ class _ResultCard extends StatelessWidget {
   }
 }
 
+// ── Split table ───────────────────────────────────────────────────────────────
+// Structure: primary split (always) → toggle (always) → detail rows (expanded)
+
 class _SplitTable extends StatelessWidget {
   final List<(String, int)> splits;
   final bool expanded;
@@ -445,24 +370,11 @@ class _SplitTable extends StatelessWidget {
     required this.onToggle,
   });
 
-  (String, int)? get _hundredMSplit =>
-      splits.where((s) => s.$1 == '100m').firstOrNull;
-
-  (String, int)? get _collapsedSecondSplit {
-    final km1 = splits.where((s) => s.$1 == '1km').firstOrNull;
-    return km1 ?? splits.lastOrNull;
-  }
-
-  List<(String, int)> get _subKm =>
-      splits.where((s) => s.$1.endsWith('m') && !s.$1.contains('km')).toList();
-
-  List<(String, int)> get _kmPlus =>
-      splits.where((s) => s.$1.contains('km')).toList();
-
   @override
   Widget build(BuildContext context) {
-    final split100m = _hundredMSplit;
-    final splitSecond = _collapsedSecondSplit;
+    final primary = splits.first;
+    final primaryLabel = '${primary.$1} Split';
+    final primaryTime = PaceCalculatorLogic.formatTime(primary.$2);
 
     return Container(
       decoration: BoxDecoration(
@@ -473,33 +385,11 @@ class _SplitTable extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: Column(
         children: [
-          // Collapsed summary rows
-          if (split100m != null)
-            _SplitRow(
-              label: '100m Split',
-              time: PaceCalculatorLogic.formatTime(split100m.$2),
-            ),
-          if (split100m != null && splitSecond != null && splitSecond.$1 != '100m')
-            const Divider(
-                height: 1, thickness: 0.5, color: AppColors.separator),
-          if (splitSecond != null && splitSecond.$1 != '100m')
-            _SplitRow(
-              label: splitSecond.$1 == '1km'
-                  ? '1km Split'
-                  : '${splitSecond.$1} Split',
-              time: PaceCalculatorLogic.formatTime(splitSecond.$2),
-            ),
+          // Primary split — always visible
+          _SplitRow(label: primaryLabel, time: primaryTime),
 
-          // Expanded detail
-          if (expanded) ...[
-            const Divider(
-                height: 1, thickness: 0.5, color: AppColors.separator),
-            ..._buildDetailRows(),
-          ],
-
-          // Toggle button
-          const Divider(
-              height: 1, thickness: 0.5, color: AppColors.separator),
+          // Toggle — always visible
+          const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
           GestureDetector(
             onTap: onToggle,
             behavior: HitTestBehavior.opaque,
@@ -527,42 +417,23 @@ class _SplitTable extends StatelessWidget {
               ),
             ),
           ),
+
+          // Detail rows — only when expanded
+          if (expanded) ...[
+            const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
+            for (int i = 0; i < splits.length; i++) ...[
+              if (i > 0)
+                const Divider(
+                    height: 1, thickness: 0.5, color: AppColors.separator),
+              _SplitRow(
+                label: splits[i].$1,
+                time: PaceCalculatorLogic.formatTime(splits[i].$2),
+              ),
+            ],
+          ],
         ],
       ),
     );
-  }
-
-  List<Widget> _buildDetailRows() {
-    final rows = <Widget>[];
-    final subKm = _subKm;
-    final kmPlus = _kmPlus;
-
-    for (int i = 0; i < subKm.length; i++) {
-      if (i > 0) {
-        rows.add(const Divider(
-            height: 1, thickness: 0.5, color: AppColors.separator));
-      }
-      final s = subKm[i];
-      rows.add(_SplitRow(
-          label: s.$1, time: PaceCalculatorLogic.formatTime(s.$2)));
-    }
-
-    if (subKm.isNotEmpty && kmPlus.isNotEmpty) {
-      rows.add(const Divider(
-          height: 1, thickness: 1.5, color: AppColors.separatorAlt));
-    }
-
-    for (int i = 0; i < kmPlus.length; i++) {
-      if (i > 0) {
-        rows.add(const Divider(
-            height: 1, thickness: 0.5, color: AppColors.separator));
-      }
-      final s = kmPlus[i];
-      rows.add(_SplitRow(
-          label: s.$1, time: PaceCalculatorLogic.formatTime(s.$2)));
-    }
-
-    return rows;
   }
 }
 

@@ -2,20 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSHealthShareUsageDescription</key>
-	<string>러닝 데이터를 자동으로 기록하기 위해 건강 앱 접근 권한이 필요합니다.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>운동 기록을 건강 앱에 저장합니다.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>운동 기록을 저장하고 미디어를 선택하기 위해 갤러리 접근 권한이 필요합니다.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>운동 기록 이미지를 갤러리에 저장합니다.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Pbpr</string>
+	<string>PeakLog</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>pbpr</string>
+	<string>PeakLog</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -34,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>러닝 데이터를 자동으로 기록하기 위해 건강 앱 접근 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>기록 이미지를 갤러리에 저장합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>기록 이미지를 갤러리에 저장합니다.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -74,9 +72,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>기록 이미지를 갤러리에 저장합니다.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>기록 이미지를 갤러리에 저장합니다.</string>
 </dict>
 </plist>

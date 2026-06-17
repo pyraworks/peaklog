@@ -192,8 +192,8 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
     );
   }
 
-  // PBPR top-left
-  _text(canvas, 'PBPR',
+  // PeakLog top-left
+  _text(canvas, 'PeakLog',
       x: pad, y: pad,
       size: w * 0.038, weight: FontWeight.w900,
       color: accent, spacing: w * 0.006);
@@ -263,14 +263,14 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
         color: const Color(0xFF1D1D1D));
   }
 
-  // PBPR box top-left
+  // PeakLog box top-left
   final boxW = w * 0.17;
   final boxH = w * 0.050;
   canvas.drawRect(
     Rect.fromLTWH(pad, pad, boxW, boxH),
     Paint()..color = accent,
   );
-  _text(canvas, 'PBPR',
+  _text(canvas, 'PeakLog',
       x: pad + w * 0.015, y: pad + w * 0.008,
       size: w * 0.026, weight: FontWeight.w900,
       color: Colors.black, spacing: w * 0.003);
@@ -394,7 +394,7 @@ class CleanFrame extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('PBPR',
+                Text('PeakLog',
                     style: GoogleFonts.spaceGrotesk(
                         color: AppTheme.accent,
                         fontSize: 13,
@@ -543,7 +543,7 @@ class RoughFrame extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         color: AppTheme.accent,
-                        child: Text('PBPR',
+                        child: Text('PeakLog',
                             style: GoogleFonts.spaceGrotesk(
                                 color: Colors.black,
                                 fontSize: 11,
@@ -1022,9 +1022,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         options: _overlay,
       );
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.png';
+      final path = '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(path).writeAsBytes(bytes);
-      await Gal.putImage(path, album: 'PBPR');
+      await Gal.putImage(path, album: 'PeakLog');
       if (mounted) _showSnack('갤러리에 저장됐습니다');
     } catch (e) {
       if (mounted) _showSnack('저장 실패: $e');
@@ -1057,7 +1057,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       await File(overlayPath).writeAsBytes(overlayBytes);
 
       final outputPath =
-          '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.mp4';
+          '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.mp4';
       final exportW = _aspectRatio.exportSize.width.toInt();
       final exportH = _aspectRatio.exportSize.height.toInt();
 
@@ -1075,7 +1075,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final session = await FFmpegKit.execute(cmd);
       final rc = await session.getReturnCode();
       if (ReturnCode.isSuccess(rc)) {
-        await Gal.putVideo(outputPath, album: 'PBPR');
+        await Gal.putVideo(outputPath, album: 'PeakLog');
         if (mounted) _showSnack('갤러리에 저장됐습니다');
       } else {
         final logs = await session.getLogs();
@@ -1106,11 +1106,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         options: _overlay,
       );
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/pbpr_share.png';
+      final path = '${tempDir.path}/peaklog_share.png';
       await File(path).writeAsBytes(bytes);
       await Share.shareXFiles(
         [XFile(path, mimeType: 'image/png')],
-        subject: 'PBPR — ${widget.exercise.displayName} 신기록!',
+        subject: 'PeakLog — ${widget.exercise.displayName} 신기록!',
       );
     } finally {
       if (mounted) setState(() => _exporting = false);

@@ -8,14 +8,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pbpr/app.dart';
+import 'package:peaklog/app.dart';
 
 void main() {
-  testWidgets('PBPR app smoke test', (WidgetTester tester) async {
+  testWidgets('PeakLog app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: PbprApp()));
+    await tester.pumpWidget(const ProviderScope(child: PeakLogApp()));
 
-    // Verify that the PBPR app launches.
-    expect(find.text('PBPR'), findsOneWidget);
+    // Verify that the PeakLog app launches.
+    expect(find.text('PeakLog'), findsOneWidget);
   });
 }

@@ -1,0 +1,3300 @@
+# PeakLog Phase 1 MVP 구현 계획
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 러닝·크로스핏 사용자가 최대 6개 운동의 PR/PB를 기록·공유하는 Flutter MVP 앱 구축
+
+**Architecture:** Riverpod AsyncNotifier로 상태 관리, sqflite로 로컬 영속화, 단위 변환은 순수 함수로 처리. Feature 폴더 구조로 화면별 분리.
+
+**Tech Stack:** Flutter 3.x, flutter_riverpod 2.5.x, sqflite 2.3.x, shared_preferences, share_plus, google_fonts, path_provider
+
+---
+
+## 파일 구조
+
+```
+lib/
+  main.dart                                  # ProviderScope + runApp
+  app.dart                                   # MaterialApp + 라우팅
+  core/
+    theme/app_theme.dart                     # 색상/폰트 상수
+    models/exercise.dart                     # Exercise, ExerciseType
+    models/record.dart                       # Record
+    database/database_helper.dart            # sqflite 싱글톤
+    utils/unit_converter.dart                # kg↔lbs, km↔mi, 초↔HH:MM:SS
+  providers/
+    unit_settings_provider.dart              # weightUnit/distanceUnit toggle
+    exercises_provider.dart                  # AsyncNotifier<List<Exercise>>
+    records_provider.dart                    # FamilyAsyncNotifier<List<Record>, int>
+  features/
+    home/
+      home_screen.dart                       # 홈 화면 (카드 목록)
+      unit_toggle.dart                       # KG⇄LBS / KM⇄MI 토글 버튼
+      exercise_card.dart                     # 운동 카드 위젯
+      one_rm_panel.dart                      # 1RM % 슬라이더 패널
+      add_exercise_sheet.dart                # 운동 추가 바텀시트
+    record_input/
+      record_input_screen.dart               # 기록 입력 화면
+      time_input_field.dart                  # HH:MM:SS 입력 위젯
+      pr_celebration_dialog.dart             # PR 축하 팝업
+    history/
+      history_screen.dart                    # 기록 히스토리 화면
+    export/
+      export_screen.dart                     # 내보내기 화면 (Clean/Rough)
+      clean_frame.dart                       # Clean 스타일 프레임
+      rough_frame.dart                       # Rough 스타일 프레임
+test/
+  core/
+    models/exercise_test.dart
+    models/record_test.dart
+    utils/unit_converter_test.dart
+    database/database_helper_test.dart
+  providers/
+    unit_settings_provider_test.dart
+```
+
+---
+
+## Task 1: Flutter 프로젝트 생성 및 의존성 설정
+
+**Files:**
+- Create: `pubspec.yaml` (수정)
+- Create: `lib/main.dart`
+
+- [ ] **Step 1: Flutter 프로젝트 생성**
+
+```bash
+cd /Users/ida-eun/projects/peaklog
+flutter create . --org com.peaklog --project-name peaklog --platforms android,ios
+```
+
+Expected: Flutter 프로젝트 파일 생성 완료 메시지
+
+- [ ] **Step 2: pubspec.yaml 의존성 업데이트**
+
+`pubspec.yaml`의 `dependencies` 섹션을 아래로 교체:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  sqflite: ^2.3.3+1
+  shared_preferences: ^2.2.3
+  share_plus: ^9.0.0
+  google_fonts: ^6.2.1
+  path: ^1.9.0
+  path_provider: ^2.1.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  sqflite_common_ffi: ^2.3.3+1
+```
+
+- [ ] **Step 3: 의존성 설치**
+
+```bash
+flutter pub get
+```
+
+Expected: `Got dependencies!`
+
+- [ ] **Step 4: 기본 파일 정리 — lib/main.dart 초기화**
+
+`lib/main.dart` 전체를 아래로 교체:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'app.dart';
+
+void main() {
+  runApp(const ProviderScope(child: PeaklogApp()));
+}
+```
+
+- [ ] **Step 5: 커밋**
+
+```bash
+git add pubspec.yaml pubspec.lock lib/main.dart
+git commit -m "chore: flutter project setup with riverpod/sqflite dependencies"
+```
+
+---
+
+## Task 2: 데이터 모델 (Exercise, Record)
+
+**Files:**
+- Create: `lib/core/models/exercise.dart`
+- Create: `lib/core/models/record.dart`
+- Create: `test/core/models/exercise_test.dart`
+- Create: `test/core/models/record_test.dart`
+
+- [ ] **Step 1: Exercise 모델 작성**
+
+`lib/core/models/exercise.dart`:
+
+```dart
+enum ExerciseType { weight, time, distance }
+
+extension ExerciseTypeLabel on ExerciseType {
+  String get label {
+    switch (this) {
+      case ExerciseType.weight:
+        return '무게';
+      case ExerciseType.time:
+        return '시간';
+      case ExerciseType.distance:
+        return '거리';
+    }
+  }
+}
+
+class Exercise {
+  final int? id;
+  final String name;
+  final ExerciseType type;
+  final int orderIndex;
+  final int createdAt;
+
+  const Exercise({
+    this.id,
+    required this.name,
+    required this.type,
+    required this.orderIndex,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    final map = <String, dynamic>{
+      'name': name,
+      'type': type.name,
+      'order_index': orderIndex,
+      'created_at': createdAt,
+    };
+    if (id != null) map['id'] = id;
+    return map;
+  }
+
+  factory Exercise.fromMap(Map<String, dynamic> map) => Exercise(
+        id: map['id'] as int?,
+        name: map['name'] as String,
+        type: ExerciseType.values.byName(map['type'] as String),
+        orderIndex: map['order_index'] as int,
+        createdAt: map['created_at'] as int,
+      );
+
+  Exercise copyWith({
+    int? id,
+    String? name,
+    ExerciseType? type,
+    int? orderIndex,
+    int? createdAt,
+  }) =>
+      Exercise(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        type: type ?? this.type,
+        orderIndex: orderIndex ?? this.orderIndex,
+        createdAt: createdAt ?? this.createdAt,
+      );
+}
+```
+
+- [ ] **Step 2: Record 모델 작성**
+
+`lib/core/models/record.dart`:
+
+```dart
+class Record {
+  final int? id;
+  final int exerciseId;
+  final double value;
+  final int recordedAt;
+  final String? note;
+
+  const Record({
+    this.id,
+    required this.exerciseId,
+    required this.value,
+    required this.recordedAt,
+    this.note,
+  });
+
+  Map<String, dynamic> toMap() {
+    final map = <String, dynamic>{
+      'exercise_id': exerciseId,
+      'value': value,
+      'recorded_at': recordedAt,
+      'note': note,
+    };
+    if (id != null) map['id'] = id;
+    return map;
+  }
+
+  factory Record.fromMap(Map<String, dynamic> map) => Record(
+        id: map['id'] as int?,
+        exerciseId: map['exercise_id'] as int,
+        value: (map['value'] as num).toDouble(),
+        recordedAt: map['recorded_at'] as int,
+        note: map['note'] as String?,
+      );
+
+  Record copyWith({
+    int? id,
+    int? exerciseId,
+    double? value,
+    int? recordedAt,
+    String? note,
+  }) =>
+      Record(
+        id: id ?? this.id,
+        exerciseId: exerciseId ?? this.exerciseId,
+        value: value ?? this.value,
+        recordedAt: recordedAt ?? this.recordedAt,
+        note: note ?? this.note,
+      );
+}
+```
+
+- [ ] **Step 3: Exercise 테스트 작성**
+
+`test/core/models/exercise_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:peaklog/core/models/exercise.dart';
+
+void main() {
+  const exercise = Exercise(
+    id: 1,
+    name: '스쿼트',
+    type: ExerciseType.weight,
+    orderIndex: 0,
+    createdAt: 1000000,
+  );
+
+  test('toMap includes all fields', () {
+    final map = exercise.toMap();
+    expect(map['id'], 1);
+    expect(map['name'], '스쿼트');
+    expect(map['type'], 'weight');
+    expect(map['order_index'], 0);
+  });
+
+  test('fromMap round-trips correctly', () {
+    final map = exercise.toMap();
+    final restored = Exercise.fromMap(map);
+    expect(restored.name, exercise.name);
+    expect(restored.type, exercise.type);
+    expect(restored.orderIndex, exercise.orderIndex);
+  });
+
+  test('copyWith replaces specified fields', () {
+    final updated = exercise.copyWith(name: '데드리프트', orderIndex: 1);
+    expect(updated.name, '데드리프트');
+    expect(updated.orderIndex, 1);
+    expect(updated.type, ExerciseType.weight);
+  });
+
+  test('toMap omits id when null', () {
+    const noId = Exercise(
+      name: 'A',
+      type: ExerciseType.time,
+      orderIndex: 0,
+      createdAt: 0,
+    );
+    expect(noId.toMap().containsKey('id'), isFalse);
+  });
+}
+```
+
+- [ ] **Step 4: 테스트 실행 (통과 확인)**
+
+```bash
+flutter test test/core/models/exercise_test.dart
+```
+
+Expected: All tests pass
+
+- [ ] **Step 5: Record 테스트 작성**
+
+`test/core/models/record_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:peaklog/core/models/record.dart';
+
+void main() {
+  const record = Record(
+    id: 1,
+    exerciseId: 2,
+    value: 100.5,
+    recordedAt: 1000000,
+  );
+
+  test('toMap includes all fields', () {
+    final map = record.toMap();
+    expect(map['exercise_id'], 2);
+    expect(map['value'], 100.5);
+    expect(map['recorded_at'], 1000000);
+  });
+
+  test('fromMap handles num value', () {
+    final map = {
+      'id': 1,
+      'exercise_id': 2,
+      'value': 100,
+      'recorded_at': 1000000,
+      'note': null,
+    };
+    final r = Record.fromMap(map);
+    expect(r.value, 100.0);
+    expect(r.value, isA<double>());
+  });
+
+  test('copyWith preserves unchanged fields', () {
+    final updated = record.copyWith(value: 110.0);
+    expect(updated.value, 110.0);
+    expect(updated.exerciseId, 2);
+  });
+}
+```
+
+- [ ] **Step 6: 테스트 실행**
+
+```bash
+flutter test test/core/models/record_test.dart
+```
+
+Expected: All tests pass
+
+- [ ] **Step 7: 커밋**
+
+```bash
+git add lib/core/models/ test/core/models/
+git commit -m "feat: add Exercise and Record models with tests"
+```
+
+---
+
+## Task 3: UnitConverter 유틸리티
+
+**Files:**
+- Create: `lib/core/utils/unit_converter.dart`
+- Create: `test/core/utils/unit_converter_test.dart`
+
+- [ ] **Step 1: 테스트 먼저 작성**
+
+`test/core/utils/unit_converter_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:peaklog/core/utils/unit_converter.dart';
+
+void main() {
+  group('weight conversion', () {
+    test('kgToLbs', () {
+      expect(UnitConverter.kgToLbs(100), closeTo(220.462, 0.001));
+    });
+    test('lbsToKg round-trip', () {
+      expect(UnitConverter.lbsToKg(UnitConverter.kgToLbs(100)), closeTo(100, 0.001));
+    });
+  });
+
+  group('distance conversion', () {
+    test('kmToMi', () {
+      expect(UnitConverter.kmToMi(5), closeTo(3.107, 0.001));
+    });
+    test('miToKm round-trip', () {
+      expect(UnitConverter.miToKm(UnitConverter.kmToMi(5)), closeTo(5, 0.001));
+    });
+  });
+
+  group('time formatting', () {
+    test('under 1 hour shows MM:SS', () {
+      expect(UnitConverter.secondsToDisplay(90), '01:30');
+    });
+    test('1 hour and over shows H:MM:SS', () {
+      expect(UnitConverter.secondsToDisplay(3661), '1:01:01');
+    });
+    test('zero shows 00:00', () {
+      expect(UnitConverter.secondsToDisplay(0), '00:00');
+    });
+  });
+
+  group('time parsing', () {
+    test('parses MM:SS', () {
+      expect(UnitConverter.displayToSeconds('19:30'), 1170);
+    });
+    test('parses H:MM:SS', () {
+      expect(UnitConverter.displayToSeconds('1:23:45'), 5025);
+    });
+    test('round-trip', () {
+      expect(UnitConverter.displayToSeconds(UnitConverter.secondsToDisplay(5025)), 5025);
+    });
+  });
+
+  group('formatWeight', () {
+    test('kg stays as kg', () {
+      expect(UnitConverter.formatWeight(100, 'kg'), '100 kg');
+    });
+    test('converts to lbs', () {
+      expect(UnitConverter.formatWeight(100, 'lbs'), '220.5 lbs');
+    });
+    test('integer display for whole numbers', () {
+      expect(UnitConverter.formatWeight(50, 'kg'), '50 kg');
+    });
+    test('one decimal for fractional', () {
+      expect(UnitConverter.formatWeight(102.5, 'kg'), '102.5 kg');
+    });
+  });
+
+  group('formatDistance', () {
+    test('km stays as km', () {
+      expect(UnitConverter.formatDistance(5, 'km'), '5 km');
+    });
+    test('converts to mi', () {
+      expect(UnitConverter.formatDistance(5, 'mi'), '3.1 mi');
+    });
+  });
+
+  group('formatDiffWeight', () {
+    test('positive diff', () {
+      expect(UnitConverter.formatDiffWeight(2.5, 'kg'), '+2.5 kg');
+    });
+    test('negative diff', () {
+      expect(UnitConverter.formatDiffWeight(-5.0, 'kg'), '-5 kg');
+    });
+  });
+}
+```
+
+- [ ] **Step 2: 테스트 실행 (실패 확인)**
+
+```bash
+flutter test test/core/utils/unit_converter_test.dart
+```
+
+Expected: FAIL — `UnitConverter` not found
+
+- [ ] **Step 3: UnitConverter 구현**
+
+`lib/core/utils/unit_converter.dart`:
+
+```dart
+class UnitConverter {
+  static const double _kgToLbs = 2.20462;
+  static const double _kmToMi = 0.621371;
+
+  static double kgToLbs(double kg) => kg * _kgToLbs;
+  static double lbsToKg(double lbs) => lbs / _kgToLbs;
+  static double kmToMi(double km) => km * _kmToMi;
+  static double miToKm(double mi) => mi / _kmToMi;
+
+  static String secondsToDisplay(int totalSeconds) {
+    final h = totalSeconds ~/ 3600;
+    final m = (totalSeconds % 3600) ~/ 60;
+    final s = totalSeconds % 60;
+    final mm = m.toString().padLeft(2, '0');
+    final ss = s.toString().padLeft(2, '0');
+    if (h > 0) return '$h:$mm:$ss';
+    return '$mm:$ss';
+  }
+
+  static int displayToSeconds(String display) {
+    final parts = display.split(':');
+    if (parts.length == 3) {
+      return (int.tryParse(parts[0]) ?? 0) * 3600 +
+          (int.tryParse(parts[1]) ?? 0) * 60 +
+          (int.tryParse(parts[2]) ?? 0);
+    }
+    if (parts.length == 2) {
+      return (int.tryParse(parts[0]) ?? 0) * 60 +
+          (int.tryParse(parts[1]) ?? 0);
+    }
+    return int.tryParse(display) ?? 0;
+  }
+
+  static String formatWeight(double kg, String unit) {
+    final value = unit == 'lbs' ? kgToLbs(kg) : kg;
+    return '${_fmt(value)} $unit';
+  }
+
+  static String formatDistance(double km, String unit) {
+    final value = unit == 'mi' ? kmToMi(km) : km;
+    return '${_fmt(value)} $unit';
+  }
+
+  static String formatDiffWeight(double diffKg, String unit) {
+    final value = unit == 'lbs' ? kgToLbs(diffKg) : diffKg;
+    final sign = value >= 0 ? '+' : '';
+    return '$sign${_fmt(value)} $unit';
+  }
+
+  static String formatDiffTime(int diffSeconds) {
+    final sign = diffSeconds <= 0 ? '-' : '+';
+    return '$sign${secondsToDisplay(diffSeconds.abs())}';
+  }
+
+  static String formatDiffDistance(double diffKm, String unit) {
+    final value = unit == 'mi' ? kmToMi(diffKm) : diffKm;
+    final sign = value >= 0 ? '+' : '';
+    return '$sign${_fmt(value)} $unit';
+  }
+
+  static String _fmt(double value) {
+    if (value == value.truncateToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(1);
+  }
+}
+```
+
+- [ ] **Step 4: 테스트 실행 (통과 확인)**
+
+```bash
+flutter test test/core/utils/unit_converter_test.dart
+```
+
+Expected: All tests pass
+
+- [ ] **Step 5: 커밋**
+
+```bash
+git add lib/core/utils/ test/core/utils/
+git commit -m "feat: add UnitConverter with kg/lbs, km/mi, time formatting"
+```
+
+---
+
+## Task 4: DatabaseHelper
+
+**Files:**
+- Create: `lib/core/database/database_helper.dart`
+- Create: `test/core/database/database_helper_test.dart`
+
+- [ ] **Step 1: DatabaseHelper 구현**
+
+`lib/core/database/database_helper.dart`:
+
+```dart
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import '../models/exercise.dart';
+import '../models/record.dart';
+
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._();
+  static Database? _db;
+
+  DatabaseHelper._();
+
+  Future<Database> get database async {
+    _db ??= await _open();
+    return _db!;
+  }
+
+  Future<Database> _open() async {
+    final dbPath = await getDatabasesPath();
+    return openDatabase(
+      join(dbPath, 'peaklog.db'),
+      version: 1,
+      onCreate: (db, _) async {
+        await db.execute('''
+          CREATE TABLE exercises (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            order_index INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            exercise_id INTEGER NOT NULL,
+            value REAL NOT NULL,
+            recorded_at INTEGER NOT NULL,
+            note TEXT
+          )
+        ''');
+      },
+    );
+  }
+
+  Future<int> insertExercise(Exercise exercise) async {
+    final db = await database;
+    return db.insert('exercises', exercise.toMap());
+  }
+
+  Future<List<Exercise>> getExercises() async {
+    final db = await database;
+    final maps = await db.query('exercises', orderBy: 'order_index ASC');
+    return maps.map(Exercise.fromMap).toList();
+  }
+
+  Future<void> deleteExercise(int id) async {
+    final db = await database;
+    await db.delete('records', where: 'exercise_id = ?', whereArgs: [id]);
+    await db.delete('exercises', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> insertRecord(Record record) async {
+    final db = await database;
+    return db.insert('records', record.toMap());
+  }
+
+  Future<List<Record>> getRecordsForExercise(int exerciseId) async {
+    final db = await database;
+    final maps = await db.query(
+      'records',
+      where: 'exercise_id = ?',
+      whereArgs: [exerciseId],
+      orderBy: 'recorded_at DESC',
+    );
+    return maps.map(Record.fromMap).toList();
+  }
+
+  Future<void> deleteRecord(int id) async {
+    final db = await database;
+    await db.delete('records', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> close() async {
+    final db = _db;
+    if (db != null) {
+      await db.close();
+      _db = null;
+    }
+  }
+}
+```
+
+- [ ] **Step 2: DatabaseHelper 테스트 작성**
+
+`test/core/database/database_helper_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:peaklog/core/database/database_helper.dart';
+import 'package:peaklog/core/models/exercise.dart';
+import 'package:peaklog/core/models/record.dart';
+
+void main() {
+  late DatabaseHelper helper;
+
+  setUpAll(() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  });
+
+  setUp(() {
+    helper = DatabaseHelper.instance;
+  });
+
+  tearDown(() async {
+    final db = await helper.database;
+    final path = db.path;
+    await helper.close();
+    await databaseFactory.deleteDatabase(path);
+  });
+
+  test('insert and retrieve exercise', () async {
+    const exercise = Exercise(
+      name: '스쿼트',
+      type: ExerciseType.weight,
+      orderIndex: 0,
+      createdAt: 1000000,
+    );
+    final id = await helper.insertExercise(exercise);
+    expect(id, greaterThan(0));
+
+    final list = await helper.getExercises();
+    expect(list.length, 1);
+    expect(list.first.name, '스쿼트');
+    expect(list.first.id, id);
+  });
+
+  test('exercises ordered by order_index', () async {
+    await helper.insertExercise(const Exercise(
+      name: 'B', type: ExerciseType.weight, orderIndex: 1, createdAt: 0));
+    await helper.insertExercise(const Exercise(
+      name: 'A', type: ExerciseType.weight, orderIndex: 0, createdAt: 0));
+
+    final list = await helper.getExercises();
+    expect(list[0].name, 'A');
+    expect(list[1].name, 'B');
+  });
+
+  test('delete exercise', () async {
+    final id = await helper.insertExercise(const Exercise(
+      name: 'X', type: ExerciseType.time, orderIndex: 0, createdAt: 0));
+    await helper.deleteExercise(id);
+    final list = await helper.getExercises();
+    expect(list.where((e) => e.id == id), isEmpty);
+  });
+
+  test('insert and retrieve records', () async {
+    final exId = await helper.insertExercise(const Exercise(
+      name: 'Run', type: ExerciseType.distance, orderIndex: 0, createdAt: 0));
+    final record = Record(exerciseId: exId, value: 5.0, recordedAt: 1000000);
+    final rId = await helper.insertRecord(record);
+    expect(rId, greaterThan(0));
+
+    final records = await helper.getRecordsForExercise(exId);
+    expect(records.length, 1);
+    expect(records.first.value, 5.0);
+  });
+
+  test('records ordered newest first', () async {
+    final exId = await helper.insertExercise(const Exercise(
+      name: 'Run', type: ExerciseType.distance, orderIndex: 0, createdAt: 0));
+    await helper.insertRecord(Record(exerciseId: exId, value: 5.0, recordedAt: 1000));
+    await helper.insertRecord(Record(exerciseId: exId, value: 6.0, recordedAt: 2000));
+
+    final records = await helper.getRecordsForExercise(exId);
+    expect(records[0].recordedAt, 2000);
+    expect(records[1].recordedAt, 1000);
+  });
+
+  test('delete record', () async {
+    final exId = await helper.insertExercise(const Exercise(
+      name: 'R', type: ExerciseType.weight, orderIndex: 0, createdAt: 0));
+    final rId = await helper.insertRecord(
+        Record(exerciseId: exId, value: 100, recordedAt: 1000));
+    await helper.deleteRecord(rId);
+    final records = await helper.getRecordsForExercise(exId);
+    expect(records, isEmpty);
+  });
+}
+```
+
+- [ ] **Step 3: 테스트 실행**
+
+```bash
+flutter test test/core/database/database_helper_test.dart
+```
+
+Expected: All tests pass
+
+- [ ] **Step 4: 커밋**
+
+```bash
+git add lib/core/database/ test/core/database/
+git commit -m "feat: add DatabaseHelper with sqflite CRUD"
+```
+
+---
+
+## Task 5: Riverpod Providers
+
+**Files:**
+- Create: `lib/providers/unit_settings_provider.dart`
+- Create: `lib/providers/exercises_provider.dart`
+- Create: `lib/providers/records_provider.dart`
+- Create: `test/providers/unit_settings_provider_test.dart`
+
+- [ ] **Step 1: UnitSettings provider**
+
+`lib/providers/unit_settings_provider.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class UnitSettings {
+  final String weightUnit;
+  final String distanceUnit;
+
+  const UnitSettings({this.weightUnit = 'kg', this.distanceUnit = 'km'});
+
+  UnitSettings copyWith({String? weightUnit, String? distanceUnit}) => UnitSettings(
+        weightUnit: weightUnit ?? this.weightUnit,
+        distanceUnit: distanceUnit ?? this.distanceUnit,
+      );
+}
+
+class UnitSettingsNotifier extends AsyncNotifier<UnitSettings> {
+  @override
+  Future<UnitSettings> build() async {
+    final prefs = await SharedPreferences.getInstance();
+    return UnitSettings(
+      weightUnit: prefs.getString('weightUnit') ?? 'kg',
+      distanceUnit: prefs.getString('distanceUnit') ?? 'km',
+    );
+  }
+
+  Future<void> toggleWeightUnit() async {
+    final current = state.valueOrNull ?? const UnitSettings();
+    final next = current.weightUnit == 'kg' ? 'lbs' : 'kg';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('weightUnit', next);
+    state = AsyncData(current.copyWith(weightUnit: next));
+  }
+
+  Future<void> toggleDistanceUnit() async {
+    final current = state.valueOrNull ?? const UnitSettings();
+    final next = current.distanceUnit == 'km' ? 'mi' : 'km';
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('distanceUnit', next);
+    state = AsyncData(current.copyWith(distanceUnit: next));
+  }
+}
+
+final unitSettingsProvider =
+    AsyncNotifierProvider<UnitSettingsNotifier, UnitSettings>(
+  UnitSettingsNotifier.new,
+);
+```
+
+- [ ] **Step 2: Exercises provider**
+
+`lib/providers/exercises_provider.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/database/database_helper.dart';
+import '../core/models/exercise.dart';
+
+class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
+  @override
+  Future<List<Exercise>> build() async {
+    return DatabaseHelper.instance.getExercises();
+  }
+
+  Future<void> addExercise(String name, ExerciseType type) async {
+    final current = state.valueOrNull ?? [];
+    if (current.length >= 6) return;
+    final exercise = Exercise(
+      name: name,
+      type: type,
+      orderIndex: current.length,
+      createdAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+    );
+    final id = await DatabaseHelper.instance.insertExercise(exercise);
+    state = AsyncData([...current, exercise.copyWith(id: id)]);
+  }
+
+  Future<void> deleteExercise(int id) async {
+    await DatabaseHelper.instance.deleteExercise(id);
+    final current = state.valueOrNull ?? [];
+    final updated = current.where((e) => e.id != id).toList();
+    final reindexed = updated
+        .asMap()
+        .entries
+        .map((e) => e.value.copyWith(orderIndex: e.key))
+        .toList();
+    state = AsyncData(reindexed);
+  }
+}
+
+final exercisesProvider =
+    AsyncNotifierProvider<ExercisesNotifier, List<Exercise>>(
+  ExercisesNotifier.new,
+);
+```
+
+- [ ] **Step 3: Records provider**
+
+`lib/providers/records_provider.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/database/database_helper.dart';
+import '../core/models/record.dart';
+
+class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, int> {
+  @override
+  Future<List<Record>> build(int exerciseId) async {
+    return DatabaseHelper.instance.getRecordsForExercise(exerciseId);
+  }
+
+  Future<Record> addRecord(double value, int recordedAt) async {
+    final exerciseId = arg;
+    final record = Record(
+      exerciseId: exerciseId,
+      value: value,
+      recordedAt: recordedAt,
+    );
+    final id = await DatabaseHelper.instance.insertRecord(record);
+    final saved = record.copyWith(id: id);
+    final current = state.valueOrNull ?? [];
+    state = AsyncData([saved, ...current]);
+    return saved;
+  }
+
+  Future<void> deleteRecord(int id) async {
+    await DatabaseHelper.instance.deleteRecord(id);
+    final current = state.valueOrNull ?? [];
+    state = AsyncData(current.where((r) => r.id != id).toList());
+  }
+}
+
+final recordsProvider =
+    AsyncNotifierProvider.family<RecordsNotifier, List<Record>, int>(
+  RecordsNotifier.new,
+);
+```
+
+- [ ] **Step 4: UnitSettings provider 테스트**
+
+`test/providers/unit_settings_provider_test.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:peaklog/providers/unit_settings_provider.dart';
+
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  test('initial state is kg and km', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final settings = await container.read(unitSettingsProvider.future);
+    expect(settings.weightUnit, 'kg');
+    expect(settings.distanceUnit, 'km');
+  });
+
+  test('toggleWeightUnit switches kg to lbs', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(unitSettingsProvider.future);
+    await container.read(unitSettingsProvider.notifier).toggleWeightUnit();
+
+    final settings = container.read(unitSettingsProvider).valueOrNull;
+    expect(settings?.weightUnit, 'lbs');
+  });
+
+  test('toggleWeightUnit switches lbs back to kg', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(unitSettingsProvider.future);
+    await container.read(unitSettingsProvider.notifier).toggleWeightUnit();
+    await container.read(unitSettingsProvider.notifier).toggleWeightUnit();
+
+    final settings = container.read(unitSettingsProvider).valueOrNull;
+    expect(settings?.weightUnit, 'kg');
+  });
+
+  test('toggleDistanceUnit switches km to mi', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(unitSettingsProvider.future);
+    await container.read(unitSettingsProvider.notifier).toggleDistanceUnit();
+
+    final settings = container.read(unitSettingsProvider).valueOrNull;
+    expect(settings?.distanceUnit, 'mi');
+  });
+}
+```
+
+- [ ] **Step 5: 테스트 실행**
+
+```bash
+flutter test test/providers/unit_settings_provider_test.dart
+```
+
+Expected: All tests pass
+
+- [ ] **Step 6: 커밋**
+
+```bash
+git add lib/providers/ test/providers/
+git commit -m "feat: add Riverpod providers for unit settings, exercises, records"
+```
+
+---
+
+## Task 6: 앱 테마 및 진입점
+
+**Files:**
+- Create: `lib/core/theme/app_theme.dart`
+- Create: `lib/app.dart`
+
+- [ ] **Step 1: AppTheme 작성**
+
+`lib/core/theme/app_theme.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class AppTheme {
+  static const Color background = Color(0xFF1A1A1A);
+  static const Color card = Color(0xFF2C2C2C);
+  static const Color accent = Color(0xFFFF6B35);
+  static const Color textPrimary = Color(0xFFFFFFFF);
+  static const Color textSecondary = Color(0xFF888888);
+
+  static ThemeData get dark {
+    final base = ThemeData.dark(useMaterial3: true);
+    return base.copyWith(
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.dark(
+        primary: accent,
+        surface: card,
+        onPrimary: Colors.white,
+        onSurface: textPrimary,
+      ),
+      textTheme: GoogleFonts.spaceGroteskTextTheme(base.textTheme).apply(
+        bodyColor: textPrimary,
+        displayColor: textPrimary,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: textPrimary,
+        elevation: 0,
+        titleTextStyle: GoogleFonts.spaceGrotesk(
+          color: textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 2,
+        ),
+      ),
+      cardTheme: const CardThemeData(
+        color: card,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: card,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: accent, width: 2),
+        ),
+        labelStyle: const TextStyle(color: textSecondary),
+        hintStyle: const TextStyle(color: textSecondary),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+      ),
+      sliderTheme: const SliderThemeData(
+        activeTrackColor: accent,
+        thumbColor: accent,
+        inactiveTrackColor: card,
+        overlayColor: Color(0x33FF6B35),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: app.dart 작성**
+
+`lib/app.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'features/home/home_screen.dart';
+
+class PeaklogApp extends StatelessWidget {
+  const PeaklogApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'PeakLog',
+      theme: AppTheme.dark,
+      debugShowCheckedModeBanner: false,
+      home: const HomeScreen(),
+    );
+  }
+}
+```
+
+- [ ] **Step 3: 앱 기동 확인 (홈 화면 플레이스홀더 임시 생성)**
+
+`lib/features/home/home_screen.dart` 임시 파일:
+
+```dart
+import 'package:flutter/material.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text('PeakLog', style: TextStyle(fontSize: 32))),
+    );
+  }
+}
+```
+
+- [ ] **Step 4: 앱 실행 확인**
+
+```bash
+flutter run
+```
+
+Expected: 검정 배경에 "PeakLog" 텍스트가 보이는 빈 화면
+
+- [ ] **Step 5: 커밋**
+
+```bash
+git add lib/core/theme/ lib/app.dart lib/features/home/home_screen.dart
+git commit -m "feat: app theme (dark, orange accent) and app entry point"
+```
+
+---
+
+## Task 7: 홈 화면 및 UnitToggle
+
+**Files:**
+- Modify: `lib/features/home/home_screen.dart`
+- Create: `lib/features/home/unit_toggle.dart`
+
+- [ ] **Step 1: UnitToggle 위젯 작성**
+
+`lib/features/home/unit_toggle.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/unit_settings_provider.dart';
+
+class UnitToggle extends ConsumerWidget {
+  const UnitToggle({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+    if (settings == null) return const SizedBox.shrink();
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ToggleChip(
+          label: '${settings.weightUnit.toUpperCase()} ⇄ ${settings.weightUnit == 'kg' ? 'LBS' : 'KG'}',
+          onTap: () => ref.read(unitSettingsProvider.notifier).toggleWeightUnit(),
+        ),
+        const SizedBox(width: 8),
+        _ToggleChip(
+          label: '${settings.distanceUnit.toUpperCase()} ⇄ ${settings.distanceUnit == 'km' ? 'MI' : 'KM'}',
+          onTap: () => ref.read(unitSettingsProvider.notifier).toggleDistanceUnit(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ToggleChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _ToggleChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.accent.withOpacity(0.4)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.accent,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: HomeScreen 본체 작성**
+
+`lib/features/home/home_screen.dart` 전체 교체:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/exercises_provider.dart';
+import 'exercise_card.dart';
+import 'unit_toggle.dart';
+import 'add_exercise_sheet.dart';
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final exercisesAsync = ref.watch(exercisesProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PeakLog'),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: UnitToggle(),
+          ),
+        ],
+      ),
+      body: exercisesAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppTheme.accent),
+        ),
+        error: (e, _) => Center(child: Text('오류: $e')),
+        data: (exercises) => exercises.isEmpty
+            ? _EmptyState(onAdd: () => _showAddSheet(context, ref))
+            : ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                itemCount: exercises.length,
+                itemBuilder: (_, i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ExerciseCard(exercise: exercises[i]),
+                ),
+              ),
+      ),
+      floatingActionButton: exercisesAsync.valueOrNull != null &&
+              exercisesAsync.valueOrNull!.length < 6
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddSheet(context, ref),
+              backgroundColor: AppTheme.accent,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('운동 추가',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+            )
+          : null,
+    );
+  }
+
+  void _showAddSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const AddExerciseSheet(),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final VoidCallback onAdd;
+  const _EmptyState({required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('운동을 추가해보세요',
+              style: TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 18)),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add),
+            label: const Text('운동 추가'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add lib/features/home/home_screen.dart lib/features/home/unit_toggle.dart
+git commit -m "feat: home screen scaffold with unit toggle"
+```
+
+---
+
+## Task 8: ExerciseCard + 1RM 패널
+
+**Files:**
+- Create: `lib/features/home/exercise_card.dart`
+- Create: `lib/features/home/one_rm_panel.dart`
+
+- [ ] **Step 1: OneRmPanel 작성**
+
+`lib/features/home/one_rm_panel.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/records_provider.dart';
+import '../../providers/unit_settings_provider.dart';
+
+class OneRmPanel extends ConsumerStatefulWidget {
+  final Exercise exercise;
+  const OneRmPanel({required this.exercise, super.key});
+
+  @override
+  ConsumerState<OneRmPanel> createState() => _OneRmPanelState();
+}
+
+class _OneRmPanelState extends ConsumerState<OneRmPanel> {
+  double _percent = 80;
+
+  @override
+  Widget build(BuildContext context) {
+    final records = ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
+    final unit = ref.watch(unitSettingsProvider).valueOrNull?.weightUnit ?? 'kg';
+
+    double? bestKg;
+    if (records.isNotEmpty) {
+      bestKg = records.map((r) => r.value).reduce((a, b) => a > b ? a : b);
+    }
+
+    final calculated = bestKg != null ? bestKg * (_percent / 100) : null;
+    final displayCalc = calculated != null
+        ? UnitConverter.formatWeight(calculated, unit)
+        : '—';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFF222222),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '1RM %',
+            style: TextStyle(
+                color: AppTheme.accent,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 4,
+                  ),
+                  child: Slider(
+                    value: _percent,
+                    min: 0,
+                    max: 120,
+                    divisions: 120,
+                    onChanged: (v) => setState(() => _percent = v),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 48,
+                child: Text(
+                  '${_percent.toInt()}%',
+                  style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.right,
+                ),
+              ),
+            ],
+          ),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.card,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                displayCalc,
+                style: const TextStyle(
+                    color: AppTheme.accent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+          if (bestKg == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('기록을 먼저 추가해주세요',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: ExerciseCard 작성**
+
+`lib/features/home/exercise_card.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/models/record.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/records_provider.dart';
+import '../../providers/unit_settings_provider.dart';
+import '../../providers/exercises_provider.dart';
+import '../history/history_screen.dart';
+import '../record_input/record_input_screen.dart';
+import 'one_rm_panel.dart';
+
+class ExerciseCard extends ConsumerStatefulWidget {
+  final Exercise exercise;
+  const ExerciseCard({required this.exercise, super.key});
+
+  @override
+  ConsumerState<ExerciseCard> createState() => _ExerciseCardState();
+}
+
+class _ExerciseCardState extends ConsumerState<ExerciseCard> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final records = ref.watch(recordsProvider(widget.exercise.id!)).valueOrNull ?? [];
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+
+    final bestRecord = _getBestRecord(records, widget.exercise.type);
+    final displayValue = _formatBestValue(bestRecord, widget.exercise, settings);
+    final daysSince = _daysSince(records);
+
+    return GestureDetector(
+      onLongPress: () => _confirmDelete(context),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: widget.exercise.type == ExerciseType.weight
+                ? () => setState(() => _expanded = !_expanded)
+                : null,
+            child: Card(
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(16),
+                  bottom: Radius.circular(_expanded ? 0 : 16),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    widget.exercise.name.toUpperCase(),
+                                    style: const TextStyle(
+                                        color: AppTheme.textSecondary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 2),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.accent.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      widget.exercise.type.label,
+                                      style: const TextStyle(
+                                          color: AppTheme.accent,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                displayValue,
+                                style: const TextStyle(
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (widget.exercise.type == ExerciseType.weight)
+                          Icon(
+                            _expanded ? Icons.expand_less : Icons.expand_more,
+                            color: AppTheme.textSecondary,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Text(
+                          daysSince,
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 12),
+                        ),
+                        if (bestRecord != null) ...[
+                          const SizedBox(width: 8),
+                          const Icon(Icons.star,
+                              color: AppTheme.accent, size: 14),
+                          const SizedBox(width: 2),
+                          const Text(
+                            '최고 기록',
+                            style: TextStyle(
+                                color: AppTheme.accent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => _openRecordInput(context),
+                          style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.accent,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4)),
+                          child: const Text('기록 추가',
+                              style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w700)),
+                        ),
+                        TextButton(
+                          onPressed: () => _openHistory(context),
+                          style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.textSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4)),
+                          child: const Text('히스토리',
+                              style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_expanded && widget.exercise.type == ExerciseType.weight)
+            OneRmPanel(exercise: widget.exercise),
+        ],
+      ),
+    );
+  }
+
+  Record? _getBestRecord(List<Record> records, ExerciseType type) {
+    if (records.isEmpty) return null;
+    if (type == ExerciseType.time) {
+      return records.reduce((a, b) => a.value < b.value ? a : b);
+    }
+    return records.reduce((a, b) => a.value > b.value ? a : b);
+  }
+
+  String _formatBestValue(
+      Record? best, Exercise exercise, UnitSettings? settings) {
+    if (best == null) return '—';
+    switch (exercise.type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatWeight(
+            best.value, settings?.weightUnit ?? 'kg');
+      case ExerciseType.time:
+        return UnitConverter.secondsToDisplay(best.value.toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDistance(
+            best.value, settings?.distanceUnit ?? 'km');
+    }
+  }
+
+  String _daysSince(List<Record> records) {
+    if (records.isEmpty) return '기록 없음';
+    final last = DateTime.fromMillisecondsSinceEpoch(
+        records.first.recordedAt * 1000);
+    final diff = DateTime.now().difference(last).inDays;
+    if (diff == 0) return '오늘';
+    return '+${diff}일';
+  }
+
+  void _openRecordInput(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RecordInputScreen(exercise: widget.exercise),
+      ),
+    );
+  }
+
+  void _openHistory(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HistoryScreen(exercise: widget.exercise),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('운동 삭제'),
+        content: Text(
+            '\'${widget.exercise.name}\' 와(과) 모든 기록을 삭제할까요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소',
+                style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref
+                  .read(exercisesProvider.notifier)
+                  .deleteExercise(widget.exercise.id!);
+            },
+            child: const Text('삭제',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 3: 임시 플레이스홀더 생성 (빌드 오류 방지)**
+
+`lib/features/history/history_screen.dart` 임시:
+
+```dart
+import 'package:flutter/material.dart';
+import '../../core/models/exercise.dart';
+
+class HistoryScreen extends StatelessWidget {
+  final Exercise exercise;
+  const HistoryScreen({required this.exercise, super.key});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: Text(exercise.name)),
+      body: const Center(child: Text('히스토리')));
+}
+```
+
+`lib/features/record_input/record_input_screen.dart` 임시:
+
+```dart
+import 'package:flutter/material.dart';
+import '../../core/models/exercise.dart';
+
+class RecordInputScreen extends StatelessWidget {
+  final Exercise exercise;
+  const RecordInputScreen({required this.exercise, super.key});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: Text(exercise.name)),
+      body: const Center(child: Text('기록 입력')));
+}
+```
+
+- [ ] **Step 4: 앱 실행 확인**
+
+```bash
+flutter run
+```
+
+Expected: 홈 화면에 운동 추가 버튼이 보이고, 운동 추가 시 카드가 표시됨. weight 타입 카드 탭 시 1RM 패널 확장됨.
+
+- [ ] **Step 5: 커밋**
+
+```bash
+git add lib/features/home/ lib/features/history/ lib/features/record_input/
+git commit -m "feat: exercise card with 1RM slider panel"
+```
+
+---
+
+## Task 9: 운동 추가 바텀시트
+
+**Files:**
+- Create: `lib/features/home/add_exercise_sheet.dart`
+
+- [ ] **Step 1: AddExerciseSheet 작성**
+
+`lib/features/home/add_exercise_sheet.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/exercises_provider.dart';
+
+class AddExerciseSheet extends ConsumerStatefulWidget {
+  const AddExerciseSheet({super.key});
+
+  @override
+  ConsumerState<AddExerciseSheet> createState() => _AddExerciseSheetState();
+}
+
+class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
+  final _controller = TextEditingController();
+  ExerciseType _selectedType = ExerciseType.weight;
+  bool _saving = false;
+
+  final _types = [
+    (ExerciseType.weight, '무게', '스쿼트, 데드리프트 등'),
+    (ExerciseType.time, '시간', '5km 달리기, 플랭크 등'),
+    (ExerciseType.distance, '거리', '하루 러닝 거리 등'),
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '운동 추가',
+            style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            style: const TextStyle(color: AppTheme.textPrimary),
+            decoration: const InputDecoration(
+              labelText: '운동 이름',
+              hintText: '예: 스쿼트, 5km 달리기',
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            '운동 타입',
+            style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1),
+          ),
+          const SizedBox(height: 12),
+          ..._types.map((t) => _TypeTile(
+                type: t.$1,
+                label: t.$2,
+                description: t.$3,
+                selected: _selectedType == t.$1,
+                onTap: () => setState(() => _selectedType = t.$1),
+              )),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _saving ? null : _submit,
+            child: _saving
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Text('추가'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty) return;
+    setState(() => _saving = true);
+    await ref.read(exercisesProvider.notifier).addExercise(name, _selectedType);
+    if (mounted) Navigator.pop(context);
+  }
+}
+
+class _TypeTile extends StatelessWidget {
+  final ExerciseType type;
+  final String label;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TypeTile({
+    required this.type,
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.accent.withOpacity(0.15)
+              : AppTheme.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? AppTheme.accent : AppTheme.card,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                        color: selected
+                            ? AppTheme.accent
+                            : AppTheme.textPrimary,
+                        fontWeight: FontWeight.w700),
+                  ),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_circle, color: AppTheme.accent, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: 앱에서 바텀시트 동작 확인**
+
+```bash
+flutter run
+```
+
+Expected: FAB 탭 시 바텀시트 열림, 이름 입력 + 타입 선택 + 추가 버튼으로 카드 생성됨
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add lib/features/home/add_exercise_sheet.dart
+git commit -m "feat: add exercise bottom sheet with type selection"
+```
+
+---
+
+## Task 10: 기록 입력 화면
+
+**Files:**
+- Modify: `lib/features/record_input/record_input_screen.dart`
+- Create: `lib/features/record_input/time_input_field.dart`
+
+- [ ] **Step 1: TimeInputField 위젯 작성**
+
+`lib/features/record_input/time_input_field.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../core/theme/app_theme.dart';
+
+class TimeInputField extends StatefulWidget {
+  final ValueChanged<int> onChanged;
+  final int initialSeconds;
+
+  const TimeInputField({
+    required this.onChanged,
+    this.initialSeconds = 0,
+    super.key,
+  });
+
+  @override
+  State<TimeInputField> createState() => _TimeInputFieldState();
+}
+
+class _TimeInputFieldState extends State<TimeInputField> {
+  late final TextEditingController _h;
+  late final TextEditingController _m;
+  late final TextEditingController _s;
+
+  @override
+  void initState() {
+    super.initState();
+    final total = widget.initialSeconds;
+    final h = total ~/ 3600;
+    final m = (total % 3600) ~/ 60;
+    final s = total % 60;
+    _h = TextEditingController(text: h > 0 ? h.toString() : '');
+    _m = TextEditingController(text: m.toString().padLeft(2, '0'));
+    _s = TextEditingController(text: s.toString().padLeft(2, '0'));
+  }
+
+  @override
+  void dispose() {
+    _h.dispose();
+    _m.dispose();
+    _s.dispose();
+    super.dispose();
+  }
+
+  void _notify() {
+    final h = int.tryParse(_h.text) ?? 0;
+    final m = int.tryParse(_m.text) ?? 0;
+    final s = int.tryParse(_s.text) ?? 0;
+    widget.onChanged(h * 3600 + m * 60 + s);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _Field(controller: _h, hint: '0', label: '시간', maxLength: 2, onChanged: (_) => _notify()),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Text(':', style: TextStyle(color: AppTheme.textPrimary, fontSize: 24, fontWeight: FontWeight.w700)),
+        ),
+        _Field(controller: _m, hint: '00', label: '분', maxLength: 2, onChanged: (_) => _notify()),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Text(':', style: TextStyle(color: AppTheme.textPrimary, fontSize: 24, fontWeight: FontWeight.w700)),
+        ),
+        _Field(controller: _s, hint: '00', label: '초', maxLength: 2, onChanged: (_) => _notify()),
+      ],
+    );
+  }
+}
+
+class _Field extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final String label;
+  final int maxLength;
+  final ValueChanged<String> onChanged;
+
+  const _Field({
+    required this.controller,
+    required this.hint,
+    required this.label,
+    required this.maxLength,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.w700),
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(maxLength),
+            ],
+            decoration: InputDecoration(hintText: hint),
+            onChanged: onChanged,
+          ),
+          const SizedBox(height: 4),
+          Text(label,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: RecordInputScreen 완성**
+
+`lib/features/record_input/record_input_screen.dart` 전체 교체:
+
+```dart
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/models/record.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/records_provider.dart';
+import '../../providers/unit_settings_provider.dart';
+import 'pr_celebration_dialog.dart';
+import 'time_input_field.dart';
+
+class RecordInputScreen extends ConsumerStatefulWidget {
+  final Exercise exercise;
+  const RecordInputScreen({required this.exercise, super.key});
+
+  @override
+  ConsumerState<RecordInputScreen> createState() => _RecordInputScreenState();
+}
+
+class _RecordInputScreenState extends ConsumerState<RecordInputScreen> {
+  final _valueController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
+  int _timeSeconds = 0;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _valueController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+    final weightUnit = settings?.weightUnit ?? 'kg';
+    final distanceUnit = settings?.distanceUnit ?? 'km';
+
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.exercise.name)),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _DatePicker(
+              selected: _selectedDate,
+              onChanged: (d) => setState(() => _selectedDate = d),
+            ),
+            const SizedBox(height: 24),
+            if (widget.exercise.type == ExerciseType.time) ...[
+              const Text('기록',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1)),
+              const SizedBox(height: 8),
+              TimeInputField(
+                initialSeconds: _timeSeconds,
+                onChanged: (s) => setState(() => _timeSeconds = s),
+              ),
+            ] else ...[
+              TextField(
+                controller: _valueController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+                ],
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  labelText: '기록',
+                  suffixText: widget.exercise.type == ExerciseType.weight
+                      ? weightUnit
+                      : distanceUnit,
+                  suffixStyle: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 16),
+                ),
+              ),
+            ],
+            const Spacer(),
+            ElevatedButton(
+              onPressed: _saving ? null : () => _save(weightUnit, distanceUnit),
+              child: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Text('저장'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _save(String weightUnit, String distanceUnit) async {
+    final exerciseId = widget.exercise.id!;
+    double inputValueKg;
+
+    if (widget.exercise.type == ExerciseType.time) {
+      if (_timeSeconds == 0) return;
+      inputValueKg = _timeSeconds.toDouble();
+    } else {
+      final raw = double.tryParse(_valueController.text.trim());
+      if (raw == null || raw <= 0) return;
+      if (widget.exercise.type == ExerciseType.weight) {
+        inputValueKg = weightUnit == 'lbs'
+            ? UnitConverter.lbsToKg(raw)
+            : raw;
+      } else {
+        inputValueKg = distanceUnit == 'mi'
+            ? UnitConverter.miToKm(raw)
+            : raw;
+      }
+    }
+
+    setState(() => _saving = true);
+
+    final currentRecords =
+        ref.read(recordsProvider(exerciseId)).valueOrNull ?? [];
+    final previousBest = _getPreviousBest(currentRecords, widget.exercise.type);
+
+    await ref
+        .read(recordsProvider(exerciseId).notifier)
+        .addRecord(inputValueKg, _selectedDate.millisecondsSinceEpoch ~/ 1000);
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    final isPb = _isPb(inputValueKg, previousBest, widget.exercise.type);
+    if (isPb) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => PRCelebrationDialog(
+          exercise: widget.exercise,
+          newValue: inputValueKg,
+          previousBest: previousBest,
+        ),
+      );
+    }
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  double? _getPreviousBest(List<Record> records, ExerciseType type) {
+    if (records.isEmpty) return null;
+    if (type == ExerciseType.time) {
+      return records.map((r) => r.value).reduce(min);
+    }
+    return records.map((r) => r.value).reduce(max);
+  }
+
+  bool _isPb(double newValue, double? previousBest, ExerciseType type) {
+    if (previousBest == null) return true;
+    return type == ExerciseType.time
+        ? newValue < previousBest
+        : newValue > previousBest;
+  }
+}
+
+class _DatePicker extends StatelessWidget {
+  final DateTime selected;
+  final ValueChanged<DateTime> onChanged;
+
+  const _DatePicker({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: selected,
+          firstDate: DateTime(2000),
+          lastDate: DateTime.now(),
+          builder: (ctx, child) => Theme(
+            data: Theme.of(ctx).copyWith(
+              colorScheme: const ColorScheme.dark(
+                primary: AppTheme.accent,
+                surface: AppTheme.card,
+              ),
+            ),
+            child: child!,
+          ),
+        );
+        if (picked != null) onChanged(picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today,
+                color: AppTheme.accent, size: 18),
+            const SizedBox(width: 12),
+            Text(
+              '${selected.year}.${selected.month.toString().padLeft(2, '0')}.${selected.day.toString().padLeft(2, '0')}',
+              style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 3: PRCelebrationDialog 임시 플레이스홀더 생성 (빌드 오류 방지)**
+
+`lib/features/record_input/pr_celebration_dialog.dart` 임시:
+
+```dart
+import 'package:flutter/material.dart';
+import '../../core/models/exercise.dart';
+
+class PRCelebrationDialog extends StatelessWidget {
+  final Exercise exercise;
+  final double newValue;
+  final double? previousBest;
+  const PRCelebrationDialog({
+    required this.exercise,
+    required this.newValue,
+    this.previousBest,
+    super.key,
+  });
+  @override
+  Widget build(BuildContext context) => const AlertDialog(
+      title: Text('PR 달성!'), content: Text('새로운 최고 기록!'));
+}
+```
+
+- [ ] **Step 4: 빌드 확인**
+
+```bash
+flutter run
+```
+
+Expected: 카드에서 '기록 추가' 버튼 탭 → 기록 입력 화면 진입, 저장 시 홈으로 복귀
+
+- [ ] **Step 5: 커밋**
+
+```bash
+git add lib/features/record_input/
+git commit -m "feat: record input screen with time/weight/distance support"
+```
+
+---
+
+## Task 11: PR 축하 다이얼로그
+
+**Files:**
+- Modify: `lib/features/record_input/pr_celebration_dialog.dart`
+
+- [ ] **Step 1: PRCelebrationDialog 완성**
+
+`lib/features/record_input/pr_celebration_dialog.dart` 전체 교체:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/unit_settings_provider.dart';
+import '../export/export_screen.dart';
+
+class PRCelebrationDialog extends ConsumerWidget {
+  final Exercise exercise;
+  final double newValue;
+  final double? previousBest;
+
+  const PRCelebrationDialog({
+    required this.exercise,
+    required this.newValue,
+    this.previousBest,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+    final weightUnit = settings?.weightUnit ?? 'kg';
+    final distanceUnit = settings?.distanceUnit ?? 'km';
+
+    final displayNew = _formatValue(newValue, exercise.type, weightUnit, distanceUnit);
+    final displayDiff = _formatDiff(newValue, previousBest, exercise.type, weightUnit, distanceUnit);
+
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.emoji_events,
+                  color: AppTheme.accent, size: 36),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              previousBest == null ? '첫 기록!' : '새로운 PR!',
+              style: const TextStyle(
+                  color: AppTheme.accent,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              exercise.name,
+              style: const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    displayNew,
+                    style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900),
+                  ),
+                  if (displayDiff != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      displayDiff,
+                      style: const TextStyle(
+                          color: AppTheme.accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.card),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('닫기'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ExportScreen(
+                            exercise: exercise,
+                            newValue: newValue,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.share, size: 18),
+                    label: const Text('공유'),
+                    style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatValue(double value, ExerciseType type, String weightUnit,
+      String distanceUnit) {
+    switch (type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatWeight(value, weightUnit);
+      case ExerciseType.time:
+        return UnitConverter.secondsToDisplay(value.toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDistance(value, distanceUnit);
+    }
+  }
+
+  String? _formatDiff(double newVal, double? prev, ExerciseType type,
+      String weightUnit, String distanceUnit) {
+    if (prev == null) return null;
+    switch (type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatDiffWeight(newVal - prev, weightUnit);
+      case ExerciseType.time:
+        return UnitConverter.formatDiffTime((newVal - prev).toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDiffDistance(newVal - prev, distanceUnit);
+    }
+  }
+}
+```
+
+- [ ] **Step 2: ExportScreen 임시 플레이스홀더 생성**
+
+`lib/features/export/export_screen.dart` 임시:
+
+```dart
+import 'package:flutter/material.dart';
+import '../../core/models/exercise.dart';
+
+class ExportScreen extends StatelessWidget {
+  final Exercise exercise;
+  final double newValue;
+  const ExportScreen({required this.exercise, required this.newValue, super.key});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: const Text('공유')),
+      body: const Center(child: Text('내보내기')));
+}
+```
+
+- [ ] **Step 3: 기록 저장 후 PR 팝업 확인**
+
+```bash
+flutter run
+```
+
+Expected: 최고 기록 갱신 시 축하 팝업 표시, [닫기]/[공유] 버튼 동작
+
+- [ ] **Step 4: 커밋**
+
+```bash
+git add lib/features/record_input/pr_celebration_dialog.dart lib/features/export/
+git commit -m "feat: PR celebration dialog with share button"
+```
+
+---
+
+## Task 12: 히스토리 화면
+
+**Files:**
+- Modify: `lib/features/history/history_screen.dart`
+
+- [ ] **Step 1: HistoryScreen 완성**
+
+`lib/features/history/history_screen.dart` 전체 교체:
+
+```dart
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/models/exercise.dart';
+import '../../core/models/record.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+import '../../providers/records_provider.dart';
+import '../../providers/unit_settings_provider.dart';
+
+class HistoryScreen extends ConsumerWidget {
+  final Exercise exercise;
+  const HistoryScreen({required this.exercise, super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recordsAsync = ref.watch(recordsProvider(exercise.id!));
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+
+    return Scaffold(
+      appBar: AppBar(title: Text(exercise.name)),
+      body: recordsAsync.when(
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: AppTheme.accent)),
+        error: (e, _) => Center(child: Text('오류: $e')),
+        data: (records) {
+          if (records.isEmpty) {
+            return const Center(
+              child: Text('기록이 없습니다',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+            );
+          }
+          final bestValue = _getBestValue(records, exercise.type);
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: records.length,
+            itemBuilder: (_, i) => _RecordTile(
+              record: records[i],
+              exercise: exercise,
+              isBest: records[i].value == bestValue,
+              settings: settings,
+              onDelete: () => ref
+                  .read(recordsProvider(exercise.id!).notifier)
+                  .deleteRecord(records[i].id!),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  double? _getBestValue(List<Record> records, ExerciseType type) {
+    if (records.isEmpty) return null;
+    if (type == ExerciseType.time) {
+      return records.map((r) => r.value).reduce(min);
+    }
+    return records.map((r) => r.value).reduce(max);
+  }
+}
+
+class _RecordTile extends StatelessWidget {
+  final Record record;
+  final Exercise exercise;
+  final bool isBest;
+  final UnitSettings? settings;
+  final VoidCallback onDelete;
+
+  const _RecordTile({
+    required this.record,
+    required this.exercise,
+    required this.isBest,
+    required this.settings,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.fromMillisecondsSinceEpoch(record.recordedAt * 1000);
+    final dateStr =
+        '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+    final displayValue = _formatValue();
+
+    return Dismissible(
+      key: Key('record_${record.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete_outline, color: Colors.redAccent),
+      ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('기록 삭제'),
+            content: const Text('이 기록을 삭제할까요?'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('취소',
+                      style: TextStyle(color: AppTheme.textSecondary))),
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('삭제',
+                      style: TextStyle(color: Colors.redAccent))),
+            ],
+          ),
+        );
+      },
+      onDismissed: (_) => onDelete(),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(12),
+          border: isBest
+              ? Border.all(color: AppTheme.accent.withOpacity(0.5))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(dateStr,
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Text(displayValue,
+                      style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+            if (isBest)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text('PB',
+                    style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatValue() {
+    switch (exercise.type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatWeight(
+            record.value, settings?.weightUnit ?? 'kg');
+      case ExerciseType.time:
+        return UnitConverter.secondsToDisplay(record.value.toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDistance(
+            record.value, settings?.distanceUnit ?? 'km');
+    }
+  }
+}
+```
+
+- [ ] **Step 2: 앱 실행 및 히스토리 확인**
+
+```bash
+flutter run
+```
+
+Expected: 카드에서 '히스토리' 탭 → 기록 리스트 표시, 스와이프로 삭제 가능, PB 기록에 'PB' 뱃지 표시
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add lib/features/history/history_screen.dart
+git commit -m "feat: history screen with swipe-to-delete and PB badge"
+```
+
+---
+
+## Task 13: 내보내기 화면 (Clean + Rough 프레임)
+
+**Files:**
+- Create: `lib/features/export/clean_frame.dart`
+- Create: `lib/features/export/rough_frame.dart`
+- Modify: `lib/features/export/export_screen.dart`
+
+- [ ] **Step 1: CleanFrame 위젯 작성**
+
+`lib/features/export/clean_frame.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+
+class CleanFrame extends StatelessWidget {
+  final Exercise exercise;
+  final double valueInMetric;
+  final String weightUnit;
+  final String distanceUnit;
+  final DateTime date;
+
+  const CleanFrame({
+    required this.exercise,
+    required this.valueInMetric,
+    required this.weightUnit,
+    required this.distanceUnit,
+    required this.date,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue = _formatValue();
+    final dateStr =
+        '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+
+    return AspectRatio(
+      aspectRatio: 9 / 16,
+      child: Container(
+        color: AppTheme.background,
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'PeakLog',
+                  style: GoogleFonts.spaceGrotesk(
+                      color: AppTheme.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 4),
+                ),
+                Text(
+                  'NEW PR',
+                  style: GoogleFonts.spaceGrotesk(
+                      color: const Color(0xFF333333),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              exercise.name.toUpperCase(),
+              style: GoogleFonts.spaceGrotesk(
+                  color: const Color(0xFF444444),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 3),
+            ),
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                displayValue,
+                style: GoogleFonts.spaceGrotesk(
+                    color: AppTheme.textPrimary,
+                    fontSize: 72,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -2),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 16,
+                  color: AppTheme.accent,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '개인 최고 기록',
+                  style: GoogleFonts.spaceGrotesk(
+                      color: AppTheme.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dateStr,
+                  style: const TextStyle(
+                      color: Color(0xFF333333), fontSize: 11),
+                ),
+                Container(
+                    width: 32, height: 2, color: AppTheme.accent),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatValue() {
+    switch (exercise.type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatWeight(valueInMetric, weightUnit);
+      case ExerciseType.time:
+        return UnitConverter.secondsToDisplay(valueInMetric.toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDistance(valueInMetric, distanceUnit);
+    }
+  }
+}
+```
+
+- [ ] **Step 2: RoughFrame 위젯 작성**
+
+`lib/features/export/rough_frame.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/unit_converter.dart';
+
+class RoughFrame extends StatelessWidget {
+  final Exercise exercise;
+  final double valueInMetric;
+  final String weightUnit;
+  final String distanceUnit;
+  final DateTime date;
+
+  const RoughFrame({
+    required this.exercise,
+    required this.valueInMetric,
+    required this.weightUnit,
+    required this.distanceUnit,
+    required this.date,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue = _formatValue();
+    final dateStr =
+        '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+
+    return AspectRatio(
+      aspectRatio: 9 / 16,
+      child: Container(
+        color: const Color(0xFF111111),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -10,
+              top: -20,
+              child: Text(
+                'PR',
+                style: GoogleFonts.spaceGrotesk(
+                  color: const Color(0xFF1D1D1D),
+                  fontSize: 200,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        color: AppTheme.accent,
+                        child: Text(
+                          'PeakLog',
+                          style: GoogleFonts.spaceGrotesk(
+                              color: Colors.black,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2),
+                        ),
+                      ),
+                      Text(
+                        'NEW PR',
+                        style: GoogleFonts.spaceGrotesk(
+                            color: AppTheme.accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 2),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 40,
+                    height: 2,
+                    color: AppTheme.accent,
+                    margin: const EdgeInsets.only(bottom: 10),
+                  ),
+                  Text(
+                    '// ${exercise.name.toUpperCase()}',
+                    style: GoogleFonts.spaceGrotesk(
+                        color: AppTheme.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2),
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      displayValue,
+                      style: GoogleFonts.spaceGrotesk(
+                          color: AppTheme.textPrimary,
+                          fontSize: 64,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        dateStr,
+                        style: const TextStyle(
+                            color: Color(0xFF555555),
+                            fontSize: 10,
+                            fontFamily: 'monospace'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatValue() {
+    switch (exercise.type) {
+      case ExerciseType.weight:
+        return UnitConverter.formatWeight(valueInMetric, weightUnit);
+      case ExerciseType.time:
+        return UnitConverter.secondsToDisplay(valueInMetric.toInt());
+      case ExerciseType.distance:
+        return UnitConverter.formatDistance(valueInMetric, distanceUnit);
+    }
+  }
+}
+```
+
+- [ ] **Step 3: ExportScreen 완성**
+
+`lib/features/export/export_screen.dart` 전체 교체:
+
+```dart
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../core/models/exercise.dart';
+import '../../core/theme/app_theme.dart';
+import '../../providers/unit_settings_provider.dart';
+import 'clean_frame.dart';
+import 'rough_frame.dart';
+
+class ExportScreen extends ConsumerStatefulWidget {
+  final Exercise exercise;
+  final double newValue;
+
+  const ExportScreen({
+    required this.exercise,
+    required this.newValue,
+    super.key,
+  });
+
+  @override
+  ConsumerState<ExportScreen> createState() => _ExportScreenState();
+}
+
+class _ExportScreenState extends ConsumerState<ExportScreen> {
+  int _selectedStyle = 0;
+  bool _exporting = false;
+  final _cleanKey = GlobalKey();
+  final _roughKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(unitSettingsProvider).valueOrNull;
+    final weightUnit = settings?.weightUnit ?? 'kg';
+    final distanceUnit = settings?.distanceUnit ?? 'km';
+    final now = DateTime.now();
+
+    final frames = [
+      RepaintBoundary(
+        key: _cleanKey,
+        child: CleanFrame(
+          exercise: widget.exercise,
+          valueInMetric: widget.newValue,
+          weightUnit: weightUnit,
+          distanceUnit: distanceUnit,
+          date: now,
+        ),
+      ),
+      RepaintBoundary(
+        key: _roughKey,
+        child: RoughFrame(
+          exercise: widget.exercise,
+          valueInMetric: widget.newValue,
+          weightUnit: weightUnit,
+          distanceUnit: distanceUnit,
+          date: now,
+        ),
+      ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('공유하기')),
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+              child: frames[_selectedStyle],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                _StyleButton(
+                  label: 'CLEAN',
+                  selected: _selectedStyle == 0,
+                  onTap: () => setState(() => _selectedStyle = 0),
+                ),
+                const SizedBox(width: 12),
+                _StyleButton(
+                  label: 'ROUGH',
+                  selected: _selectedStyle == 1,
+                  onTap: () => setState(() => _selectedStyle = 1),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+            child: ElevatedButton.icon(
+              onPressed: _exporting ? null : _share,
+              icon: _exporting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.share),
+              label: const Text('공유 / 저장'),
+              style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _share() async {
+    setState(() => _exporting = true);
+    try {
+      final key = _selectedStyle == 0 ? _cleanKey : _roughKey;
+      final boundary =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final bytes = byteData.buffer.asUint8List();
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/peaklog_share.png');
+      await file.writeAsBytes(bytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        subject: 'PeakLog - ${widget.exercise.name} 신기록!',
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+}
+
+class _StyleButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _StyleButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.accent : AppTheme.card,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? Colors.white : AppTheme.textSecondary,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 4: iOS Info.plist에 공유 권한 추가**
+
+`ios/Runner/Info.plist`에 `</dict>` 바로 앞에 추가:
+
+```xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>기록 이미지를 갤러리에 저장합니다.</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>기록 이미지를 갤러리에 저장합니다.</string>
+```
+
+- [ ] **Step 5: 전체 테스트 실행**
+
+```bash
+flutter test
+```
+
+Expected: 모든 단위 테스트 통과
+
+- [ ] **Step 6: 앱 실행 및 내보내기 기능 확인**
+
+```bash
+flutter run
+```
+
+Expected: [공유 / 저장] 버튼 탭 → Clean/Rough 프레임 이미지 공유 시트 표시
+
+- [ ] **Step 7: 최종 커밋**
+
+```bash
+git add lib/features/export/ ios/Runner/Info.plist
+git commit -m "feat: export screen with clean/rough frame styles and share"
+```
+
+---
+
+## 전체 테스트 실행
+
+```bash
+flutter test
+flutter analyze
+```
+
+Expected: 모든 테스트 통과, 분석 경고 없음
+
+---
+
+## 완료 체크리스트
+
+- [ ] 운동 추가 (최대 6개, 타입: 무게/시간/거리)
+- [ ] 기록 입력 (날짜, 값, 단위 입력)
+- [ ] 1RM % 슬라이더 패널 (0~120%, weight 타입만)
+- [ ] 단위 토글 (KG⇄LBS, KM⇄MI) 홈 화면 상단
+- [ ] +N일 표시 (마지막 기록으로부터)
+- [ ] PR 달성 축하 팝업 (이전 PB 대비 차이 표시)
+- [ ] 기록 히스토리 (날짜 내림차순, PB 뱃지, 스와이프 삭제)
+- [ ] 내보내기 (Clean / Rough 스타일, 시스템 공유 시트)

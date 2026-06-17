@@ -76,11 +76,11 @@ void main() {
     setUp(() {
       splits = PaceCalculatorLogic.generateSplits(5.0, 240.0);
     });
-    test('has 14 splits total', () {
-      expect(splits.length, 14); // 9 × 100m + 5 × km
+    test('has 5 splits total', () {
+      expect(splits.length, 5); // 1km … 5km, no sub-km
     });
-    test('first split is 100m = 24s', () {
-      expect(splits.first, ('100m', 24));
+    test('first split is 1km = 240s', () {
+      expect(splits.first, ('1km', 240));
     });
     test('last split is 5km = 1200s', () {
       expect(splits.last, ('5km', 1200));

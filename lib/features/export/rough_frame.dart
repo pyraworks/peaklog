@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/unit_converter.dart';
@@ -13,6 +12,7 @@ class RoughFrame extends StatelessWidget {
   final DateTime date;
   final String daysSinceStr;
   final OverlayOptions options;
+  final bool showPrBadge;
 
   const RoughFrame({
     required this.exercise,
@@ -22,6 +22,7 @@ class RoughFrame extends StatelessWidget {
     required this.date,
     this.daysSinceStr = '',
     this.options = const OverlayOptions(),
+    this.showPrBadge = true,
     super.key,
   });
 
@@ -30,124 +31,144 @@ class RoughFrame extends StatelessWidget {
     final displayValue = _formatValue();
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+    const accent = Color(0xFFFF9500);
 
     return AspectRatio(
       aspectRatio: 9 / 16,
-      child: Container(
-        color: const Color(0xFF111111),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -10,
-              top: -20,
-              child: Text(
-                'PR',
-                style: GoogleFonts.spaceGrotesk(
-                  color: const Color(0xFF1D1D1D),
-                  fontSize: 200,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          final pad = w * 0.074;
+
+          return Container(
+            color: const Color(0xFF111111),
+            child: Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                if (showPrBadge)
+                  Positioned(
+                    right: -w * 0.037,
+                    top: -h * 0.060,
+                    child: Text(
+                      exercise.bestTypeLabel,
+                      style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        color: const Color(0xFF1D1D1D),
+                        fontSize: w * 0.83,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: EdgeInsets.all(pad),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: w * 0.015, vertical: w * 0.008),
+                            color: accent,
+                            child: Text(
+                              'PeakLog',
+                              style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  color: Colors.black,
+                                  fontSize: w * 0.026,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: w * 0.003),
+                            ),
+                          ),
+                          if (showPrBadge)
+                            Text(
+                              'NEW ${exercise.bestTypeLabel}',
+                              style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  color: accent,
+                                  fontSize: w * 0.022,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: w * 0.003),
+                            ),
+                        ],
+                      ),
+                      const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        color: AppTheme.accent,
-                        child: Text(
-                          'PBPR',
-                          style: GoogleFonts.spaceGrotesk(
-                              color: Colors.black,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 2),
+                        width: w * 0.074,
+                        height: w * 0.006,
+                        color: accent,
+                        margin: EdgeInsets.only(bottom: w * 0.025),
+                      ),
+                      if (options.showName)
+                        Text(
+                          '// ${exercise.displayName.toUpperCase()}',
+                          style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              color: accent,
+                              fontSize: w * 0.026,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: w * 0.004),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
                         ),
-                      ),
-                      Text(
-                        'NEW PR',
-                        style: GoogleFonts.spaceGrotesk(
-                            color: AppTheme.accent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 2),
-                      ),
+                      if (options.showValue) ...[
+                        SizedBox(height: w * 0.020),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            displayValue,
+                            style: TextStyle(
+                                fontFamily: 'Pretendard',
+                                color: AppTheme.textPrimary,
+                                fontSize: w * 0.145,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -w * 0.002),
+                          ),
+                        ),
+                      ],
+                      if (options.showDaysSince && daysSinceStr.isNotEmpty) ...[
+                        SizedBox(height: w * 0.020),
+                        Text(
+                          daysSinceStr,
+                          style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              color: accent,
+                              fontSize: w * 0.030,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                      const Spacer(),
+                      if (options.showDate)
+                        Text(
+                          dateStr,
+                          style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              color: const Color(0xFF555555),
+                              fontSize: w * 0.018),
+                        ),
                     ],
                   ),
-                  const Spacer(),
-                  Container(
-                    width: 40,
-                    height: 2,
-                    color: AppTheme.accent,
-                    margin: const EdgeInsets.only(bottom: 10),
-                  ),
-                  if (options.showName)
-                    Text(
-                      '// ${exercise.displayName.toUpperCase()}',
-                      style: GoogleFonts.spaceGrotesk(
-                          color: AppTheme.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2),
-                    ),
-                  if (options.showPr) ...[
-                    const SizedBox(height: 8),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        displayValue,
-                        style: GoogleFonts.spaceGrotesk(
-                            color: AppTheme.textPrimary,
-                            fontSize: 64,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -1),
-                      ),
-                    ),
-                  ],
-                  if (options.showDaysSince && daysSinceStr.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      daysSinceStr,
-                      style: GoogleFonts.spaceGrotesk(
-                          color: AppTheme.accent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (options.showDate)
-                    Text(
-                      dateStr,
-                      style: const TextStyle(
-                          color: Color(0xFF555555),
-                          fontSize: 10,
-                          fontFamily: 'monospace'),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   String _formatValue() {
-    switch (exercise.category) {
-      case ExerciseCategory.strength:
+    switch (exercise.recordType!) {
+      case RecordType.weight:
         return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
+      case RecordType.etc:
+        return UnitConverter.formatEtc(valueInMetric, distanceUnit);
+      case RecordType.forTime:
+      case RecordType.amrap:
         return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-      case ExerciseCategory.custom:
-        return valueInMetric.toStringAsFixed(1);
     }
   }
 }

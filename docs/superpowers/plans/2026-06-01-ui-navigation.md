@@ -173,7 +173,7 @@ class CategoryDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: const Text(
-                'PBPR',
+                'PeakLog',
                 style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
@@ -389,7 +389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'PBPR',
+              'PeakLog',
               style: TextStyle(
                 fontSize: 34,
                 fontWeight: FontWeight.w700,

@@ -1,232 +1,190 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme/app_theme.dart';
-import '../../providers/unit_settings_provider.dart';
-import '../health/health_sync_screen.dart';
+import '../../core/design/app_colors.dart';
+import '../../core/design/app_icons.dart';
+import 'package:go_router/go_router.dart';
+import '../../widgets/screen_header.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(unitSettingsProvider).valueOrNull;
-
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
-      body: ListView(
+      backgroundColor: AppColors.background,
+      body: Column(
         children: [
-          const _SectionHeader('단위 설정'),
-          _SegmentRow(
-            title: '무게',
-            options: const ['kg', 'lbs'],
-            selected: settings?.weightUnit ?? 'kg',
-            onChanged: (v) {
-              final cur = ref.read(unitSettingsProvider).valueOrNull;
-              if (cur != null && cur.weightUnit != v) {
-                ref.read(unitSettingsProvider.notifier).toggleWeightUnit();
-              }
-            },
-          ),
-          _Separator(),
-          _SegmentRow(
-            title: '거리',
-            options: const ['km', 'mi'],
-            selected: settings?.distanceUnit ?? 'km',
-            onChanged: (v) {
-              final cur = ref.read(unitSettingsProvider).valueOrNull;
-              if (cur != null && cur.distanceUnit != v) {
-                ref.read(unitSettingsProvider.notifier).toggleDistanceUnit();
-              }
-            },
-          ),
-          const SizedBox(height: 32),
-          const _SectionHeader('건강 앱'),
-          _NavRow(
-            title: 'Apple Health 연동',
-            subtitle: '러닝 기록 자동 가져오기',
-            icon: CupertinoIcons.heart_fill,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const HealthSyncScreen()),
+          const ScreenHeader(backLabel: 'Home', title: 'Settings'),
+          Expanded(
+            child: ListView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              children: [
+                // ── GENERAL ──────────────────────────────────────────
+                const _SectionLabel('GENERAL'),
+                _CardSection(
+                  items: [
+                    _CardItem(
+                        title: 'Categories',
+                        onTap: () => context.push('/categories')),
+                    _CardItem(
+                        title: 'Profile',
+                        onTap: () => context.push('/profile')),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // ── ABOUT ─────────────────────────────────────────────
+                const _SectionLabel('ABOUT'),
+                const _AboutCard(),
+              ],
             ),
           ),
-          const SizedBox(height: 32),
-          const _SectionHeader('앱 정보'),
-          const _InfoRow(title: '버전', value: '1.0.0'),
         ],
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader(this.title);
+// ─────────────────────────────────────────────────────────────────────────────
+// Reusable section label
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
       child: Text(
-        title.toUpperCase(),
+        text,
         style: const TextStyle(
-          color: AppTheme.textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.label2,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
 }
 
-class _SegmentRow extends StatelessWidget {
-  final String title;
-  final List<String> options;
-  final String selected;
-  final ValueChanged<String> onChanged;
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic card section with divider-separated rows
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _SegmentRow({
-    required this.title,
-    required this.options,
-    required this.selected,
-    required this.onChanged,
-  });
+class _CardItem {
+  final String title;
+  final VoidCallback onTap;
+  const _CardItem({required this.title, required this.onTap});
+}
+
+class _CardSection extends StatelessWidget {
+  final List<_CardItem> items;
+
+  const _CardSection({required this.items});
 
   @override
   Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < items.length; i++) {
+      if (i > 0) {
+        rows.add(const Divider(
+            height: 1, thickness: 1, color: AppColors.separatorAlt));
+      }
+      rows.add(_MenuRow(title: items[i].title, onTap: items[i].onTap));
+    }
+
     return Container(
-      color: AppTheme.card,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(title,
-                style: const TextStyle(
-                    color: AppTheme.textPrimary, fontSize: 16)),
-          ),
-          CupertinoSlidingSegmentedControl<String>(
-            groupValue: selected,
-            thumbColor: AppTheme.card,
-            backgroundColor: AppTheme.background,
-            children: {
-              for (final opt in options)
-                opt: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Text(opt,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: selected == opt
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: selected == opt
-                            ? AppTheme.accent
-                            : AppTheme.textPrimary,
-                      )),
-                ),
-            },
-            onValueChanged: (v) {
-              if (v != null) onChanged(v);
-            },
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
       ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(children: rows),
     );
   }
 }
 
-class _Separator extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppTheme.card,
-      child: const Divider(
-          height: 0.5, thickness: 0.5, color: AppTheme.separator, indent: 16),
-    );
-  }
-}
-
-class _NavRow extends StatelessWidget {
+class _MenuRow extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final IconData icon;
   final VoidCallback onTap;
 
-  const _NavRow({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
+  const _MenuRow({required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.card,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: AppTheme.accent, size: 16),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title,
-                        style: const TextStyle(
-                            color: AppTheme.textPrimary, fontSize: 16)),
-                    Text(subtitle,
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12)),
-                  ],
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF1F2328),
                 ),
               ),
-              const Icon(CupertinoIcons.chevron_right,
-                  color: AppTheme.separator, size: 14),
-            ],
-          ),
+            ),
+            Icon(
+              AppIcons.forward,
+              size: 20,
+              color: AppColors.chevron,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final String title;
-  final String value;
-  const _InfoRow({required this.title, required this.value});
+class _AboutCard extends StatelessWidget {
+  const _AboutCard();
+
+  static const _version = '1.0.0';
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.card,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Expanded(
-              child: Text(title,
-                  style: const TextStyle(
-                      color: AppTheme.textPrimary, fontSize: 16))),
-          Text(value,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 16)),
-        ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Version',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF1F2328),
+                ),
+              ),
+            ),
+            Text(
+              _version,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                color: AppColors.label2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+

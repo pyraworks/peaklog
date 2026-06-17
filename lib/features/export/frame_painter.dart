@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../../core/design/app_colors.dart';
 import 'export_models.dart';
 
 // ── Public API ────────────────────────────────────────────────
@@ -13,6 +14,7 @@ Future<Uint8List> renderFrameToBytes({
   required String dateStr,
   required String daysSinceStr,
   required OverlayOptions options,
+  String badgeLabel = 'PR',
   bool overlayOnly = false,
 }) async {
   final size = aspectRatio.exportSize;
@@ -28,6 +30,7 @@ Future<Uint8List> renderFrameToBytes({
     dateStr: dateStr,
     daysSinceStr: daysSinceStr,
     options: options,
+    badgeLabel: badgeLabel,
     overlayOnly: overlayOnly,
   );
 
@@ -53,6 +56,7 @@ class _FrameData {
   final String dateStr;
   final String daysSinceStr;
   final OverlayOptions options;
+  final String badgeLabel;
   final bool overlayOnly;
 
   const _FrameData({
@@ -61,6 +65,7 @@ class _FrameData {
     required this.dateStr,
     required this.daysSinceStr,
     required this.options,
+    this.badgeLabel = 'PR',
     required this.overlayOnly,
   });
 }
@@ -74,16 +79,16 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
   if (!d.overlayOnly) {
     canvas.drawRect(
       Rect.fromLTWH(0, 0, w, h),
-      Paint()..color = const Color(0xFFF2F2F7),
+      Paint()..color = AppColors.background,
     );
   }
 
-  _text(canvas, 'PBPR',
+  _text(canvas, 'PeakLog',
       x: pad, y: pad,
       size: w * 0.038, weight: FontWeight.w900,
       color: accent, spacing: w * 0.006);
 
-  _text(canvas, 'NEW PR',
+  _text(canvas, 'NEW ${d.badgeLabel}',
       x: w - pad - w * 0.18, y: pad * 1.05,
       size: w * 0.024, weight: FontWeight.w700,
       color: const Color(0xFF333333), spacing: w * 0.004);
@@ -97,7 +102,7 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
         color: const Color(0xFF444444), spacing: w * 0.007);
   }
 
-  if (d.options.showPr) {
+  if (d.options.showValue) {
     _text(canvas, d.prValue,
         x: pad, y: midY + w * 0.038,
         size: w * 0.155, weight: FontWeight.w900,
@@ -139,7 +144,7 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
       Rect.fromLTWH(0, 0, w, h),
       Paint()..color = const Color(0xFF111111),
     );
-    _text(canvas, 'PR',
+    _text(canvas, d.badgeLabel,
         x: w * 0.4, y: -h * 0.06,
         size: w * 0.83, weight: FontWeight.w900,
         color: const Color(0xFF1D1D1D));
@@ -151,12 +156,12 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
     Rect.fromLTWH(pad, pad, boxW, boxH),
     Paint()..color = accent,
   );
-  _text(canvas, 'PBPR',
+  _text(canvas, 'PeakLog',
       x: pad + w * 0.015, y: pad + w * 0.008,
       size: w * 0.026, weight: FontWeight.w900,
       color: Colors.black, spacing: w * 0.003);
 
-  _text(canvas, 'NEW PR',
+  _text(canvas, 'NEW ${d.badgeLabel}',
       x: w - pad - w * 0.17, y: pad * 1.05,
       size: w * 0.022, weight: FontWeight.w700,
       color: accent, spacing: w * 0.003);
@@ -175,7 +180,7 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
         color: accent, spacing: w * 0.004);
   }
 
-  if (d.options.showPr) {
+  if (d.options.showValue) {
     _text(canvas, d.prValue,
         x: pad, y: midY,
         size: w * 0.145, weight: FontWeight.w900,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/unit_converter.dart';
@@ -13,6 +12,7 @@ class CleanFrame extends StatelessWidget {
   final DateTime date;
   final String daysSinceStr;
   final OverlayOptions options;
+  final bool showPrBadge;
 
   const CleanFrame({
     required this.exercise,
@@ -22,6 +22,7 @@ class CleanFrame extends StatelessWidget {
     required this.date,
     this.daysSinceStr = '',
     this.options = const OverlayOptions(),
+    this.showPrBadge = true,
     super.key,
   });
 
@@ -30,110 +31,131 @@ class CleanFrame extends StatelessWidget {
     final displayValue = _formatValue();
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+    const accent = Color(0xFFFF9500);
 
     return AspectRatio(
       aspectRatio: 9 / 16,
-      child: Container(
-        color: AppTheme.background,
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final pad = w * 0.074;
+
+          return Container(
+            color: AppTheme.background,
+            padding: EdgeInsets.all(pad),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('PBPR',
-                    style: GoogleFonts.spaceGrotesk(
-                        color: AppTheme.accent,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 4)),
-                Text('NEW PR',
-                    style: GoogleFonts.spaceGrotesk(
-                        color: const Color(0xFF333333),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2)),
-              ],
-            ),
-            const Spacer(),
-            if (options.showName)
-              Text(
-                exercise.displayName.toUpperCase(),
-                style: GoogleFonts.spaceGrotesk(
-                    color: const Color(0xFF444444),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 3),
-              ),
-            if (options.showPr) ...[
-              const SizedBox(height: 8),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  displayValue,
-                  style: GoogleFonts.spaceGrotesk(
-                      color: AppTheme.textPrimary,
-                      fontSize: 72,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('PeakLog',
+                        style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            color: accent,
+                            fontSize: w * 0.038,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: w * 0.006)),
+                    if (showPrBadge)
+                      Text('NEW ${exercise.bestTypeLabel}',
+                          style: TextStyle(
+                              fontFamily: 'Pretendard',
+                              color: const Color(0xFF333333),
+                              fontSize: w * 0.024,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: w * 0.004)),
+                  ],
                 ),
-              ),
-            ],
-            if (options.showDaysSince && daysSinceStr.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                daysSinceStr,
-                style: GoogleFonts.spaceGrotesk(
-                    color: AppTheme.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(width: 4, height: 16, color: AppTheme.accent),
-                const SizedBox(width: 8),
-                Text(
-                  '개인 최고 기록',
-                  style: GoogleFonts.spaceGrotesk(
-                      color: AppTheme.accent,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (options.showDate)
+                const Spacer(),
+                if (options.showName)
                   Text(
-                    dateStr,
-                    style: const TextStyle(
-                        color: Color(0xFF333333), fontSize: 11),
+                    exercise.displayName.toUpperCase(),
+                    style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        color: const Color(0xFF444444),
+                        fontSize: w * 0.030,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: w * 0.007),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
-                Container(width: 32, height: 2, color: AppTheme.accent),
+                if (options.showValue) ...[
+                  SizedBox(height: w * 0.020),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      displayValue,
+                      style: TextStyle(
+                          fontFamily: 'Pretendard',
+                          color: AppTheme.textPrimary,
+                          fontSize: w * 0.155,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -w * 0.003),
+                    ),
+                  ),
+                ],
+                if (options.showDaysSince && daysSinceStr.isNotEmpty) ...[
+                  SizedBox(height: w * 0.015),
+                  Text(
+                    daysSinceStr,
+                    style: TextStyle(
+                        fontFamily: 'Pretendard',
+                        color: accent,
+                        fontSize: w * 0.030,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ],
+                SizedBox(height: w * 0.030),
+                if (showPrBadge)
+                  Row(
+                    children: [
+                      Container(
+                          width: w * 0.011, height: w * 0.042, color: accent),
+                      SizedBox(width: w * 0.018),
+                      Text(
+                        '개인 최고 기록',
+                        style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            color: accent,
+                            fontSize: w * 0.022,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: w * 0.002),
+                      ),
+                    ],
+                  ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (options.showDate)
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                            color: const Color(0xFF333333),
+                            fontSize: w * 0.019),
+                      ),
+                    Container(
+                        width: w * 0.118, height: w * 0.007, color: accent),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   String _formatValue() {
-    switch (exercise.category) {
-      case ExerciseCategory.strength:
+    switch (exercise.recordType!) {
+      case RecordType.weight:
         return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
+      case RecordType.etc:
+        return UnitConverter.formatEtc(valueInMetric, distanceUnit);
+      case RecordType.forTime:
+      case RecordType.amrap:
         return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-      case ExerciseCategory.custom:
-        return valueInMetric.toStringAsFixed(1);
     }
   }
 }

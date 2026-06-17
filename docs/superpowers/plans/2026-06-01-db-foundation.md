@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Migrate PBPR from int PKs + single `value` field to UUID PKs + separate weight/reps/duration/distance fields, add PersonalBest & SyncTask tables, enforce soft delete throughout.
+**Goal:** Migrate PeakLog from int PKs + single `value` field to UUID PKs + separate weight/reps/duration/distance fields, add PersonalBest & SyncTask tables, enforce soft delete throughout.
 
 **Architecture:** Drop & recreate SQLite DB at version 3. New models (Exercise, Record, PersonalBest, SyncTask) use String UUID PKs. DatabaseHelper computes PersonalBest automatically on record insert/delete. All UI files updated to compile and run with new models.
 
@@ -444,7 +444,7 @@ class DatabaseHelper {
   Future<Database> _open() async {
     final dbPath = await getDatabasesPath();
     return openDatabase(
-      join(dbPath, 'pbpr.db'),
+      join(dbPath, 'peaklog.db'),
       version: 3,
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {

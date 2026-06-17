@@ -2,8 +2,11 @@ import 'package:health/health.dart';
 import '../database/database_helper.dart';
 import '../models/exercise.dart';
 import '../models/health_import.dart';
+import '../models/health_workout.dart';
 import '../models/record.dart';
+import '../utils/normalize.dart';
 import '../utils/unit_converter.dart';
+import '../../domain/models/category.dart';
 
 class SyncResult {
   final int imported;
@@ -39,7 +42,106 @@ class HealthSyncService {
   Future<void> configure() => _health.configure();
 
   Future<bool> requestPermission() async {
-    return _health.requestAuthorization([HealthDataType.WORKOUT]);
+    return _health.requestAuthorization([
+      HealthDataType.WORKOUT,
+      HealthDataType.DISTANCE_WALKING_RUNNING,
+    ]);
+  }
+
+  Future<List<HealthWorkout>> fetchRecentRunningWorkouts() async {
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: 90));
+
+    final dataPoints = await _health.getHealthDataFromTypes(
+      startTime: start,
+      endTime: now,
+      types: [HealthDataType.WORKOUT],
+    );
+
+    final db = DatabaseHelper.instance;
+    final workouts = <HealthWorkout>[];
+
+    for (final dp in dataPoints) {
+      if (dp.value is! WorkoutHealthValue) continue;
+      final workout = dp.value as WorkoutHealthValue;
+      if (workout.workoutActivityType != HealthWorkoutActivityType.RUNNING) {
+        continue;
+      }
+
+      final distM = workout.totalDistance;
+      if (distM == null || distM <= 0) continue;
+
+      final durationSec = dp.dateTo.difference(dp.dateFrom).inSeconds;
+      if (durationSec <= 0) continue;
+
+      final workoutId = dp.uuid;
+      if (await db.hasHealthKitWorkout(workoutId)) continue;
+
+      workouts.add(HealthWorkout(
+        workoutId: workoutId,
+        startTime: dp.dateFrom,
+        durationSeconds: durationSec,
+        distanceKm: distM / 1000,
+        activityType: HealthActivityType.running,
+      ));
+    }
+
+    workouts.sort((a, b) => b.startTime.compareTo(a.startTime));
+    return workouts;
+  }
+
+  /// 최근 90일 내 모든 Activity 가져오기 (중복 제거 없음 — 사용자가 직접 선택).
+  Future<List<HealthWorkout>> fetchRecentActivities() async {
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: 90));
+
+    final dataPoints = await _health.getHealthDataFromTypes(
+      startTime: start,
+      endTime: now,
+      types: [HealthDataType.WORKOUT],
+    );
+
+    final workouts = <HealthWorkout>[];
+
+    for (final dp in dataPoints) {
+      if (dp.value is! WorkoutHealthValue) continue;
+      final workout = dp.value as WorkoutHealthValue;
+
+      final activityType = _mapActivityType(workout.workoutActivityType);
+      final durationSec = dp.dateTo.difference(dp.dateFrom).inSeconds;
+      if (durationSec <= 0) continue;
+
+      final distM = workout.totalDistance ?? 0;
+
+      workouts.add(HealthWorkout(
+        workoutId: dp.uuid,
+        startTime: dp.dateFrom,
+        durationSeconds: durationSec,
+        distanceKm: distM / 1000,
+        activityType: activityType,
+      ));
+    }
+
+    workouts.sort((a, b) => b.startTime.compareTo(a.startTime));
+    return workouts;
+  }
+
+  static HealthActivityType _mapActivityType(
+      HealthWorkoutActivityType type) {
+    switch (type) {
+      case HealthWorkoutActivityType.RUNNING:
+        return HealthActivityType.running;
+      case HealthWorkoutActivityType.BIKING:
+      case HealthWorkoutActivityType.BIKING_STATIONARY:
+      case HealthWorkoutActivityType.HAND_CYCLING:
+        return HealthActivityType.cycling;
+      case HealthWorkoutActivityType.SWIMMING:
+      case HealthWorkoutActivityType.SWIMMING_OPEN_WATER:
+      case HealthWorkoutActivityType.SWIMMING_POOL:
+        return HealthActivityType.swimming;
+      default:
+        return HealthActivityType.other;
+    }
   }
 
   Future<SyncResult> syncRunningWorkouts() async {
@@ -62,7 +164,9 @@ class HealthSyncService {
       final workout = dp.value as WorkoutHealthValue;
 
       if (workout.workoutActivityType !=
-          HealthWorkoutActivityType.RUNNING) continue;
+          HealthWorkoutActivityType.RUNNING) {
+        continue;
+      }
 
       final distM = workout.totalDistance;
       if (distM == null || distM <= 0) continue;
@@ -129,16 +233,21 @@ class HealthSyncService {
 
   Future<Exercise> _findOrCreateRunningExercise(
       DatabaseHelper db, String displayName) async {
-    final exercises = await db.getExercises();
-    final normalized = normalizeExerciseName(displayName);
-    final existing =
-        exercises.where((e) => e.normalizedName == normalized).firstOrNull;
-    if (existing != null) return existing;
+    final normalized = normalize(displayName);
 
+    // Search all exercises including archived to avoid unique-index conflict.
+    final existing = await db.findExerciseByNormalizedName(normalized);
+    if (existing != null) {
+      if (existing.isArchived) await db.unarchiveExercise(existing.id);
+      return existing;
+    }
+
+    final activeCount = (await db.getExercises()).length;
     final exercise = Exercise.create(
       displayName: displayName,
-      category: ExerciseCategory.running,
-      orderIndex: exercises.length,
+      recordType: RecordType.forTime,
+      categoryId: Category.uncategorizedId,
+      orderIndex: activeCount,
     );
     await db.insertExercise(exercise);
     return exercise;

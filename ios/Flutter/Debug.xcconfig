@@ -1,2 +1,4 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
+// Override Flutter's arm64 exclusion — ffmpeg frameworks are vtool-patched for iOS Simulator.
+EXCLUDED_ARCHS[sdk=iphonesimulator*] = i386

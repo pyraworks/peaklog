@@ -254,7 +254,7 @@ class _PbCard extends StatelessWidget {
           TextSpan(
             text: ' × ${parts[1]}',
             style: AppTypography.pbValue.copyWith(
-              color: AppColors.label2, letterSpacing: -0.8),
+              color: AppColors.label1, letterSpacing: -0.8),
           ),
         ]),
       );

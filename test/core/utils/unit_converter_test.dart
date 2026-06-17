@@ -68,23 +68,4 @@ void main() {
     });
   });
 
-  group('formatDiffWeight', () {
-    test('positive diff', () {
-      expect(UnitConverter.formatDiffWeight(2.5, 'kg'), '+2.5 kg');
-    });
-    test('negative diff', () {
-      expect(UnitConverter.formatDiffWeight(-5.0, 'kg'), '-5 kg');
-    });
-    test('positive kg diff converts to lbs when unit is lbs', () {
-      // 10 kg diff → 22.0462 lbs → displayed as '+22 lbs'
-      expect(UnitConverter.formatDiffWeight(10, 'lbs'), '+22 lbs');
-    });
-    test('negative kg diff converts to lbs when unit is lbs', () {
-      expect(UnitConverter.formatDiffWeight(-10, 'lbs'), '-22 lbs');
-    });
-    test('fractional lbs diff is formatted to one decimal', () {
-      // 1 kg ≈ 2.2 lbs
-      expect(UnitConverter.formatDiffWeight(1, 'lbs'), '+2.2 lbs');
-    });
-  });
 }

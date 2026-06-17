@@ -1,8 +1,9 @@
-import 'package:path/path.dart';
+import 'package:path/path.dart' hide normalize;
 import 'package:sqflite/sqflite.dart';
 import '../models/exercise.dart';
 import '../models/health_import.dart';
 import '../models/record.dart';
+import '../utils/normalize.dart';
 import '../../domain/models/category.dart';
 import '../../domain/models/public_record.dart';
 
@@ -19,8 +20,8 @@ class DatabaseHelper {
   Future<Database> _open() async {
     final dbPath = await getDatabasesPath();
     return openDatabase(
-      join(dbPath, 'pbpr.db'),
-      version: 13,
+      join(dbPath, 'peaklog.db'),
+      version: 17,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -92,6 +93,7 @@ class DatabaseHelper {
         reps             INTEGER,
         rounds           INTEGER,
         duration_seconds INTEGER,
+        duration_minutes INTEGER,
         distance         REAL,
         distance_unit    TEXT NOT NULL DEFAULT 'km',
         note             TEXT,
@@ -147,7 +149,7 @@ class DatabaseHelper {
       await db.execute("""
         UPDATE exercises SET record_type = CASE category
           WHEN 'strength' THEN 'weight'
-          WHEN 'running'  THEN 'distance'
+          WHEN 'running'  THEN 'etc'
           WHEN 'workout'  THEN 'forTime'
           ELSE 'weight'
         END WHERE record_type IS NULL OR record_type = 'weight'
@@ -304,23 +306,6 @@ class DatabaseHelper {
     if (oldVersion < 8) {
       // Remove preset exercises that have no user records.
       // Presets with records are kept so existing user data is not lost.
-      final toDelete = await db.rawQuery('''
-        SELECT display_name FROM exercises
-        WHERE id LIKE 'preset-ex-%'
-          AND is_system_preset = 1
-          AND id NOT IN (
-            SELECT DISTINCT exercise_id FROM records WHERE is_deleted = 0
-          )
-        ORDER BY display_name
-      ''');
-      // ignore: avoid_print
-      print('Deleting preset exercises:');
-      for (final row in toDelete) {
-        // ignore: avoid_print
-        print('- ${row['display_name']}');
-      }
-      // ignore: avoid_print
-      print('Count: ${toDelete.length}');
       await db.execute('''
         DELETE FROM exercises
         WHERE id LIKE 'preset-ex-%'
@@ -367,6 +352,79 @@ class DatabaseHelper {
       // 'preset-category-custom' keeps 'gray' — already correct from the DEFAULT.
     }
 
+    if (oldVersion < 14) {
+      // Recompute normalized_name for all exercises using the Unicode-safe
+      // normalize() — the old [^a-z0-9\s] regex collapsed all Korean (and any
+      // other non-ASCII) names to "", causing false-positive duplicate detection
+      // for every Korean exercise name.
+      final rows = await db.query(
+        'exercises',
+        columns: ['id', 'display_name', 'normalized_name'],
+      );
+      final collisions = <String>[];
+      for (final row in rows) {
+        final id          = row['id']              as String;
+        final displayName = row['display_name']    as String;
+        final currentNorm = row['normalized_name'] as String;
+        final newNorm     = normalize(displayName);
+
+        if (newNorm == currentNorm) continue;
+
+        // Before updating, check whether another exercise already owns newNorm.
+        // We check explicitly (rather than relying on ConflictAlgorithm.ignore)
+        // so collisions are surfaced rather than silently dropped.
+        final ownerRows = await db.query(
+          'exercises',
+          columns: ['id', 'display_name'],
+          where:     'normalized_name = ? AND id != ?',
+          whereArgs: [newNorm, id],
+        );
+        if (ownerRows.isNotEmpty) {
+          final owner = ownerRows.first;
+          final msg =
+              '[Migration v14] COLLISION — skipped: '
+              '"$displayName" (id=$id) wants normalized="$newNorm" '
+              'but it is already owned by '
+              '"${owner['display_name']}" (id=${owner['id']})';
+          collisions.add(msg);
+          continue;
+        }
+
+        await db.update(
+          'exercises',
+          {'normalized_name': newNorm},
+          where:     'id = ?',
+          whereArgs: [id],
+        );
+      }
+    }
+
+    if (oldVersion < 15) {
+      await _addColumnIfMissing(db, 'records', 'duration_minutes', 'INTEGER');
+    }
+
+    if (oldVersion < 16) {
+      await db.execute(
+          "UPDATE exercises SET record_type = 'etc' WHERE record_type = 'distance'");
+    }
+
+    if (oldVersion < 17) {
+      // Ensure Uncategorized exists (new fallback category).
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await db.execute('''
+        INSERT OR IGNORE INTO categories
+          (id, name, color, sort_order, created_at, updated_at, sync_status)
+        VALUES
+          ('${Category.uncategorizedId}', 'Uncategorized', 'gray', 999, $now, $now, 'pending')
+      ''');
+      // Move exercises with null or orphaned category_id to Uncategorized.
+      await db.execute('''
+        UPDATE exercises
+        SET category_id = '${Category.uncategorizedId}'
+        WHERE category_id IS NULL
+           OR category_id NOT IN (SELECT id FROM categories)
+      ''');
+    }
   }
 
   Future<void> _addColumnIfMissing(
@@ -394,6 +452,7 @@ class DatabaseHelper {
   }
 
   Future<void> _seedCategories(Database db) async {
+    // New installs: only Uncategorized is seeded.
     for (final cat in Category.presets) {
       await db.insert('categories', cat.toMap(),
           conflictAlgorithm: ConflictAlgorithm.ignore);
@@ -501,9 +560,6 @@ class DatabaseHelper {
         'insertRecord: exercise not found in DB — exerciseId=${record.exerciseId}',
       );
     }
-    // ignore: avoid_print
-    print('[DB] insertRecord: exerciseId=${record.exerciseId} '
-        'is_archived=${exerciseRows.first['is_archived']}');
     await db.insert('records', record.toMap());
   }
 
@@ -584,8 +640,7 @@ class DatabaseHelper {
 
   Future<void> deleteCategory(String id) async {
     final db = await database;
-    // Null out exercises that belong to this category
-    await db.update('exercises', {'category_id': null},
+    await db.update('exercises', {'category_id': Category.uncategorizedId},
         where: 'category_id = ?', whereArgs: [id]);
     await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }

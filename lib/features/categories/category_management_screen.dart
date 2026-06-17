@@ -407,7 +407,7 @@ class _CategoryTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             isUncategorized
-                ? Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18)
+                ? const Icon(Icons.remove, color: Color(0xFFD1D5DA), size: 18)
                 : ReorderableDragStartListener(
                     index: index,
                     child: Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),

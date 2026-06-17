@@ -23,19 +23,20 @@ class CategoryColor {
 }
 
 class Category {
-  // ── Current preset IDs ───────────────────────────────────────────
+  // ── Fallback category — cannot be deleted ────────────────────────
+  static const uncategorizedId = 'uncategorized';
+
+  // ── Legacy preset IDs — kept for backward compat only ───────────
+  // Existing users may still have exercises referencing these IDs.
   static const weightliftingId = 'preset-category-weightlifting';
   static const powerliftingId  = 'preset-category-powerlifting';
   static const runningId       = 'preset-category-running';
   static const crossfitId      = 'preset-category-crossfit';
   static const gymnasticsId    = 'preset-category-gymnastics';
   static const otherId         = 'preset-category-other';
-
-  // ── Legacy IDs — kept for exercise.dart backward compat only ─────
-  // exercise.dart:_legacyCategoryName still maps old exercises to these IDs.
-  static const runId    = 'preset-category-run';
-  static const wodId    = 'preset-category-wod';
-  static const customId = 'preset-category-custom';
+  static const runId           = 'preset-category-run';
+  static const wodId           = 'preset-category-wod';
+  static const customId        = 'preset-category-custom';
 
   final String id;
   final String name;
@@ -94,29 +95,25 @@ class Category {
   );
 
   static String nameForId(String? id) {
+    if (id == uncategorizedId) return 'Uncategorized';
+    // Legacy preset names — backward compat for existing data
     if (id == weightliftingId) return 'Weightlifting';
     if (id == powerliftingId)  return 'Powerlifting';
     if (id == runningId)       return 'Running';
     if (id == crossfitId)      return 'CrossFit';
     if (id == gymnasticsId)    return 'Gymnastics';
     if (id == otherId)         return 'Other';
-    // Legacy
     if (id == runId)           return 'Run';
     if (id == wodId)           return 'WOD';
     if (id == customId)        return 'Custom';
-    return 'Other';
+    return 'Uncategorized';
   }
 
-  /// Seeded on new installs only. Existing installs keep their categories.
+  /// Seeded on new installs only — Uncategorized is the sole default.
   static List<Category> get presets {
     final now = DateTime(2026, 1, 1).millisecondsSinceEpoch;
     return [
-      Category(id: weightliftingId, name: 'Weightlifting', color: 'amber',  sortOrder: 0, createdAt: now, updatedAt: now),
-      Category(id: powerliftingId,  name: 'Powerlifting',  color: 'red',    sortOrder: 1, createdAt: now, updatedAt: now),
-      Category(id: runningId,       name: 'Running',       color: 'blue',   sortOrder: 2, createdAt: now, updatedAt: now),
-      Category(id: crossfitId,      name: 'CrossFit',      color: 'green',  sortOrder: 3, createdAt: now, updatedAt: now),
-      Category(id: gymnasticsId,    name: 'Gymnastics',    color: 'purple', sortOrder: 4, createdAt: now, updatedAt: now),
-      Category(id: otherId,         name: 'Other',         color: 'gray',   sortOrder: 5, createdAt: now, updatedAt: now),
+      Category(id: uncategorizedId, name: 'Uncategorized', color: 'gray', sortOrder: 0, createdAt: now, updatedAt: now),
     ];
   }
 }

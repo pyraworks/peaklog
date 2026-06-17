@@ -57,7 +57,8 @@ class PaceCalculatorLogic {
   }
 
   // Returns [(label, cumulativeSeconds)].
-  // Layout: 100m..900m (or up to distance if < 1km), then 1km..Nkm, then optional finish.
+  // < 1km: 100m increments until finish.
+  // >= 1km: km increments only — no sub-km splits.
   static List<(String, int)> generateSplits(
     double distanceKm,
     double paceSecPerKm,
@@ -65,23 +66,20 @@ class PaceCalculatorLogic {
     if (distanceKm <= 0 || paceSecPerKm <= 0) return [];
     final result = <(String, int)>[];
 
-    // 100m increments: cap at 900m (or distanceKm if < 1km)
-    final cap = distanceKm < 1.0 ? distanceKm : 0.9;
-    for (int i = 1; i * 0.1 <= cap + 1e-9; i++) {
-      final d = i * 0.1;
-      result.add(('${i * 100}m', (d * paceSecPerKm).round()));
-    }
-
-    // Whole km checkpoints: 1km … floor(distanceKm)km
-    final fullKm = distanceKm.truncate();
-    for (int km = 1; km <= fullKm; km++) {
-      result.add(('${km}km', (km.toDouble() * paceSecPerKm).round()));
-    }
-
-    // Fractional finish (half/marathon/custom), only for distances >= 1km
-    final frac = distanceKm - fullKm;
-    if (frac > 1e-6 && distanceKm >= 1.0) {
-      result.add((_finishLabel(distanceKm), (distanceKm * paceSecPerKm).round()));
+    if (distanceKm < 1.0) {
+      for (int i = 1; i * 0.1 <= distanceKm + 1e-9; i++) {
+        final d = i * 0.1;
+        result.add(('${i * 100}m', (d * paceSecPerKm).round()));
+      }
+    } else {
+      final fullKm = distanceKm.truncate();
+      for (int km = 1; km <= fullKm; km++) {
+        result.add(('${km}km', (km.toDouble() * paceSecPerKm).round()));
+      }
+      final frac = distanceKm - fullKm;
+      if (frac > 1e-6) {
+        result.add((_finishLabel(distanceKm), (distanceKm * paceSecPerKm).round()));
+      }
     }
 
     return result;

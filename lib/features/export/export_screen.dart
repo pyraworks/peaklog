@@ -27,7 +27,7 @@ import 'frame_painter.dart';
 import 'rough_frame.dart';
 
 class ExportScreen extends ConsumerStatefulWidget {
-  final Exercise? exercise;      // PBPR Record mode: non-null
+  final Exercise? exercise;      // PeakLog Record mode: non-null
   final HealthWorkout? activity; // Activity mode: non-null
   final double newValue;
   final DateTime date;
@@ -75,7 +75,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       id: '',
       displayName: displayName,
       normalizedName: '',
-      recordType: hasDistance ? RecordType.distance : RecordType.forTime,
+      recordType: hasDistance ? RecordType.etc : RecordType.forTime,
       createdAt: 0,
       updatedAt: 0,
     );
@@ -315,9 +315,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         badgeLabel: ex.bestTypeLabel,
       );
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.png';
+      final path = '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(path).writeAsBytes(bytes);
-      await Gal.putImage(path, album: 'PBPR');
+      await Gal.putImage(path, album: 'PeakLog');
       if (mounted) _showSnack('Saved to Photos');
     } catch (e) {
       if (mounted) _showSnack('Save failed: $e');
@@ -346,7 +346,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final overlayPath = '${tempDir.path}/overlay_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(overlayPath).writeAsBytes(overlayBytes);
 
-      final outputPath = '${tempDir.path}/pbpr_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final outputPath = '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.mp4';
       final exportW = _aspectRatio.exportSize.width.toInt();
       final exportH = _aspectRatio.exportSize.height.toInt();
 
@@ -364,11 +364,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final session = await FFmpegKit.execute(cmd);
       final rc = await session.getReturnCode();
       if (ReturnCode.isSuccess(rc)) {
-        await Gal.putVideo(outputPath, album: 'PBPR');
+        await Gal.putVideo(outputPath, album: 'PeakLog');
         if (mounted) _showSnack('Saved to Photos');
       } else {
         if (mounted) _showSnack('Video save failed');
-        debugPrint('ffmpeg failed: ${(await session.getLogs()).map((l) => l.getMessage()).join('\n')}');
       }
     } catch (e) {
       if (mounted) _showSnack('Error: $e');
@@ -383,6 +382,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String daysSinceStr,
   }) async {
     setState(() { _exporting = true; _exportLabel = 'Preparing...'; });
+    final box = context.findRenderObject() as RenderBox?;
     try {
       final exS = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
@@ -393,14 +393,14 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         badgeLabel: exS.bestTypeLabel,
       );
       final tempDir = await getTemporaryDirectory();
-      final path = '${tempDir.path}/pbpr_share.png';
+      final path = '${tempDir.path}/peaklog_share.png';
       await File(path).writeAsBytes(bytes);
 
-      final box = context.findRenderObject() as RenderBox?;
-      final exerciseName = (widget.exercise ?? _effectiveExercise()).displayName;
+      final shareExercise = widget.exercise ?? _effectiveExercise();
+      final exerciseName = shareExercise.displayName;
       await Share.shareXFiles(
         [XFile(path, mimeType: 'image/png')],
-        subject: 'PBPR — $exerciseName${_isActivityMode ? '' : ' New PR!'}',
+        subject: 'PeakLog — $exerciseName${_isActivityMode ? '' : ' New ${shareExercise.bestTypeLabel}!'}',
         sharePositionOrigin:
             box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
@@ -418,7 +418,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     switch (recordType) {
       case RecordType.weight:
         return UnitConverter.formatWeight(v, weightUnit);
-      case RecordType.distance:
+      case RecordType.etc:
+        return UnitConverter.formatEtc(v, distanceUnit);
       case RecordType.forTime:
       case RecordType.amrap:
         return UnitConverter.secondsToDisplay(v.toInt());
@@ -440,7 +441,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           return (r.weight != null && (r.reps == null || r.reps == 1))
               ? r.weight
               : null;
-        case RecordType.distance:
+        case RecordType.etc:
+          return r.distance;
         case RecordType.forTime:
         case RecordType.amrap:
           return r.durationSeconds?.toDouble();
@@ -455,7 +457,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       case RecordType.weight:
         prevBest =
             valid.reduce((a, b) => (valOf(a) ?? 0) >= (valOf(b) ?? 0) ? a : b);
-      case RecordType.distance:
+      case RecordType.etc:
+        prevBest = valid.reduce((a, b) =>
+            (valOf(a) ?? 0) >= (valOf(b) ?? 0) ? a : b);
       case RecordType.forTime:
       case RecordType.amrap:
         prevBest = valid.reduce((a, b) =>

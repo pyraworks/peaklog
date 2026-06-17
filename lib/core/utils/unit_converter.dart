@@ -41,25 +41,11 @@ class UnitConverter {
     return '${_fmt(value)} $unit';
   }
 
-  static String formatDiffWeight(double diffKg, String unit) {
-    final value = unit == 'lbs' ? kgToLbs(diffKg) : diffKg;
-    final sign = value >= 0 ? '+' : '';
-    return '$sign${_fmt(value)} $unit';
-  }
-
-  static String formatDiffTime(int diffSeconds) {
-    final sign = diffSeconds <= 0 ? '-' : '+';
-    return '$sign${secondsToDisplay(diffSeconds.abs())}';
-  }
-
-  static String formatDiffDistance(double diffKm, String unit) {
-    final value = unit == 'mi' ? kmToMi(diffKm) : diffKm;
-    final sign = value >= 0 ? '+' : '';
-    return '$sign${_fmt(value)} $unit';
-  }
+  static String formatEtc(double value, String unit) =>
+      unit.isEmpty ? _fmt(value) : '${_fmt(value)} $unit';
 
   static String _fmt(double value) {
-    if (value == value.truncateToDouble()) return value.toStringAsFixed(0);
-    return value.toStringAsFixed(1);
+    final s = value.toStringAsFixed(1);
+    return s.endsWith('.0') ? value.toStringAsFixed(0) : s;
   }
 }

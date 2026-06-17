@@ -81,6 +81,22 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
         : '${rounded.toStringAsFixed(1)} kg';
   }
 
+  void _onUnitChanged(String newUnit) {
+    if (newUnit == _unit) return;
+    final raw = double.tryParse(_weightCtrl.text.trim());
+    if (raw != null && raw > 0) {
+      final converted = newUnit == 'lbs'
+          ? UnitConverter.kgToLbs(raw)
+          : UnitConverter.lbsToKg(raw);
+      final s = converted.toStringAsFixed(1);
+      _weightCtrl.text = s.endsWith('.0')
+          ? converted.toInt().toString()
+          : s;
+    }
+    setState(() => _unit = newUnit);
+    CalculatorPrefs.set1rmUnit(newUnit);
+  }
+
   void _tapChip(int pct) {
     _pctCtrl.text = '$pct';
     _pctCtrl.selection =
@@ -161,6 +177,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                                   color: AppColors.label1,
                                 ),
                                 cursorColor: AppColors.label1,
+                                cursorHeight: 20,
                                 decoration: InputDecoration(
                                   hintText: '100',
                                   hintStyle: AppTypography.inputValue.copyWith(
@@ -183,10 +200,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                             const SizedBox(width: AppSpacing.s8),
                             _UnitToggle(
                               selected: _unit,
-                              onTap: (u) {
-                                setState(() => _unit = u);
-                                CalculatorPrefs.set1rmUnit(u);
-                              },
+                              onTap: _onUnitChanged,
                             ),
                           ],
                         ),
@@ -230,7 +244,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                                           : AppColors.disabled),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'View Full Table',
+                                    'View Table',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
@@ -319,6 +333,8 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                                                       .numberWithOptions(
                                                       decimal: true),
                                               textAlign: TextAlign.right,
+                                              textAlignVertical:
+                                                  TextAlignVertical.center,
                                               cursorColor: AppColors.label1,
                                               cursorWidth: 1.5,
                                               cursorHeight: 14,
@@ -334,10 +350,9 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                                                 focusedBorder: InputBorder.none,
                                                 filled: false,
                                                 isDense: true,
-                                                contentPadding: EdgeInsets.only(
-                                                    left: 6,
-                                                    top: 6,
-                                                    bottom: 6),
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 6),
                                               ),
                                               onChanged: (_) => setState(() {}),
                                               onTap: () =>
@@ -415,11 +430,11 @@ class _UnitToggle extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _UnitChip(
-              label: 'KG',
+              label: 'kg',
               active: selected == 'kg',
               onTap: () => onTap('kg')),
           _UnitChip(
-              label: 'LBS',
+              label: 'lbs',
               active: selected == 'lbs',
               onTap: () => onTap('lbs')),
         ],
