@@ -79,14 +79,14 @@ void main() {
     test('has 5 splits total', () {
       expect(splits.length, 5); // 1km … 5km, no sub-km
     });
-    test('first split is 1km = 240s', () {
-      expect(splits.first, ('1km', 240));
+    test('first split is 1 km = 240s', () {
+      expect(splits.first, ('1 km', 240));
     });
-    test('last split is 5km = 1200s', () {
-      expect(splits.last, ('5km', 1200));
+    test('last split is 5 km = 1200s', () {
+      expect(splits.last, ('5 km', 1200));
     });
-    test('1km split = 240s', () {
-      final km1 = splits.firstWhere((s) => s.$1 == '1km');
+    test('1 km split = 240s', () {
+      final km1 = splits.firstWhere((s) => s.$1 == '1 km');
       expect(km1.$2, 240);
     });
   });
@@ -97,8 +97,8 @@ void main() {
       splits = PaceCalculatorLogic.generateSplits(
           PaceCalculatorLogic.halfMarathonKm, 300.0);
     });
-    test('last split label is "21.1km Finish"', () {
-      expect(splits.last.$1, '21.1km Finish');
+    test('last split label is "21.1 km Finish"', () {
+      expect(splits.last.$1, '21.1 km Finish');
     });
     test('last split time = halfMarathonKm * 300 seconds', () {
       expect(splits.last.$2,
@@ -107,10 +107,10 @@ void main() {
   });
 
   group('generateSplits — marathon at 5:00/km', () {
-    test('last split label is "42.195km Finish"', () {
+    test('last split label is "42.195 km Finish"', () {
       final splits = PaceCalculatorLogic.generateSplits(
           PaceCalculatorLogic.marathonKm, 300.0);
-      expect(splits.last.$1, '42.195km Finish');
+      expect(splits.last.$1, '42.195 km Finish');
     });
   });
 
@@ -122,11 +122,11 @@ void main() {
     test('has 10 splits (100m increments)', () {
       expect(splits.length, 10);
     });
-    test('first split is 100m = 24s', () {
-      expect(splits.first, ('100m', 24));
+    test('first split is 100 m = 24s', () {
+      expect(splits.first, ('100 m', 24));
     });
-    test('last split is 1000m = 240s', () {
-      expect(splits.last, ('1000m', 240));
+    test('last split is 1000 m = 240s', () {
+      expect(splits.last, ('1000 m', 240));
     });
   });
 

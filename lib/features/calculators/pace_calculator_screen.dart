@@ -194,21 +194,24 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                   // ── Time input ────────────────────────────────────────
                   _InputCard(
                     label: 'TIME',
-                    child: TextField(
-                      controller: _timeCtrl,
-                      keyboardType: TextInputType.datetime,
-                      style: AppTypography.inputValue
-                          .copyWith(color: AppColors.label1),
-                      cursorColor: AppColors.label1,
-                      decoration: InputDecoration(
-                        hintText: '20:00',
-                        hintStyle: AppTypography.inputValue
-                            .copyWith(color: AppColors.label2),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
+                    child: SizedBox(
+                      width: 140,
+                      child: TextField(
+                        controller: _timeCtrl,
+                        keyboardType: TextInputType.datetime,
+                        style: AppTypography.inputValue
+                            .copyWith(color: AppColors.label1),
+                        cursorColor: AppColors.label1,
+                        decoration: InputDecoration(
+                          hintText: '20:00',
+                          hintStyle: AppTypography.inputValue
+                              .copyWith(color: AppColors.label2),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: _onTimeChanged,
                       ),
-                      onChanged: _onTimeChanged,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s12),

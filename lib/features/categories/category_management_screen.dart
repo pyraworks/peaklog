@@ -28,27 +28,9 @@ class _CategoryManagementScreenState
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          ScreenHeader(
+          const ScreenHeader(
             backLabel: 'Settings',
             title: 'Categories',
-            trailing: GestureDetector(
-              onTap: () => _showAddSheet(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.actionDark,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  '+ Add',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
           ),
           Expanded(
             child: categories.isEmpty
@@ -80,6 +62,45 @@ class _CategoryManagementScreenState
                       );
                     },
                   ),
+          ),
+          // ── Add Category button ────────────────────────────────────
+          Container(
+            color: AppColors.background,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                child: GestureDetector(
+                  onTap: () => _showAddSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.actionDark,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.actionDarkBorder),
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('+',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w300)),
+                          SizedBox(width: 6),
+                          Text('Add Category',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

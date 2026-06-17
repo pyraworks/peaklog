@@ -69,12 +69,12 @@ class PaceCalculatorLogic {
     if (distanceKm <= 1.0) {
       for (int i = 1; i * 0.1 <= distanceKm + 1e-9; i++) {
         final d = i * 0.1;
-        result.add(('${i * 100}m', (d * paceSecPerKm).round()));
+        result.add(('${i * 100} m', (d * paceSecPerKm).round()));
       }
     } else {
       final fullKm = distanceKm.truncate();
       for (int km = 1; km <= fullKm; km++) {
-        result.add(('${km}km', (km.toDouble() * paceSecPerKm).round()));
+        result.add(('$km km', (km.toDouble() * paceSecPerKm).round()));
       }
       final frac = distanceKm - fullKm;
       if (frac > 1e-6) {
@@ -86,8 +86,8 @@ class PaceCalculatorLogic {
   }
 
   static String _finishLabel(double km) {
-    if ((km - halfMarathonKm).abs() < 0.01) return '21.1km Finish';
-    if ((km - marathonKm).abs() < 0.01) return '42.195km Finish';
-    return '${km.toStringAsFixed(1)}km Finish';
+    if ((km - halfMarathonKm).abs() < 0.01) return '21.1 km Finish';
+    if ((km - marathonKm).abs() < 0.01) return '42.195 km Finish';
+    return '${km.toStringAsFixed(1)} km Finish';
   }
 }

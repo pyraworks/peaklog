@@ -1,8 +1,8 @@
 class PlateCalculatorLogic {
   static const kgPlates = [25.0, 20.0, 15.0, 10.0, 5.0, 2.5, 1.25];
   static const lbPlates = [45.0, 35.0, 25.0, 10.0, 5.0, 2.5];
-  static const kgBars = [20.0, 15.0];
-  static const lbBars = [45.0, 35.0, 15.0];
+  static const kgBars = [10.0, 15.0, 20.0];
+  static const lbBars = [15.0, 35.0, 45.0];
 
   // Total weight = bar + sum(plateWeight × count) for all plates.
   // count=2 means 1 plate per side (symmetrical loading).

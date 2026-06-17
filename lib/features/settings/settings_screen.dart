@@ -19,6 +19,10 @@ class SettingsScreen extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               children: [
+                // ── Profile card ──────────────────────────────────────
+                _ProfileSummaryCard(onTap: () => context.push('/profile')),
+                const SizedBox(height: 24),
+
                 // ── GENERAL ──────────────────────────────────────────
                 const _SectionLabel('GENERAL'),
                 _CardSection(
@@ -26,9 +30,6 @@ class SettingsScreen extends StatelessWidget {
                     _CardItem(
                         title: 'Categories',
                         onTap: () => context.push('/categories')),
-                    _CardItem(
-                        title: 'Profile',
-                        onTap: () => context.push('/profile')),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -138,6 +139,62 @@ class _MenuRow extends StatelessWidget {
               size: 20,
               color: AppColors.chevron,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile summary card — tappable, navigates to /profile
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ProfileSummaryCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ProfileSummaryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: AppColors.separator, width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.separatorAlt),
+              ),
+              child: Center(
+                child: Icon(
+                  AppIcons.person,
+                  size: 22,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'PeakLog User',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2328),
+                ),
+              ),
+            ),
+            Icon(AppIcons.forward, size: 20, color: AppColors.chevron),
           ],
         ),
       ),

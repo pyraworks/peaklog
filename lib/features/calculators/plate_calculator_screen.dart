@@ -98,6 +98,15 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
     CalculatorPrefs.setPlateCounts(_unit, _counts);
   }
 
+  void _resetPlates() {
+    setState(() {
+      _counts = {for (final s in _plateSizes) s: 0};
+      _totalCtrl.text = _fmtWeight(_barWeight);
+    });
+    CalculatorPrefs.setPlateTotalWeight(_barWeight);
+    CalculatorPrefs.setPlateCounts(_unit, _counts);
+  }
+
   void _selectBar(double weight) {
     setState(() => _barWeight = weight);
     CalculatorPrefs.setPlateBarWeight(weight);
@@ -182,15 +191,18 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            IntrinsicWidth(
+                            SizedBox(
+                              width: 80,
                               child: TextField(
                                 controller: _totalCtrl,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
+                                textAlign: TextAlign.center,
                                 style: AppTypography.inputValue
                                     .copyWith(color: AppColors.label1),
                                 cursorColor: AppColors.label1,
+                                cursorHeight: 20,
                                 decoration: InputDecoration(
                                   hintText: '100',
                                   hintStyle: AppTypography.inputValue
@@ -223,36 +235,50 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Row(
-                    children: _barOptions.map((w) {
-                      final active = (w - _barWeight).abs() < 0.01;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => _selectBar(w),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 7),
-                            decoration: BoxDecoration(
-                              color: active
-                                  ? AppColors.chipSelected
-                                  : AppColors.chip,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              '${_fmtWeight(w)}$_unitLabel',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                    children: [
+                      ..._barOptions.map((w) {
+                        final active = (w - _barWeight).abs() < 0.01;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () => _selectBar(w),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
                                 color: active
-                                    ? Colors.white
-                                    : AppColors.textPrimaryAlt,
+                                    ? AppColors.chipSelected
+                                    : AppColors.chip,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                '${_fmtWeight(w)} $_unitLabel',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: active
+                                      ? Colors.white
+                                      : AppColors.textPrimaryAlt,
+                                ),
                               ),
                             ),
                           ),
+                        );
+                      }),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: _resetPlates,
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.label2,
+                          ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.s16),
 
@@ -405,7 +431,7 @@ class _PlateRow extends StatelessWidget {
           SizedBox(
             width: 64,
             child: Text(
-              '${_fmt(plate)}$unitLabel',
+              '${_fmt(plate)} $unitLabel',
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
