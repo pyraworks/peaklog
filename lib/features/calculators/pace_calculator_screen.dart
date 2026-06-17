@@ -132,7 +132,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
       );
     }
 
-    final (paceSecPerKm, totalSec) = _computed;
+    final (paceSecPerKm, _) = _computed;
     final hasSplits = paceSecPerKm != null && paceSecPerKm > 0;
     final splits = hasSplits
         ? PaceCalculatorLogic.generateSplits(_distanceKm, paceSecPerKm)
@@ -247,32 +247,6 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                   ),
                   const SizedBox(height: AppSpacing.s24),
 
-                  // ── Result cards ──────────────────────────────────────
-                  if (paceSecPerKm != null || totalSec != null) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ResultCard(
-                            label: 'PACE',
-                            value: paceSecPerKm != null
-                                ? '${PaceCalculatorLogic.formatPace(paceSecPerKm)} /km'
-                                : '—',
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.s12),
-                        Expanded(
-                          child: _ResultCard(
-                            label: 'TIME',
-                            value: totalSec != null
-                                ? PaceCalculatorLogic.formatTime(totalSec)
-                                : '—',
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s24),
-                  ],
-
                   // ── Split table ───────────────────────────────────────
                   if (hasSplits && splits.isNotEmpty) ...[
                     _SplitTable(
@@ -318,38 +292,6 @@ class _InputCard extends StatelessWidget {
                   AppTypography.inputLabel.copyWith(color: AppColors.label2)),
           const SizedBox(height: 4),
           child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ResultCard extends StatelessWidget {
-  final String label;
-  final String value;
-  const _ResultCard({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.separator, width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16, vertical: AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: AppTypography.sectionLabel
-                  .copyWith(color: AppColors.label2)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTypography.calcValue.copyWith(color: AppColors.label1),
-          ),
         ],
       ),
     );

@@ -274,7 +274,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                   hintText: 'e.g. reps, kg, km',
                   hintStyle: TextStyle(
                     fontSize: 16,
-                    color: AppColors.textTertiary,
+                    color: AppColors.label2,
                   ),
                 ),
               ),

@@ -75,7 +75,6 @@ class _CategoryManagementScreenState
                         key: ValueKey(cat.id),
                         index: i,
                         category: cat,
-                        isUncategorized: cat.id == Category.uncategorizedId,
                         onEdit: () => _showEditSheet(context, cat),
                         onDelete: () => _confirmDelete(context, cat),
                       );
@@ -89,7 +88,6 @@ class _CategoryManagementScreenState
 
 
   Future<void> _reorder(List<Category> cats, int oldIdx, int newIdx) async {
-    if (cats[oldIdx].id == Category.uncategorizedId) return;
     final reordered = List<Category>.from(cats);
     final moved = reordered.removeAt(oldIdx);
     reordered.insert(newIdx, moved);
@@ -372,14 +370,12 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
 class _CategoryTile extends StatelessWidget {
   final int index;
   final Category category;
-  final bool isUncategorized;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CategoryTile({
     required this.index,
     required this.category,
-    required this.isUncategorized,
     required this.onEdit,
     required this.onDelete,
     super.key,
@@ -396,9 +392,6 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Row content — identical structure for all tiles.
-    // Uncategorized: drag handle visible, no swipe actions.
-    // Normal: drag handle + swipe (edit + delete).
     final content = ColoredBox(
       color: Colors.white,
       child: ListTile(
@@ -406,12 +399,10 @@ class _CategoryTile extends StatelessWidget {
         leading: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            isUncategorized
-                ? const Icon(Icons.remove, color: Color(0xFFD1D5DA), size: 18)
-                : ReorderableDragStartListener(
-                    index: index,
-                    child: Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),
-                  ),
+            ReorderableDragStartListener(
+              index: index,
+              child: Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),
+            ),
             const SizedBox(width: 10),
             _colorDot(),
           ],
@@ -427,15 +418,13 @@ class _CategoryTile extends StatelessWidget {
       ),
     );
 
-    final inner = isUncategorized
-        ? content
-        : SwipeableRow(
-            id: category.id,
-            onEdit: onEdit,
-            onSwipeEdit: onEdit,
-            onDelete: onDelete,
-            child: content,
-          );
+    final inner = SwipeableRow(
+      id: category.id,
+      onEdit: onEdit,
+      onSwipeEdit: onEdit,
+      onDelete: onDelete,
+      child: content,
+    );
 
     // Outer container: border radius + clip matches History card (radius 12,
     // hardEdge), so swiped action pane rendering is identical.

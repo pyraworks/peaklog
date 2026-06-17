@@ -180,8 +180,9 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                         ),
                         const SizedBox(height: 4),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(
+                            IntrinsicWidth(
                               child: TextField(
                                 controller: _totalCtrl,
                                 keyboardType:
@@ -201,6 +202,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                                 onChanged: _onTotalChanged,
                               ),
                             ),
+                            const SizedBox(width: 6),
                             Text(
                               _unitLabel,
                               style: AppTypography.inputValue
