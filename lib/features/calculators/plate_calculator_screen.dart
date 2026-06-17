@@ -198,7 +198,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                         decimal: true),
-                                textAlign: TextAlign.center,
+
                                 style: AppTypography.inputValue
                                     .copyWith(color: AppColors.label1),
                                 cursorColor: AppColors.label1,
@@ -235,6 +235,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                   ),
                   const SizedBox(height: AppSpacing.s8),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       ..._barOptions.map((w) {
                         final active = (w - _barWeight).abs() < 0.01;
