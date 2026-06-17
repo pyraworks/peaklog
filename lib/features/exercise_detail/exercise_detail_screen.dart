@@ -1,126 +1,170 @@
-import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../core/design/app_colors.dart';
+import '../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/design/app_spacing.dart';
+import '../../core/design/app_typography.dart';
 import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
-import '../../core/theme/app_theme.dart';
+import '../../providers/personal_best_provider.dart';
+import '../../domain/models/category.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
-import '../../providers/unit_settings_provider.dart';
-import '../compare/compare_screen.dart';
-import '../home/one_rm_panel.dart';
-import '../record_input/record_input_screen.dart';
+import '../../widgets/pb_badge.dart';
+import '../../widgets/screen_header.dart';
+import '../../widgets/swipeable_row.dart';
+import '../home/add_exercise_sheet.dart';
+import '../record_input/add_record_sheet.dart';
 
-class ExerciseDetailScreen extends ConsumerWidget {
-  final Exercise exercise;
-  const ExerciseDetailScreen({required this.exercise, super.key});
+class ExerciseDetailScreen extends ConsumerStatefulWidget {
+  final String exerciseId;
+  const ExerciseDetailScreen({required this.exerciseId, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ExerciseDetailScreen> createState() =>
+      _ExerciseDetailScreenState();
+}
+
+class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
+  bool _addRecordOpened = false;
+
+  void _maybeOpenAddRecord(BuildContext context, Exercise exercise) {
+    if (exercise.recordType == null && !_addRecordOpened) {
+      _addRecordOpened = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showAddRecordSheet(context, ref, exercise);
+      });
+    }
+  }
+
+  // ── helpers ────────────────────────────────────────────────────────────────
+
+  String _formatHistoryValue(Record r, RecordType? rt, String unit) {
+    if (rt == null) return '—';
+    switch (rt) {
+      case RecordType.weight:
+        final w = UnitConverter.formatWeight(r.weight!, unit);
+        return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
+      case RecordType.etc:
+        if (r.distance != null) {
+          final u = r.distanceUnit.isNotEmpty ? r.distanceUnit : unit;
+          return UnitConverter.formatEtc(r.distance!, u);
+        }
+        return '—';
+      case RecordType.forTime:
+      case RecordType.amrap:
+        if (r.durationSeconds != null) {
+          return UnitConverter.secondsToDisplay(r.durationSeconds!);
+        }
+        return '—';
+    }
+  }
+
+  // ── build ──────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final exercise = ref.watch(
+      exercisesProvider.select(
+        (s) => s.valueOrNull
+            ?.where((e) => e.id == widget.exerciseId)
+            .firstOrNull,
+      ),
+    );
     final records =
-        ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
-    final settings = ref.watch(unitSettingsProvider).valueOrNull;
-    final bestValue = _getBestValue(records, exercise.category);
+        ref.watch(recordsProvider(widget.exerciseId)).valueOrNull ?? [];
+
+    if (exercise == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final weightUnit = exercise.baseUnit;
+
+    // Auto-open Add Record when recordType not yet set
+    _maybeOpenAddRecord(context, exercise);
+
+    final rt = exercise.recordType;
+    final pb = ref.watch(personalBestProvider(widget.exerciseId));
+    final bestRecordId = pb?.sourceRecordId;
+    final bestRecord = bestRecordId != null
+        ? records.where((r) => r.id == bestRecordId).firstOrNull
+        : null;
+    final bestValue = bestRecord != null && rt != null
+        ? _formatHistoryValue(bestRecord, rt, weightUnit)
+        : '—';
+    final bestDate = bestRecord != null
+        ? DateFormatter.relative(
+            DateTime.fromMillisecondsSinceEpoch(bestRecord.performedAt))
+        : null;
+    final bestKg =
+        (rt == RecordType.weight && bestRecord?.weight != null)
+            ? bestRecord!.weight!
+            : null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(exercise.displayName),
-        actions: [
-          CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => CompareScreen(exercise: exercise)),
-            ),
-            child: const Text(
-              '비교',
-              style: TextStyle(
-                  color: AppTheme.accent,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500),
-            ),
-          ),
-          CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      RecordInputScreen(exercise: exercise)),
-            ),
-            child: const Text(
-              '기록 추가',
-              style: TextStyle(
-                  color: AppTheme.accent,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const Divider(
-              height: 0.5, thickness: 0.5, color: AppTheme.separator),
+          _ExerciseHeader(exercise: exercise),
           Expanded(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _StatsCard(
-                    exercise: exercise,
-                    records: records,
-                    settings: settings,
-                    bestValue: bestValue,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s16, vertical: AppSpacing.s24),
+              children: [
+                // 1. PB Card (only when recordType is set)
+                if (bestRecord != null && rt != null) ...[
+                  _PbCard(
+                    valueText: bestValue,
+                    dateText: bestDate ?? '',
+                    pbLabel: exercise.bestTypeLabel,
+                    onTap: () => context.push(
+                        '/exercise/${widget.exerciseId}/record/${bestRecord.id}'),
+                    onShare: () => context.push('/share/${bestRecord.id}'),
                   ),
-                ),
-                if (exercise.category == ExerciseCategory.strength) ...[
-                  const SliverToBoxAdapter(child: SizedBox(height: 28)),
-                  SliverToBoxAdapter(
-                      child: OneRmPanel(exercise: exercise)),
+                  const SizedBox(height: AppSpacing.s24),
                 ],
-                const SliverToBoxAdapter(
-                    child: _SectionLabel('기록 히스토리')),
-                if (records.isEmpty)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 24),
-                      child: Center(
-                        child: Text('아직 기록이 없어요',
-                            style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 15)),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) {
-                          final r = records[i];
-                          return _HistoryTile(
-                            record: r,
-                            exercise: exercise,
-                            isBest: _isBestRecord(
-                                r, records, exercise.category),
-                            settings: settings,
-                            isLast: i == records.length - 1,
-                            onDelete: () => ref
-                                .read(recordsProvider(exercise.id)
-                                    .notifier)
-                                .deleteRecord(r.id),
-                          );
-                        },
-                        childCount: records.length,
-                      ),
-                    ),
+
+                // 2. 1RM Calculator (weight only)
+                if (rt == RecordType.weight && bestKg != null) ...[
+                  _OneRMCalculator(
+                    bestKg: bestKg,
+                    weightUnit: weightUnit,
+                    onViewTable: () => context
+                        .push('/exercise/${widget.exerciseId}/1rm-table'),
                   ),
-                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                  const SizedBox(height: AppSpacing.s24),
+                ],
+
+                // 3. Add Record button
+                _AddRecordButton(
+                  onTap: () => showAddRecordSheet(context, ref, exercise),
+                ),
+                const SizedBox(height: AppSpacing.s24),
+
+                // 4. History (only when there are records)
+                if (rt != null && records.isNotEmpty)
+                  _HistorySection(
+                    records: records,
+                    prRecordId: bestRecordId,
+                    exercise: exercise,
+                    weightUnit: weightUnit,
+                    formatValue: (r) =>
+                        _formatHistoryValue(r, rt, weightUnit),
+                    onTap: (r) => context.push(
+                        '/exercise/${widget.exerciseId}/record/${r.id}'),
+                    onShare: (r) => context.push('/share/${r.id}'),
+                    onDelete: (r) => ref
+                        .read(recordsProvider(widget.exerciseId).notifier)
+                        .deleteRecord(r.id),
+                  ),
+
+                const SizedBox(height: AppSpacing.s32),
               ],
             ),
           ),
@@ -128,347 +172,628 @@ class ExerciseDetailScreen extends ConsumerWidget {
       ),
     );
   }
-
-  double? _getBestValue(
-      List<Record> records, ExerciseCategory category) {
-    if (records.isEmpty) return null;
-    switch (category) {
-      case ExerciseCategory.strength:
-        final oneRep = records
-            .where((r) =>
-                r.weight != null && (r.reps == null || r.reps == 1))
-            .toList();
-        if (oneRep.isEmpty) return null;
-        return oneRep.map((r) => r.weight!).reduce(max);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
-        final withTime =
-            records.where((r) => r.durationSeconds != null).toList();
-        if (withTime.isEmpty) return null;
-        return withTime
-            .map((r) => r.durationSeconds!.toDouble())
-            .reduce(min);
-      case ExerciseCategory.custom:
-        return null;
-    }
-  }
-
-  bool _isBestRecord(
-      Record r, List<Record> all, ExerciseCategory category) {
-    switch (category) {
-      case ExerciseCategory.strength:
-        if (r.weight == null) return false;
-        final oneRep = all
-            .where((x) =>
-                x.weight != null && (x.reps == null || x.reps == 1))
-            .toList();
-        if (oneRep.isEmpty) return false;
-        final best = oneRep.map((x) => x.weight!).reduce(max);
-        return r.weight == best && (r.reps == null || r.reps == 1);
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
-        if (r.durationSeconds == null) return false;
-        final withTime =
-            all.where((x) => x.durationSeconds != null).toList();
-        if (withTime.isEmpty) return false;
-        final best =
-            withTime.map((x) => x.durationSeconds!).reduce(min);
-        return r.durationSeconds == best;
-      case ExerciseCategory.custom:
-        return false;
-    }
-  }
 }
 
-class _StatsCard extends StatelessWidget {
-  final Exercise exercise;
-  final List<Record> records;
-  final UnitSettings? settings;
-  final double? bestValue;
+// ── _ExerciseHeader ──────────────────────────────────────────────────────────
 
-  const _StatsCard({
-    required this.exercise,
-    required this.records,
-    required this.settings,
-    required this.bestValue,
-  });
+class _ExerciseHeader extends StatelessWidget {
+  final Exercise exercise;
+  const _ExerciseHeader({required this.exercise});
 
   @override
   Widget build(BuildContext context) {
-    final displayBest = _formatValue(bestValue);
-    final daysSince = _daysSince();
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.card,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final categoryName = Category.nameForId(exercise.categoryId);
+    return ScreenHeader(
+      backLabel: 'Back',
+      titleWidget: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Text(
-                exercise.category.label.toUpperCase(),
-                style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: exercise.displayName,
+                    style: AppTypography.pageTitle.copyWith(
+                      color: AppColors.label1,
+                    ),
+                  ),
+                  if (categoryName.isNotEmpty)
+                    TextSpan(
+                      text: '  $categoryName',
+                      style: AppTypography.body.copyWith(
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.label2,
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text('최고 기록',
-                    style: TextStyle(
-                        color: AppTheme.accent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            displayBest,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(daysSince,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 13)),
+          GestureDetector(
+            onTap: () => showEditExerciseSheet(context, exercise),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Icon(AppIcons.settings, size: 20, color: AppColors.label2),
+            ),
+          ),
         ],
       ),
     );
   }
-
-  String _formatValue(double? v) {
-    if (v == null) return '—';
-    switch (exercise.category) {
-      case ExerciseCategory.strength:
-        return UnitConverter.formatWeight(
-            v, settings?.weightUnit ?? 'kg');
-      case ExerciseCategory.running:
-      case ExerciseCategory.workout:
-        return UnitConverter.secondsToDisplay(v.toInt());
-      case ExerciseCategory.custom:
-        return v.toStringAsFixed(1);
-    }
-  }
-
-  String _daysSince() {
-    if (records.isEmpty) return '기록 없음';
-    if (exercise.category == ExerciseCategory.strength) {
-      final oneRep = records
-          .where((r) =>
-              r.weight != null && (r.reps == null || r.reps == 1))
-          .toList();
-      if (oneRep.isEmpty) return '기록 없음';
-      final best = oneRep.reduce(
-          (a, b) => (a.weight ?? 0) >= (b.weight ?? 0) ? a : b);
-      final diff = DateTime.now()
-          .difference(
-              DateTime.fromMillisecondsSinceEpoch(best.performedAt))
-          .inDays;
-      if (diff == 0) return 'PR 오늘 갱신됨';
-      return 'PR $diff일 전 갱신';
-    }
-    final last = DateTime.fromMillisecondsSinceEpoch(
-        records.first.performedAt);
-    final diff = DateTime.now().difference(last).inDays;
-    if (diff == 0) return '오늘 업데이트됨';
-    return '$diff일 전';
-  }
 }
 
-class _SectionLabel extends StatelessWidget {
-  final String title;
-  const _SectionLabel(this.title);
+// ── _PbCard ──────────────────────────────────────────────────────────────────
+
+class _PbCard extends StatelessWidget {
+  final String valueText;
+  final String dateText;
+  final String pbLabel;
+  final VoidCallback onTap;
+  final VoidCallback onShare;
+
+  const _PbCard({
+    required this.valueText,
+    required this.dateText,
+    required this.pbLabel,
+    required this.onTap,
+    required this.onShare,
+  });
+
+  Widget _buildValue() {
+    final parts = valueText.split(' × ');
+    if (parts.length == 2) {
+      return RichText(
+        text: TextSpan(children: [
+          TextSpan(
+            text: parts[0],
+            style: AppTypography.pbValue.copyWith(
+              color: AppColors.label1, letterSpacing: -0.8),
+          ),
+          TextSpan(
+            text: ' × ${parts[1]}',
+            style: AppTypography.pbValue.copyWith(
+              color: AppColors.label2, letterSpacing: -0.8),
+          ),
+        ]),
+      );
+    }
+    return Text(
+      valueText,
+      style: AppTypography.pbValue.copyWith(
+        color: AppColors.label1, letterSpacing: -0.8),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        title.toUpperCase(),
-        style: const TextStyle(
-          color: AppTheme.textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          border: Border.all(color: AppColors.separator, width: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.hardEdge,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left column
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'PERSONAL BEST',
+                      style: AppTypography.sectionLabel.copyWith(
+                        color: AppColors.label2,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    PbBadge(label: pbLabel),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                _buildValue(),
+                const SizedBox(height: 2),
+                Text(
+                  dateText,
+                  style: AppTypography.footnote.copyWith(
+                    color: AppColors.label2,
+                  ),
+                ),
+              ],
+            ),
+            // Right — share button
+            GestureDetector(
+              onTap: onShare,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(AppIcons.share, size: 13, color: AppColors.label2),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Share',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.label2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _HistoryTile extends StatelessWidget {
-  final Record record;
-  final Exercise exercise;
-  final bool isBest;
-  final UnitSettings? settings;
-  final bool isLast;
-  final VoidCallback onDelete;
+// ── _OneRMCalculator ─────────────────────────────────────────────────────────
 
-  const _HistoryTile({
-    required this.record,
+class _OneRMCalculator extends StatefulWidget {
+  final double bestKg;
+  final String weightUnit;
+  final VoidCallback onViewTable;
+
+  static const _quickPcts = [70, 75, 80, 85, 90, 95];
+
+  const _OneRMCalculator({
+    required this.bestKg,
+    required this.weightUnit,
+    required this.onViewTable,
+  });
+
+  @override
+  State<_OneRMCalculator> createState() => _OneRMCalculatorState();
+}
+
+class _OneRMCalculatorState extends State<_OneRMCalculator> {
+  final TextEditingController _pctCtrl = TextEditingController(text: '85');
+
+  @override
+  void dispose() {
+    _pctCtrl.dispose();
+    super.dispose();
+  }
+
+  double? get _parsedPct {
+    final v = double.tryParse(_pctCtrl.text.trim());
+    if (v == null || v <= 0 || v > 200) return null;
+    return v;
+  }
+
+  int? get _activeChip {
+    final pct = _parsedPct;
+    if (pct == null) return null;
+    for (final q in _OneRMCalculator._quickPcts) {
+      if ((pct - q).abs() < 0.001) return q;
+    }
+    return null;
+  }
+
+  String _formatResult(double kg) {
+    if (widget.weightUnit == 'lbs') return UnitConverter.formatWeight(kg, 'lbs');
+    final rounded = (kg * 10).round() / 10;
+    return rounded == rounded.roundToDouble()
+        ? '${rounded.toInt()} kg'
+        : '${rounded.toStringAsFixed(1)} kg';
+  }
+
+  void _tapChip(int pct) {
+    _pctCtrl.text = '$pct';
+    _pctCtrl.selection = TextSelection.collapsed(offset: _pctCtrl.text.length);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = _parsedPct;
+    final resultKg = pct != null ? widget.bestKg * pct / 100 : null;
+    final resultDisplay = resultKg != null ? _formatResult(resultKg) : '—';
+    final activeChip = _activeChip;
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '1RM CALCULATOR',
+                style: AppTypography.sectionLabel
+                    .copyWith(color: AppColors.label2),
+              ),
+              GestureDetector(
+                onTap: widget.onViewTable,
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.chart, size: 12, color: AppColors.textTertiary),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'View Table',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s16),
+
+          // ── % chips ─────────────────────────────────────────────
+          Row(
+            children: _OneRMCalculator._quickPcts.map((pct) {
+              final active = pct == activeChip;
+              final isLast = pct == _OneRMCalculator._quickPcts.last;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: isLast ? 0 : 4),
+                  child: GestureDetector(
+                    onTap: () => _tapChip(pct),
+                    child: Container(
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: active
+                            ? AppColors.chipSelected
+                            : Colors.transparent,
+                        border: Border.all(
+                            color: AppColors.separator, width: 0.5),
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$pct%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: active
+                                ? Colors.white
+                                : AppColors.label2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+
+          // ── % input + result ─────────────────────────────────────
+          // Aligned to chip grid (6 equal flex slots, 4px gaps).
+          // Left spacer  = flex 1  → input left  == 75% chip left edge.
+          // Content      = flex 4 + Padding(right:4) → result right == 90% chip right edge.
+          // Right spacer = flex 1  → mirrors 95% chip slot.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Mirrors 70% chip slot
+              const Expanded(flex: 1, child: SizedBox()),
+              // Content: chips[1]–[4] span, same 4px right gap as chip[4]
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // % input box — left edge == 75% chip left edge
+                      Container(
+                        width: 64,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _pctCtrl,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                textAlign: TextAlign.right,
+                                cursorColor: AppColors.label1,
+                                cursorWidth: 1.5,
+                                cursorHeight: 14,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.label1,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  filled: false,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.only(
+                                      left: 6, top: 6, bottom: 6),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                                onTap: () => _pctCtrl.selection =
+                                    TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset: _pctCtrl.text.length,
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 2, right: 7),
+                              child: Text(
+                                '%',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.label2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Result — right edge == 90% chip right edge
+                      Text(
+                        resultDisplay,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.label1,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Mirrors 95% chip slot
+              const Expanded(flex: 1, child: SizedBox()),
+            ],
+          ),
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+// ── _AddRecordButton ─────────────────────────────────────────────────────────
+
+class _AddRecordButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddRecordButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.actionDark,
+          border: Border.all(color: AppColors.actionDarkBorder),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16, vertical: 11),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('+', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w300)),
+            SizedBox(width: AppSpacing.s8),
+            Text(
+              'Add Record',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                letterSpacing: -0.01 * 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _HistorySection ───────────────────────────────────────────────────────────
+
+class _HistorySection extends StatelessWidget {
+  final List<Record> records;
+  final String? prRecordId;
+  final Exercise exercise;
+  final String weightUnit;
+  final String Function(Record) formatValue;
+  final void Function(Record) onTap;
+  final void Function(Record) onShare;
+  final void Function(Record) onDelete;
+
+  const _HistorySection({
+    required this.records,
+    required this.prRecordId,
     required this.exercise,
-    required this.isBest,
-    required this.settings,
-    required this.isLast,
+    required this.weightUnit,
+    required this.formatValue,
+    required this.onTap,
+    required this.onShare,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final date =
-        DateTime.fromMillisecondsSinceEpoch(record.performedAt);
-    final dateStr =
-        '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section label
+        Text(
+          'HISTORY',
+          style: AppTypography.sectionLabel
+              .copyWith(color: AppColors.label2),
+        ),
+        const SizedBox(height: AppSpacing.s8),
 
-    return ClipRRect(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(isBest ? 10 : 0),
-        bottom: Radius.circular(isLast ? 10 : 0),
-      ),
-      child: Dismissible(
-        key: Key('record_${record.id}'),
-        direction: DismissDirection.endToStart,
-        background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20),
-          color:
-              const Color(0xFFFF3B30).withValues(alpha: 0.12),
-          child: const Icon(CupertinoIcons.trash,
-              color: Color(0xFFFF3B30), size: 18),
-        ),
-        confirmDismiss: (_) async => showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('기록 삭제'),
-            content: const Text('이 기록을 삭제할까요?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('취소',
-                    style:
-                        TextStyle(color: AppTheme.textSecondary)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('삭제',
-                    style: TextStyle(color: Color(0xFFFF3B30))),
-              ),
-            ],
+        // Card
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            border: Border.all(color: AppColors.separator, width: 0.5),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        onDismissed: (_) => onDelete(),
-        child: Container(
-          color: isBest
-              ? AppTheme.accent.withValues(alpha: 0.04)
-              : AppTheme.card,
+          clipBehavior: Clip.hardEdge,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                        children: [
-                          Text(dateStr,
-                              style: const TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12)),
-                          const SizedBox(height: 2),
-                          Text(
-                            _formatValue(),
-                            style: const TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500),
+                  children: records.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final r = entry.value;
+                    final isPb = r.id == prRecordId;
+                    final valueStr = formatValue(r);
+                    final dateStr = DateFormatter.short(
+                      DateTime.fromMillisecondsSinceEpoch(r.performedAt),
+                    );
+                    return Column(
+                      children: [
+                        SwipeableRow(
+                          id: r.id,
+                          onEdit: () => onTap(r),
+                          onShare: () => onShare(r),
+                          onDelete: () => _confirmDelete(context, r),
+                          child: GestureDetector(
+                            onTap: () => onTap(r),
+                            behavior: HitTestBehavior.opaque,
+                            child: _HistoryRowContent(
+                            valueText: valueStr,
+                            dateText: dateStr,
+                            isPb: isPb,
+                            pbLabel: exercise.bestTypeLabel,
                           ),
-                        ],
-                      ),
-                    ),
-                    if (isBest)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accent
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
-                        child: const Text('PB',
-                            style: TextStyle(
-                                color: AppTheme.accent,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                  ],
+                        if (i < records.length - 1)
+                          const Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            color: AppColors.separatorAlt,
+                            indent: AppSpacing.s20,
+                            endIndent: AppSpacing.s20,
+                          ),
+                      ],
+                    );
+                  }).toList(),
                 ),
-              ),
-              if (!isLast)
-                const Divider(
-                    height: 0.5,
-                    thickness: 0.5,
-                    color: AppTheme.separator,
-                    indent: 16),
-            ],
-          ),
         ),
-      ),
+      ],
     );
   }
 
-  String _formatValue() {
-    switch (exercise.category) {
-      case ExerciseCategory.strength:
-        final w = UnitConverter.formatWeight(
-            record.weight ?? 0, settings?.weightUnit ?? 'kg');
-        return (record.reps != null && record.reps! > 1)
-            ? '$w × ${record.reps}회'
-            : w;
-      case ExerciseCategory.running:
-        final parts = <String>[];
-        if (record.distance != null) {
-          parts.add(UnitConverter.formatDistance(
-              record.distance!, settings?.distanceUnit ?? 'km'));
-        }
-        if (record.durationSeconds != null) {
-          parts.add(
-              UnitConverter.secondsToDisplay(record.durationSeconds!));
-        }
-        return parts.join('  ');
-      case ExerciseCategory.workout:
-        return UnitConverter.secondsToDisplay(
-            record.durationSeconds ?? 0);
-      case ExerciseCategory.custom:
-        if (record.weight != null) {
-          return UnitConverter.formatWeight(
-              record.weight!, settings?.weightUnit ?? 'kg');
-        }
-        if (record.durationSeconds != null) {
-          return UnitConverter.secondsToDisplay(
-              record.durationSeconds!);
-        }
-        return '—';
-    }
+  Future<void> _confirmDelete(BuildContext context, Record r) async {
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Delete Record'),
+        content: const Text('This record will be permanently deleted.'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onDelete(r);
+  }
+}
+
+// ── _HistoryRowContent ────────────────────────────────────────────────────────
+
+class _HistoryRowContent extends StatelessWidget {
+  final String valueText;
+  final String dateText;
+  final bool isPb;
+  final String pbLabel;
+
+  const _HistoryRowContent({
+    required this.valueText,
+    required this.dateText,
+    required this.isPb,
+    required this.pbLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s20, vertical: AppSpacing.s16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    valueText,
+                    style: AppTypography.cardTitle.copyWith(
+                      color: AppColors.textPrimaryAlt,
+                    ),
+                  ),
+                  if (isPb) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    PbBadge(label: pbLabel),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                dateText,
+                style: AppTypography.footnote.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+          // Right — chevron
+          Icon(AppIcons.forward,
+              size: 16, color: const Color(0xFFD1D5DA)),
+        ],
+      ),
+    );
   }
 }
