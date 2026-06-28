@@ -88,10 +88,8 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
       final converted = newUnit == 'lbs'
           ? UnitConverter.kgToLbs(raw)
           : UnitConverter.lbsToKg(raw);
-      final s = converted.toStringAsFixed(1);
-      _weightCtrl.text = s.endsWith('.0')
-          ? converted.toInt().toString()
-          : s;
+      _weightCtrl.text = _fmtInput(converted);
+      CalculatorPrefs.set1rmWeight(converted);
     }
     setState(() => _unit = newUnit);
     CalculatorPrefs.set1rmUnit(newUnit);
@@ -434,7 +432,7 @@ class _UnitToggle extends StatelessWidget {
               active: selected == 'kg',
               onTap: () => onTap('kg')),
           _UnitChip(
-              label: 'lbs',
+              label: 'lb',
               active: selected == 'lbs',
               onTap: () => onTap('lbs')),
         ],

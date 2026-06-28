@@ -25,7 +25,7 @@ class Exercise {
   final int updatedAt;
   final SyncStatus syncStatus;
   final String? ownerId;
-  final String baseUnit; // 'kg' or 'lbs' — display preference per exercise
+  final String baseUnit; // Internal values: 'kg' or 'lbs'. UI label: 'kg' / 'lb'.
   final bool hasPrBaseline; // true once user explicitly marks a first PR
 
   /// null → PR fallback (기존 데이터 호환)

@@ -33,7 +33,8 @@ class UnitConverter {
 
   static String formatWeight(double kg, String unit) {
     final value = unit == 'lbs' ? kgToLbs(kg) : kg;
-    return '${_fmt(value)} $unit';
+    final label = unit == 'lbs' ? 'lb' : unit;
+    return '${_fmt(value)} $label';
   }
 
   static String formatDistance(double km, String unit) {

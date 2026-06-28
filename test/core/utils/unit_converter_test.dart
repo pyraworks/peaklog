@@ -49,7 +49,7 @@ void main() {
       expect(UnitConverter.formatWeight(100, 'kg'), '100 kg');
     });
     test('converts to lbs', () {
-      expect(UnitConverter.formatWeight(100, 'lbs'), '220.5 lbs');
+      expect(UnitConverter.formatWeight(100, 'lbs'), '220.5 lb');
     });
     test('integer display for whole numbers', () {
       expect(UnitConverter.formatWeight(50, 'kg'), '50 kg');

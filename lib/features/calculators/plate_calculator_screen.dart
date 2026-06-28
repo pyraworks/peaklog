@@ -27,7 +27,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
   List<double> get _barOptions =>
       _unit == 'kg' ? PlateCalculatorLogic.kgBars : PlateCalculatorLogic.lbBars;
 
-  String get _unitLabel => _unit == 'kg' ? 'kg' : 'lbs';
+  String get _unitLabel => _unit == 'kg' ? 'kg' : 'lb';
 
   @override
   void initState() {
@@ -353,7 +353,7 @@ class _KgLbToggle extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _Tab(label: 'kg', active: selected == 'kg', onTap: () => onTap('kg')),
-          _Tab(label: 'lbs', active: selected == 'lb', onTap: () => onTap('lb')),
+          _Tab(label: 'lb', active: selected == 'lb', onTap: () => onTap('lb')),
         ],
       ),
     );
