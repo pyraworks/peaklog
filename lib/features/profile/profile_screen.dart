@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/utils/unit_converter.dart';
@@ -135,6 +136,8 @@ class _ProfileCard extends StatelessWidget {
 class _IdentityRow extends StatelessWidget {
   const _IdentityRow();
 
+  static const _profileUrl = 'peaklog.app/@username';
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -158,13 +161,41 @@ class _IdentityRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'PeakLog User',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppColors.label1,
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'PeakLog User',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.label1,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  _profileUrl,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.label2,
+                  ),
+                ),
+              ],
             ),
+          ),
+          IconButton(
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: _profileUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile URL copied')),
+              );
+            },
+            icon: Icon(AppIcons.copy, size: 18, color: AppColors.label2),
+            padding: const EdgeInsets.all(8),
+            constraints: const BoxConstraints(),
           ),
         ],
       ),

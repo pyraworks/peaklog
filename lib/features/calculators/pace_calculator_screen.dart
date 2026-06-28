@@ -6,7 +6,6 @@ import '../../core/design/app_typography.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'pace_calculator_logic.dart';
-import 'time_digit_formatter.dart';
 
 class PaceCalculatorScreen extends StatefulWidget {
   const PaceCalculatorScreen({super.key});
@@ -19,6 +18,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
   final _distCtrl = TextEditingController();
   final _timeCtrl = TextEditingController();
   final _paceCtrl = TextEditingController();
+  final _timeFocus = FocusNode();
+  final _paceFocus = FocusNode();
 
   double _distanceKm = 5.0;
   String _lastEdited = '';
@@ -28,6 +29,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
   @override
   void initState() {
     super.initState();
+    _timeFocus.addListener(_onTimeFocusChange);
+    _paceFocus.addListener(_onPaceFocusChange);
     _loadPrefs();
   }
 
@@ -51,10 +54,39 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 
   @override
   void dispose() {
+    _timeFocus.removeListener(_onTimeFocusChange);
+    _paceFocus.removeListener(_onPaceFocusChange);
+    _timeFocus.dispose();
+    _paceFocus.dispose();
     _distCtrl.dispose();
     _timeCtrl.dispose();
     _paceCtrl.dispose();
     super.dispose();
+  }
+
+  void _onTimeFocusChange() {
+    if (!_timeFocus.hasFocus) _formatAndRecompute(_timeCtrl, lastEdited: 'time');
+  }
+
+  void _onPaceFocusChange() {
+    if (!_paceFocus.hasFocus) _formatAndRecompute(_paceCtrl, lastEdited: 'pace');
+  }
+
+  void _formatAndRecompute(TextEditingController ctrl, {required String lastEdited}) {
+    final raw = ctrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (raw.isEmpty) return;
+    final capped = raw.length > 6 ? raw.substring(raw.length - 6) : raw;
+    final formatted = PaceCalculatorLogic.formatRawDigits(capped);
+    if (ctrl.text != formatted) {
+      ctrl.text = formatted;
+      if (lastEdited == 'time') {
+        CalculatorPrefs.setPaceTimeText(formatted);
+      } else {
+        CalculatorPrefs.setPacePaceText(formatted);
+      }
+    }
+    _lastEdited = lastEdited;
+    _recompute();
   }
 
   void _onDistChanged(String val) {
@@ -199,8 +231,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                       width: 140,
                       child: TextField(
                         controller: _timeCtrl,
+                        focusNode: _timeFocus,
                         keyboardType: TextInputType.number,
-                        inputFormatters: const [TimeDigitFormatter()],
                         style: AppTypography.inputValue
                             .copyWith(color: AppColors.label1),
                         cursorColor: AppColors.label1,
@@ -228,8 +260,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                           width: 120,
                           child: TextField(
                             controller: _paceCtrl,
+                            focusNode: _paceFocus,
                             keyboardType: TextInputType.number,
-                            inputFormatters: const [TimeDigitFormatter()],
                             style: AppTypography.inputValue
                                 .copyWith(color: AppColors.label1),
                             cursorColor: AppColors.label1,

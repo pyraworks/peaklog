@@ -44,12 +44,15 @@ class PaceCalculatorLogic {
     return '$hrs:${mins.padLeft(2, '0')}:$secs';
   }
 
-  // Formats seconds-per-km as "M:SS" — no leading zero on minutes.
+  // Formats seconds-per-km as "M:SS" or "H:MM:SS" — no leading zero on first unit.
   static String formatPace(double secondsPerKm) {
     final total = secondsPerKm.round();
-    final m = total ~/ 60;
+    final h = total ~/ 3600;
+    final m = (total % 3600) ~/ 60;
     final s = total % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
+    final ss = s.toString().padLeft(2, '0');
+    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:$ss';
+    return '$m:$ss';
   }
 
   // Formats total seconds as "M:SS" or "H:MM:SS" — no leading zero on first unit.

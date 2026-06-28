@@ -202,26 +202,28 @@ class _ActivityIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String emoji;
+    final IconData icon;
     switch (type) {
       case HealthActivityType.running:
-        emoji = '🏃';
+        icon = AppIcons.run;
       case HealthActivityType.cycling:
-        emoji = '🚴';
+        icon = AppIcons.bike;
       case HealthActivityType.swimming:
-        emoji = '🏊';
+        icon = AppIcons.swim;
       case HealthActivityType.other:
-        emoji = '🏋️';
+        icon = AppIcons.dumbbell;
     }
 
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.primarySoft,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 20))),
+      child: Center(
+        child: Icon(icon, size: 20, color: AppColors.label2),
+      ),
     );
   }
 }

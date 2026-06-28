@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Central icon registry — swap the icon set by editing this file only.
-/// Content/activity emojis (🏋️ 🏃 🚴 🏊 🔁 ⏱) are intentionally excluded.
 abstract class AppIcons {
   // Navigation
   static IconData get back      => Icons.chevron_left;
@@ -35,4 +34,14 @@ abstract class AppIcons {
   static IconData get checkCircle => Icons.check_circle;
   static IconData get warning     => Icons.warning;
   static IconData get xCircle     => Icons.cancel;
+  // Activity / sport
+  static IconData get dumbbell => Icons.fitness_center;
+  static IconData get run      => Icons.directions_run;
+  static IconData get bike     => Icons.directions_bike;
+  static IconData get swim     => Icons.pool;
+  static IconData get ruler    => Icons.straighten;
+  // Record types
+  static IconData get loop  => Icons.loop;
+  static IconData get timer => Icons.timer;
+  static IconData get tag   => Icons.tag;
 }

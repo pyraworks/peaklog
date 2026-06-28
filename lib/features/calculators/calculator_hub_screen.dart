@@ -25,7 +25,7 @@ class CalculatorHubScreen extends StatelessWidget {
               ),
               children: [
                 _CalculatorCard(
-                  emoji: '🏋️',
+                  icon: AppIcons.dumbbell,
                   title: '1RM Calculator',
                   description: 'Estimate your one-rep max and training percentages.',
                   onTap: () {
@@ -35,7 +35,7 @@ class CalculatorHubScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 _CalculatorCard(
-                  emoji: '🏃',
+                  icon: AppIcons.run,
                   title: 'Pace Calculator',
                   description: 'Calculate pace, finish time, and race splits.',
                   onTap: () {
@@ -45,7 +45,7 @@ class CalculatorHubScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 _CalculatorCard(
-                  emoji: '⚫',
+                  icon: AppIcons.ruler,
                   title: 'Plate Calculator',
                   description: 'Calculate barbell loading and total weight.',
                   onTap: () {
@@ -63,13 +63,13 @@ class CalculatorHubScreen extends StatelessWidget {
 }
 
 class _CalculatorCard extends StatelessWidget {
-  final String emoji;
+  final IconData icon;
   final String title;
   final String description;
   final VoidCallback onTap;
 
   const _CalculatorCard({
-    required this.emoji,
+    required this.icon,
     required this.title,
     required this.description,
     required this.onTap,
@@ -91,7 +91,7 @@ class _CalculatorCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
+            Icon(icon, size: 28, color: AppColors.label1),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(

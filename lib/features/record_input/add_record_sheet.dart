@@ -83,6 +83,9 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
     if (r == null && widget.exercise.recordType == RecordType.etc) {
       _etcUnitCtrl.text = widget.exercise.baseUnit;
     }
+    if (widget.exercise.recordType == RecordType.weight) {
+      _localWeightUnit = widget.exercise.baseUnit;
+    }
   }
 
   @override
@@ -330,6 +333,13 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   }
 
   Future<void> _save(String weightUnit) async {
+    if (_effectiveType == RecordType.weight && _localWeightUnit == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a unit (kg or lb).')),
+      );
+      return;
+    }
+
     double? weight;
     int?    reps;
     int?    rounds;
@@ -463,10 +473,10 @@ class _RecordTypePicker extends StatelessWidget {
 
   // Ordered by expected usage frequency
   static const _types = [
-    (RecordType.weight,   '🏋️', 'Weight'),
-    (RecordType.amrap,    '🔁', 'AMRAP'),
-    (RecordType.forTime,  '⏱',  'For Time'),
-    (RecordType.etc, '🔢', 'ETC'),
+    (RecordType.weight,  Icons.fitness_center, 'Weight'),
+    (RecordType.amrap,   Icons.loop,           'AMRAP'),
+    (RecordType.forTime, Icons.timer,          'For Time'),
+    (RecordType.etc,     Icons.tag,            'ETC'),
   ];
 
   @override
@@ -508,7 +518,7 @@ class _RecordTypePicker extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(t.$2, style: const TextStyle(fontSize: 18)),
+                      Icon(t.$2, size: 20, color: sel ? Colors.white : AppColors.label2),
                       const SizedBox(height: 4),
                       Text(
                         t.$3,
