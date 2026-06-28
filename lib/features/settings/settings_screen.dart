@@ -130,7 +130,7 @@ class _MenuRow extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF1F2328),
+                  color: AppColors.label1,
                 ),
               ),
             ),
@@ -190,7 +190,7 @@ class _ProfileSummaryCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2328),
+                  color: AppColors.label1,
                 ),
               ),
             ),
@@ -226,7 +226,7 @@ class _AboutCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF1F2328),
+                  color: AppColors.label1,
                 ),
               ),
             ),

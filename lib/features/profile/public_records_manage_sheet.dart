@@ -40,7 +40,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD1D1D6),
+                    color: AppColors.separator,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

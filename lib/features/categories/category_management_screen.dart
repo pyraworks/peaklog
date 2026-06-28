@@ -422,7 +422,7 @@ class _CategoryTile extends StatelessWidget {
           children: [
             ReorderableDragStartListener(
               index: index,
-              child: Icon(AppIcons.dragHandle, color: const Color(0xFFD1D5DA), size: 18),
+              child: Icon(AppIcons.dragHandle, color: AppColors.label3, size: 18),
             ),
             const SizedBox(width: 10),
             _colorDot(),
@@ -433,7 +433,7 @@ class _CategoryTile extends StatelessWidget {
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF1F2328),
+            color: AppColors.label1,
           ),
         ),
       ),

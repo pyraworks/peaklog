@@ -46,8 +46,8 @@ class AppTheme {
           fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: AppColors.primary),
-        actionsIconTheme: IconThemeData(color: AppColors.primary),
+        iconTheme: IconThemeData(color: AppColors.label1),
+        actionsIconTheme: IconThemeData(color: AppColors.label1),
       ),
       cardTheme: CardThemeData(
         color: AppColors.card,

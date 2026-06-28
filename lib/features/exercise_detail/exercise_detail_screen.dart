@@ -791,7 +791,7 @@ class _HistoryRowContent extends StatelessWidget {
           ),
           // Right — chevron
           Icon(AppIcons.forward,
-              size: 16, color: const Color(0xFFD1D5DA)),
+              size: 16, color: AppColors.chevron),
         ],
       ),
     );

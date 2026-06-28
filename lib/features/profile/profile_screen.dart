@@ -163,7 +163,7 @@ class _IdentityRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1F2328),
+              color: AppColors.label1,
             ),
           ),
         ],
@@ -236,7 +236,7 @@ class _PublicRecordsGrid extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2328),
+                  color: AppColors.label1,
                   letterSpacing: -0.02 * 20,
                 ),
                 maxLines: 1,
