@@ -53,6 +53,33 @@ void main() {
     });
   });
 
+  group('formatRawDigits', () {
+    // spec examples
+    test('"4" → "0:04"',      () => expect(PaceCalculatorLogic.formatRawDigits('4'),      '0:04'));
+    test('"40" → "0:40"',     () => expect(PaceCalculatorLogic.formatRawDigits('40'),     '0:40'));
+    test('"340" → "3:40"',    () => expect(PaceCalculatorLogic.formatRawDigits('340'),    '3:40'));
+    test('"415" → "4:15"',    () => expect(PaceCalculatorLogic.formatRawDigits('415'),    '4:15'));
+    test('"1234" → "12:34"',  () => expect(PaceCalculatorLogic.formatRawDigits('1234'),   '12:34'));
+    test('"1543" → "15:43"',  () => expect(PaceCalculatorLogic.formatRawDigits('1543'),   '15:43'));
+    test('"12345" → "1:23:45"', () => expect(PaceCalculatorLogic.formatRawDigits('12345'), '1:23:45'));
+    test('"23443" → "2:34:43"', () => expect(PaceCalculatorLogic.formatRawDigits('23443'), '2:34:43'));
+    // edge cases
+    test('"" → ""',           () => expect(PaceCalculatorLogic.formatRawDigits(''),       ''));
+    test('"0" → "0:00"',      () => expect(PaceCalculatorLogic.formatRawDigits('0'),      '0:00'));
+    test('"00" → "0:00"',     () => expect(PaceCalculatorLogic.formatRawDigits('00'),     '0:00'));
+    test('"100" → "1:00"',    () => expect(PaceCalculatorLogic.formatRawDigits('100'),    '1:00'));
+    // backspace simulation: "340" → "34" → "3"
+    test('"34" → "0:34"',     () => expect(PaceCalculatorLogic.formatRawDigits('34'),     '0:34'));
+    test('"3" → "0:03"',      () => expect(PaceCalculatorLogic.formatRawDigits('3'),      '0:03'));
+    // paste (colons already stripped by formatter)
+    test('"2030" → "20:30"',  () => expect(PaceCalculatorLogic.formatRawDigits('2030'),   '20:30'));
+    // 6-digit max (H:MM:SS)
+    test('"123456" → "12:34:56"', () => expect(PaceCalculatorLogic.formatRawDigits('123456'), '12:34:56'));
+    // formatRawDigits intentionally has no length limit; TimeDigitFormatter
+    // enforces the 6-digit UI cap. This case is unreachable through the UI.
+    test('"1234567" → "123:45:67"', () => expect(PaceCalculatorLogic.formatRawDigits('1234567'), '123:45:67'));
+  });
+
   group('parseTimeOrPace', () {
     test('"20:00" → 1200', () {
       expect(PaceCalculatorLogic.parseTimeOrPace('20:00'), 1200);

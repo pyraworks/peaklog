@@ -18,6 +18,32 @@ class PaceCalculatorLogic {
     return (distanceKm * paceSecondsPerKm).round();
   }
 
+  // Converts a raw digit string (no colons) into a display-ready M:SS or
+  // H:MM:SS string. Last 2 digits are seconds; remaining digits are minutes;
+  // if more than 4 digits, the leading portion becomes hours.
+  //
+  // ""      → ""
+  // "4"     → "0:04"
+  // "40"    → "0:40"
+  // "340"   → "3:40"
+  // "1543"  → "15:43"
+  // "12345" → "1:23:45"
+  static String formatRawDigits(String digits) {
+    if (digits.isEmpty) return '';
+    final length = digits.length;
+    if (length <= 4) {
+      final secs = length <= 2
+          ? digits.padLeft(2, '0')
+          : digits.substring(length - 2);
+      final mins = length > 2 ? digits.substring(0, length - 2) : '0';
+      return '$mins:$secs';
+    }
+    final secs = digits.substring(length - 2);
+    final mins = digits.substring(length - 4, length - 2);
+    final hrs = digits.substring(0, length - 4);
+    return '$hrs:${mins.padLeft(2, '0')}:$secs';
+  }
+
   // Formats seconds-per-km as "M:SS" — no leading zero on minutes.
   static String formatPace(double secondsPerKm) {
     final total = secondsPerKm.round();

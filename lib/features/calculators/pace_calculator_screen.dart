@@ -6,6 +6,7 @@ import '../../core/design/app_typography.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'pace_calculator_logic.dart';
+import 'time_digit_formatter.dart';
 
 class PaceCalculatorScreen extends StatefulWidget {
   const PaceCalculatorScreen({super.key});
@@ -198,7 +199,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                       width: 140,
                       child: TextField(
                         controller: _timeCtrl,
-                        keyboardType: TextInputType.datetime,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: const [TimeDigitFormatter()],
                         style: AppTypography.inputValue
                             .copyWith(color: AppColors.label1),
                         cursorColor: AppColors.label1,
@@ -226,7 +228,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                           width: 120,
                           child: TextField(
                             controller: _paceCtrl,
-                            keyboardType: TextInputType.datetime,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: const [TimeDigitFormatter()],
                             style: AppTypography.inputValue
                                 .copyWith(color: AppColors.label1),
                             cursorColor: AppColors.label1,
