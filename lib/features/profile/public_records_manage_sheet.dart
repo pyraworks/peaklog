@@ -52,7 +52,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '공개 운동 관리',
+                        'Public Exercises',
                         style: AppTypography.headline
                             .copyWith(color: AppColors.label1),
                       ),
@@ -71,7 +71,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
                 child: Text(
-                  '프로필에 표시할 운동을 최대 8개까지 선택할 수 있습니다.',
+                  'Select up to 8 exercises to show on your profile.',
                   style: AppTypography.footnote
                       .copyWith(color: AppColors.label2),
                 ),
@@ -90,7 +90,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                         ),
                       ),
                       TextSpan(
-                        text: ' 선택됨',
+                        text: ' selected',
                         style: AppTypography.footnote
                             .copyWith(color: AppColors.label2),
                       ),
@@ -103,7 +103,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                 child: exercises.isEmpty
                     ? const Center(
                         child: Text(
-                          '생성된 운동 종목이 없습니다.',
+                          'No exercises yet.',
                           style: TextStyle(
                               fontSize: 15, color: AppColors.label2),
                         ),
@@ -155,7 +155,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                   child: Text(
-                    '공개 운동은 최대 8개까지 선택할 수 있습니다.',
+                    'Maximum 8 exercises allowed.',
                     textAlign: TextAlign.center,
                     style: AppTypography.footnote
                         .copyWith(color: AppColors.label2),

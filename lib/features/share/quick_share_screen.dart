@@ -135,19 +135,19 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Apple Health 접근 권한이 필요합니다'),
-          content: const Text('설정에서 건강 앱 접근을 허용해 주세요.'),
+          title: const Text('Apple Health Access Required'),
+          content: const Text('Please allow Health app access in Settings.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('취소'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 AppSettings.openAppSettings();
               },
-              child: const Text('설정에서 허용하기'),
+              child: const Text('Open Settings'),
             ),
           ],
         ),
@@ -321,7 +321,7 @@ class _RecordPickerSheetState extends ConsumerState<RecordPickerSheet> {
                 if (records.isEmpty) {
                   return const Center(
                     child: Text(
-                      '기록이 없습니다',
+                      'No records',
                       style: TextStyle(color: AppColors.label2),
                     ),
                   );

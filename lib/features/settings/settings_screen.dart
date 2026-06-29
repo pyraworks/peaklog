@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
-import 'package:go_router/go_router.dart';
+import '../../providers/nickname_provider.dart';
 import '../../widgets/screen_header.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -9,6 +13,22 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void openFeedback() {
+      if (kFeedbackFormUrl == 'REPLACE_WITH_GOOGLE_FORM_URL') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Feedback form is not available yet.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      launchUrl(
+        Uri.parse(kFeedbackFormUrl),
+        mode: LaunchMode.externalApplication,
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -30,6 +50,19 @@ class SettingsScreen extends StatelessWidget {
                     _CardItem(
                         title: 'Categories',
                         onTap: () => context.push('/categories')),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // ── FEEDBACK ─────────────────────────────────────────
+                const _SectionLabel('FEEDBACK'),
+                _CardSection(
+                  items: [
+                    _CardItem(
+                      title: 'Send Feedback',
+                      leadingIcon: AppIcons.feedback,
+                      onTap: openFeedback,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -77,8 +110,9 @@ class _SectionLabel extends StatelessWidget {
 
 class _CardItem {
   final String title;
+  final IconData? leadingIcon;
   final VoidCallback onTap;
-  const _CardItem({required this.title, required this.onTap});
+  const _CardItem({required this.title, this.leadingIcon, required this.onTap});
 }
 
 class _CardSection extends StatelessWidget {
@@ -94,7 +128,7 @@ class _CardSection extends StatelessWidget {
         rows.add(const Divider(
             height: 1, thickness: 1, color: AppColors.separatorAlt));
       }
-      rows.add(_MenuRow(title: items[i].title, onTap: items[i].onTap));
+      rows.add(_MenuRow(title: items[i].title, leadingIcon: items[i].leadingIcon, onTap: items[i].onTap));
     }
 
     return Container(
@@ -111,9 +145,10 @@ class _CardSection extends StatelessWidget {
 
 class _MenuRow extends StatelessWidget {
   final String title;
+  final IconData? leadingIcon;
   final VoidCallback onTap;
 
-  const _MenuRow({required this.title, required this.onTap});
+  const _MenuRow({required this.title, this.leadingIcon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +159,10 @@ class _MenuRow extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
+            if (leadingIcon != null) ...[
+              Icon(leadingIcon, size: 18, color: AppColors.label2),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Text(
                 title,
@@ -150,12 +189,23 @@ class _MenuRow extends StatelessWidget {
 // Profile summary card — tappable, navigates to /profile
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProfileSummaryCard extends StatelessWidget {
+class _ProfileSummaryCard extends ConsumerWidget {
   final VoidCallback onTap;
   const _ProfileSummaryCard({required this.onTap});
 
+  static String _initials(String nickname) {
+    if (nickname.isEmpty) return 'P';
+    final parts = nickname.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts[0].isEmpty) return 'P';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nickname = ref.watch(nicknameProvider).valueOrNull ?? '';
+    final displayName = nickname.isEmpty ? 'PeakLog User' : nickname;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -170,24 +220,27 @@ class _ProfileSummaryCard extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+              decoration: const BoxDecoration(
+                color: AppColors.label1,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.separatorAlt),
               ),
               child: Center(
-                child: Icon(
-                  AppIcons.person,
-                  size: 22,
-                  color: AppColors.textTertiary,
+                child: Text(
+                  _initials(nickname),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text(
-                'PeakLog User',
-                style: TextStyle(
+                displayName,
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppColors.label1,

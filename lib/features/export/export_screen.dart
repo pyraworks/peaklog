@@ -471,7 +471,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final prevDate = DateTime.fromMillisecondsSinceEpoch(prevBest.performedAt);
     final days = date.difference(prevDate).inDays;
     if (days <= 0) return '';
-    return '+$days일 만에';
+    return '+${days}d';
   }
 
   void _showSnack(String msg) {

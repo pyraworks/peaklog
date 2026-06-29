@@ -175,7 +175,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('저장 실패: $e'),
+            content: Text('Failed to save: $e'),
             duration: const Duration(seconds: 3),
           ),
         );

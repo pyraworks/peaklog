@@ -585,6 +585,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Time Cap {time}'**
   String timeCap(String time);
+
+  /// Empty state on 1RM table screen when no PB exists
+  ///
+  /// In en, this message translates to:
+  /// **'No 1RM record'**
+  String get no1RmRecord;
+
+  /// Title of the public-records management bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Public Exercises'**
+  String get managePublicExercises;
+
+  /// Hint text below the title in public-records management sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Select up to 8 exercises to show on your profile.'**
+  String get publicExercisesHint;
+
+  /// Selection counter in public-records management sheet (e.g. '3 / 8 selected')
+  ///
+  /// In en, this message translates to:
+  /// **'{count} / 8 selected'**
+  String publicExercisesSelected(int count);
+
+  /// Empty state inside public-records management sheet when no exercises exist
+  ///
+  /// In en, this message translates to:
+  /// **'No exercises yet.'**
+  String get noExercisesYet;
+
+  /// Warning shown at the bottom of public-records sheet when limit of 8 is reached
+  ///
+  /// In en, this message translates to:
+  /// **'You can select up to 8 public exercises.'**
+  String get publicExercisesMaxHint;
+
+  /// Badge label on export share frames (clean_frame, frame_painter). Mixed-case; sectionPersonalBest is the all-caps section heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Best'**
+  String get personalBestLabel;
+
+  /// Days-since-last-PR label on export share card (Korean: '+N일 만에')
+  ///
+  /// In en, this message translates to:
+  /// **'+{days} days'**
+  String daysSince(int days);
+
+  /// AlertDialog title when Health permission is denied in quick_share_screen
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Health Permission Required'**
+  String get healthPermissionTitle;
+
+  /// AlertDialog body when Health permission is denied in quick_share_screen
+  ///
+  /// In en, this message translates to:
+  /// **'Please allow Health access in Settings.'**
+  String get healthPermissionContent;
+
+  /// Button to open system Settings when Health permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'Allow in Settings'**
+  String get healthPermissionOpenSettings;
+
+  /// Empty state for the record picker sheet in quick_share_screen
+  ///
+  /// In en, this message translates to:
+  /// **'No records'**
+  String get noRecords;
 }
 
 class _AppLocalizationsDelegate

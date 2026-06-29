@@ -1,92 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
+import '../../core/models/exercise.dart';
 import '../../core/utils/unit_converter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/screen_header.dart';
-import '../../core/enums/record_type.dart';
-import 'public_records_manage_sheet.dart';
 import '../../domain/models/personal_best.dart';
+import '../../domain/models/public_record.dart';
 import '../../providers/exercises_provider.dart';
+import '../../providers/nickname_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/public_records_provider.dart';
 import '../../providers/records_provider.dart';
+import '../../widgets/screen_header.dart';
+import 'public_records_manage_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  // "Daniel" → "D", "Alex Kim" → "AK", "" → "P"
+  static String initials(String nickname) {
+    if (nickname.isEmpty) return 'P';
+    final parts = nickname.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts[0].isEmpty) return 'P';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final publicRecords = ref.watch(publicRecordsProvider).valueOrNull ?? [];
+    final nickname = ref.watch(nicknameProvider).valueOrNull ?? '';
     final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
+    final publicRecords = ref.watch(publicRecordsProvider).valueOrNull ?? [];
+
+    final displayName = nickname.isEmpty ? 'PeakLog User' : nickname;
     final limited = publicRecords.take(8).toList();
+
+    void openNicknameSheet() {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _NicknameSheet(initialNickname: nickname),
+      );
+    }
+
+    void openManageSheet() {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const PublicRecordsManageSheet(),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(backLabel: 'Home', title: 'Profile'),
-          // ── Body ──────────────────────────────────────────────────────
+          const ScreenHeader(backLabel: 'Settings', title: 'Profile'),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               children: [
-                // ── Profile Card ────────────────────────────────────────
-                const _ProfileCard(),
-                const SizedBox(height: 24),
+                // ── Hero ────────────────────────────────────────────────
+                _HeroSection(
+                  initials: initials(nickname),
+                  displayName: displayName,
+                  onEdit: openNicknameSheet,
+                ),
+                const SizedBox(height: 28),
 
-                // ── Public Records ──────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
-                  child: Row(
-                    children: [
-                      const Text(
-                        'PUBLIC RECORDS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.label2,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => showModalBottomSheet<void>(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => const PublicRecordsManageSheet(),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Manage',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.label2,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            Icon(
-                              AppIcons.forward,
-                              size: 13,
-                              color: AppColors.label2,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                // ── Public Exercises ─────────────────────────────────────
+                _SectionHeader(
+                  label: 'PUBLIC EXERCISES',
+                  actionLabel: 'Manage',
+                  onAction: openManageSheet,
                 ),
                 if (limited.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
                       child: Text(
-                        '선택된 공개 운동이 없습니다.',
+                        'No public exercises selected.',
                         style: TextStyle(
                           fontSize: 15,
                           color: AppColors.textTertiary,
@@ -98,8 +95,14 @@ class ProfileScreen extends ConsumerWidget {
                   _PublicRecordsGrid(
                     publicRecords: limited,
                     exercises: exercises,
-                    ref: ref,
                   ),
+                const SizedBox(height: 28),
+
+                // ── Settings ─────────────────────────────────────────────
+                const _SectionHeader(label: 'SETTINGS'),
+                _SettingsCard(
+                  onCategoriesTap: () => context.push('/categories'),
+                ),
               ],
             ),
           ),
@@ -110,117 +113,200 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Custom Header
+// Hero
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Profile Card
-// ─────────────────────────────────────────────────────────────────────────────
+class _HeroSection extends StatelessWidget {
+  final String initials;
+  final String displayName;
+  final VoidCallback onEdit;
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard();
-
-  @override
-  Widget build(BuildContext _) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.separator, width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: const _IdentityRow(),
-    );
-  }
-}
-
-class _IdentityRow extends StatelessWidget {
-  const _IdentityRow();
-
-  static const _profileUrl = 'peaklog.app/@username';
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.separatorAlt),
-            ),
-            child: Center(
-              child: Icon(
-                AppIcons.person,
-                size: 22,
-                color: AppColors.textTertiary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'PeakLog User',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.label1,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  _profileUrl,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.label2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              Clipboard.setData(const ClipboardData(text: _profileUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile URL copied')),
-              );
-            },
-            icon: Icon(AppIcons.copy, size: 18, color: AppColors.label2),
-            padding: const EdgeInsets.all(8),
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public Records Grid
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _PublicRecordsGrid extends StatelessWidget {
-  final List<dynamic> publicRecords;
-  final List<dynamic> exercises;
-  final WidgetRef ref;
-
-  const _PublicRecordsGrid({
-    required this.publicRecords,
-    required this.exercises,
-    required this.ref,
+  const _HeroSection({
+    required this.initials,
+    required this.displayName,
+    required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+
+        // Avatar — primary-tinted circle, dark initials
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.10),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              initials,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: AppColors.label1,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Display name
+        Text(
+          displayName,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: AppColors.label1,
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Edit Profile — always visible, clear pill button
+        GestureDetector(
+          onTap: onEdit,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.separator, width: 1),
+            ),
+            child: const Text(
+              'Edit Profile',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.label2,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section header with optional manage action
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _SectionHeader({
+    required this.label,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.label2,
+              letterSpacing: 1.2,
+            ),
+          ),
+          if (actionLabel != null && onAction != null) ...[
+            const Spacer(),
+            GestureDetector(
+              onTap: onAction,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionLabel!,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.label2,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Icon(AppIcons.forward,
+                      size: 13, color: AppColors.label2),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Settings card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SettingsCard extends StatelessWidget {
+  final VoidCallback onCategoriesTap;
+  const _SettingsCard({required this.onCategoriesTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.separator, width: 0.5),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        onTap: onCategoriesTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Categories',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.label1,
+                  ),
+                ),
+              ),
+              Icon(AppIcons.forward, size: 20, color: AppColors.chevron),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public records grid
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PublicRecordsGrid extends ConsumerWidget {
+  final List<PublicRecord> publicRecords;
+  final List<Exercise> exercises;
+
+  const _PublicRecordsGrid({
+    required this.publicRecords,
+    required this.exercises,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -233,12 +319,18 @@ class _PublicRecordsGrid extends StatelessWidget {
         final exercise =
             exercises.where((e) => e.id == pr.exerciseId).firstOrNull;
         final pb = ref.watch(personalBestProvider(pr.exerciseId));
-        final records = ref.watch(recordsProvider(pr.exerciseId)).valueOrNull ?? [];
+        final records =
+            ref.watch(recordsProvider(pr.exerciseId)).valueOrNull ?? [];
         final etcUnit = (pb != null && pb.recordType == RecordType.etc)
-            ? (records.where((r) => r.id == pb.sourceRecordId).firstOrNull?.distanceUnit ?? '')
+            ? (records
+                    .where((r) => r.id == pb.sourceRecordId)
+                    .firstOrNull
+                    ?.distanceUnit ??
+                '')
             : '';
         final valueText = pb != null
-            ? _pbValueString(pb, exercise?.baseUnit ?? 'kg', etcUnit: etcUnit)
+            ? _pbValueString(pb, exercise?.baseUnit ?? 'kg',
+                etcUnit: etcUnit)
             : '—';
         final dateText = pb != null
             ? _formatDate(
@@ -246,7 +338,8 @@ class _PublicRecordsGrid extends StatelessWidget {
             : '';
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: AppColors.separator, width: 0.5),
@@ -273,7 +366,7 @@ class _PublicRecordsGrid extends StatelessWidget {
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.label1,
-                  letterSpacing: -0.02 * 20,
+                  letterSpacing: -0.4,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -296,7 +389,8 @@ class _PublicRecordsGrid extends StatelessWidget {
     );
   }
 
-  String _pbValueString(PersonalBest pb, String weightUnit, {String etcUnit = ''}) {
+  String _pbValueString(PersonalBest pb, String weightUnit,
+      {String etcUnit = ''}) {
     switch (pb.recordType) {
       case RecordType.weight:
         final w = pb.weight;
@@ -318,8 +412,148 @@ class _PublicRecordsGrid extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
-  }
+  String _formatDate(DateTime dt) =>
+      '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')}';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Nickname editor sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NicknameSheet extends ConsumerStatefulWidget {
+  final String initialNickname;
+  const _NicknameSheet({required this.initialNickname});
+
+  @override
+  ConsumerState<_NicknameSheet> createState() => _NicknameSheetState();
+}
+
+class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initialNickname);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Set Nickname',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimaryAlt,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _ctrl,
+            autofocus: true,
+            onChanged: (_) => setState(() {}),
+            maxLength: 30,
+            style: const TextStyle(
+                fontSize: 15, color: AppColors.textPrimaryAlt),
+            decoration: InputDecoration(
+              hintText: 'e.g. Daniel',
+              hintStyle:
+                  const TextStyle(color: AppColors.textSecondaryAlt),
+              counterText: '',
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: AppColors.separatorAlt),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: AppColors.separatorAlt),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: AppColors.separatorAlt),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimaryAlt,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    await ref
+                        .read(nicknameProvider.notifier)
+                        .setNickname(_ctrl.text);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.actionDark,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

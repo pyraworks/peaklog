@@ -231,7 +231,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     onTap: () => setState(() => _filterCategoryId = null),
                   ),
                   ...categories.map((cat) => Padding(
-                    padding: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.only(left: 6),
                     child: _CategoryChip(
                       label: cat.name,
                       color: CategoryColor.toColor(cat.color),
@@ -374,7 +374,7 @@ class _CategoryChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: selected ? AppColors.chipSelected : AppColors.chip,
           borderRadius: BorderRadius.circular(16),
@@ -384,11 +384,21 @@ class _CategoryChip extends StatelessWidget {
           children: [
             if (color != null) ...[
               Container(
-                width: 6,
-                height: 6,
+                width: 14,
+                height: 14,
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white.withValues(alpha: 0.85) : color,
+                  color: color!.withValues(alpha: 0.20),
                   shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 5),

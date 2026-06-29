@@ -49,7 +49,7 @@ class OneRMTableScreen extends ConsumerWidget {
             child: pbKg == null
                 ? const Center(
                     child: Text(
-                      '1RM 기록이 없습니다',
+                      'No 1RM records',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6E7781),

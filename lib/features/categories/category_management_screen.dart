@@ -40,27 +40,44 @@ class _CategoryManagementScreenState
                       style: TextStyle(color: AppColors.textTertiary, fontSize: 15),
                     ),
                   )
-                : ReorderableListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    buildDefaultDragHandles: false,
-                    itemCount: categories.length,
-                    onReorderItem: (oldIdx, newIdx) =>
-                        _reorder(categories, oldIdx, newIdx),
-                    proxyDecorator: (child, _, animation) => Material(
-                      elevation: 4,
-                      borderRadius: BorderRadius.circular(12),
-                      child: child,
-                    ),
-                    itemBuilder: (context, i) {
-                      final cat = categories[i];
-                      return _CategoryTile(
-                        key: ValueKey(cat.id),
-                        index: i,
-                        category: cat,
-                        onEdit: () => _showEditSheet(context, cat),
-                        onDelete: () => _confirmDelete(context, cat),
-                      );
-                    },
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppColors.separatorAlt, width: 0.5),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          buildDefaultDragHandles: false,
+                          itemCount: categories.length,
+                          onReorderItem: (oldIdx, newIdx) =>
+                              _reorder(categories, oldIdx, newIdx),
+                          proxyDecorator: (child, _, animation) => Material(
+                            elevation: 2,
+                            borderRadius: BorderRadius.circular(12),
+                            child: child,
+                          ),
+                          itemBuilder: (context, i) {
+                            final cat = categories[i];
+                            return _CategoryTile(
+                              key: ValueKey(cat.id),
+                              index: i,
+                              category: cat,
+                              showDivider: i < categories.length - 1,
+                              onEdit: () => _showEditSheet(context, cat),
+                              onDelete: () => _confirmDelete(context, cat),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
           ),
           // ── Add Category button ────────────────────────────────────
@@ -303,27 +320,29 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
             runSpacing: 10,
             children: CategoryColor.palette.map((key) {
               final isSelected = key == _selectedColor;
+              final color = CategoryColor.toColor(key);
               return GestureDetector(
                 onTap: () => setState(() => _selectedColor = key),
                 child: Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: CategoryColor.toColor(key),
+                    color: color.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
                     border: isSelected
-                        ? Border.all(color: AppColors.textPrimaryAlt, width: 2.5)
-                        : null,
-                    boxShadow: isSelected
-                        ? [BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 4,
-                          )]
+                        ? Border.all(color: color, width: 2.0)
                         : null,
                   ),
-                  child: isSelected
-                      ? const Icon(Icons.check, size: 16, color: Colors.white)
-                      : null,
+                  child: Center(
+                    child: Container(
+                      width: 13,
+                      height: 13,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -391,72 +410,84 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
 class _CategoryTile extends StatelessWidget {
   final int index;
   final Category category;
+  final bool showDivider;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _CategoryTile({
     required this.index,
     required this.category,
+    required this.showDivider,
     required this.onEdit,
     required this.onDelete,
     super.key,
   });
 
-  Widget _colorDot() => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: CategoryColor.toColor(category.color),
-          shape: BoxShape.circle,
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final content = ColoredBox(
-      color: Colors.white,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ReorderableDragStartListener(
-              index: index,
-              child: Icon(AppIcons.dragHandle, color: AppColors.label3, size: 18),
-            ),
-            const SizedBox(width: 10),
-            _colorDot(),
-          ],
-        ),
-        title: Text(
-          category.name,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: AppColors.label1,
-          ),
+  Widget _colorIndicator() {
+    final color = CategoryColor.toColor(category.color);
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );
+  }
 
-    final inner = SwipeableRow(
+  @override
+  Widget build(BuildContext context) {
+    return SwipeableRow(
       id: category.id,
       onEdit: onEdit,
       onSwipeEdit: onEdit,
       onDelete: onDelete,
-      child: content,
-    );
-
-    // Outer container: border radius + clip matches History card (radius 12,
-    // hardEdge), so swiped action pane rendering is identical.
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.separatorAlt),
-        borderRadius: BorderRadius.circular(12),
+      child: ColoredBox(
+        color: Colors.white,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+              leading: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: Icon(AppIcons.dragHandle,
+                        color: AppColors.label5, size: 16),
+                  ),
+                  const SizedBox(width: 10),
+                  _colorIndicator(),
+                ],
+              ),
+              title: Text(
+                category.name,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.label1,
+                ),
+              ),
+            ),
+            if (showDivider)
+              const Divider(
+                height: 0.5,
+                thickness: 0.5,
+                indent: 44,
+                color: AppColors.separator,
+              ),
+          ],
+        ),
       ),
-      clipBehavior: Clip.hardEdge,
-      child: inner,
     );
   }
 }

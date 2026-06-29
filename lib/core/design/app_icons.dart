@@ -29,6 +29,7 @@ abstract class AppIcons {
   static IconData get medal      => Icons.workspace_premium;
   static IconData get image      => Icons.image;
   static IconData get video      => Icons.videocam;
+  static IconData get feedback => Icons.chat_bubble_outline;
   // Status
   static IconData get heart       => Icons.favorite;
   static IconData get checkCircle => Icons.check_circle;

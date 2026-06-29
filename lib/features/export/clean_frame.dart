@@ -114,7 +114,7 @@ class CleanFrame extends StatelessWidget {
                           width: w * 0.011, height: w * 0.042, color: accent),
                       SizedBox(width: w * 0.018),
                       Text(
-                        '개인 최고 기록',
+                        'Personal Best',
                         style: TextStyle(
                             fontFamily: 'Pretendard',
                             color: accent,

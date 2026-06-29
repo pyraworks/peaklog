@@ -121,7 +121,7 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
     Rect.fromLTWH(pad, barY, w * 0.011, w * 0.042),
     Paint()..color = accent,
   );
-  _text(canvas, '개인 최고 기록',
+  _text(canvas, 'Personal Best',
       x: pad + w * 0.018, y: barY + w * 0.006,
       size: w * 0.022, weight: FontWeight.w700,
       color: accent, spacing: w * 0.002);

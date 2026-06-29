@@ -262,4 +262,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String timeCap(String time) {
     return 'Time Cap $time';
   }
+
+  @override
+  String get no1RmRecord => 'No 1RM record';
+
+  @override
+  String get managePublicExercises => 'Manage Public Exercises';
+
+  @override
+  String get publicExercisesHint =>
+      'Select up to 8 exercises to show on your profile.';
+
+  @override
+  String publicExercisesSelected(int count) {
+    return '$count / 8 selected';
+  }
+
+  @override
+  String get noExercisesYet => 'No exercises yet.';
+
+  @override
+  String get publicExercisesMaxHint =>
+      'You can select up to 8 public exercises.';
+
+  @override
+  String get personalBestLabel => 'Personal Best';
+
+  @override
+  String daysSince(int days) {
+    return '+$days days';
+  }
+
+  @override
+  String get healthPermissionTitle => 'Apple Health Permission Required';
+
+  @override
+  String get healthPermissionContent =>
+      'Please allow Health access in Settings.';
+
+  @override
+  String get healthPermissionOpenSettings => 'Allow in Settings';
+
+  @override
+  String get noRecords => 'No records';
 }
