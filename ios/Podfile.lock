@@ -7,8 +7,6 @@ PODS:
   - ffmpeg_kit_flutter_new/full-gpl (1.0.0):
     - Flutter
   - Flutter (1.0.0)
-  - gal (1.0.0):
-    - Flutter
   - health (1.0.4):
     - Flutter
   - share_plus (0.0.1):
@@ -18,7 +16,6 @@ DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - ffmpeg_kit_flutter_new (from `.symlinks/plugins/ffmpeg_kit_flutter_new/ios`)
   - Flutter (from `Flutter`)
-  - gal (from `.symlinks/plugins/gal/ios`)
   - health (from `.symlinks/plugins/health/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
 
@@ -29,8 +26,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/ffmpeg_kit_flutter_new/ios"
   Flutter:
     :path: Flutter
-  gal:
-    :path: ".symlinks/plugins/gal/ios"
   health:
     :path: ".symlinks/plugins/health/ios"
   share_plus:
@@ -40,7 +35,6 @@ SPEC CHECKSUMS:
   device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   ffmpeg_kit_flutter_new: 9b7ba1042fb45c9870375fb5b61fd9815b685e20
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  gal: 29e711cd17bccb47f839d9b30afe9bc9750950b2
   health: a4ddeac72091000e94776864d0028f6be31ec7a5
   share_plus: 011d6fb4f9d2576b83179a3a5c5e323202cdabcf
 

@@ -11,6 +11,7 @@ import '../../domain/models/personal_best.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/public_records_provider.dart';
+import '../../providers/records_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -232,8 +233,12 @@ class _PublicRecordsGrid extends StatelessWidget {
         final exercise =
             exercises.where((e) => e.id == pr.exerciseId).firstOrNull;
         final pb = ref.watch(personalBestProvider(pr.exerciseId));
+        final records = ref.watch(recordsProvider(pr.exerciseId)).valueOrNull ?? [];
+        final etcUnit = (pb != null && pb.recordType == RecordType.etc)
+            ? (records.where((r) => r.id == pb.sourceRecordId).firstOrNull?.distanceUnit ?? '')
+            : '';
         final valueText = pb != null
-            ? _pbValueString(pb, exercise?.baseUnit ?? 'kg')
+            ? _pbValueString(pb, exercise?.baseUnit ?? 'kg', etcUnit: etcUnit)
             : '—';
         final dateText = pb != null
             ? _formatDate(
@@ -291,7 +296,7 @@ class _PublicRecordsGrid extends StatelessWidget {
     );
   }
 
-  String _pbValueString(PersonalBest pb, String weightUnit) {
+  String _pbValueString(PersonalBest pb, String weightUnit, {String etcUnit = ''}) {
     switch (pb.recordType) {
       case RecordType.weight:
         final w = pb.weight;
@@ -301,18 +306,15 @@ class _PublicRecordsGrid extends StatelessWidget {
       case RecordType.etc:
         final v = pb.etcValue;
         if (v == null) return '—';
-        return v == v.truncateToDouble() ? '${v.toInt()}' : v.toStringAsFixed(1);
+        return UnitConverter.formatEtc(v, etcUnit);
       case RecordType.forTime:
         final s = pb.durationSeconds;
         if (s == null) return '—';
-        final m = s ~/ 60;
-        final sec = s % 60;
-        return '$m:${sec.toString().padLeft(2, '0')}';
+        return UnitConverter.secondsToDisplay(s);
       case RecordType.amrap:
         final r = pb.rounds;
         if (r == null) return '—';
-        final extra = pb.reps != null ? '+${pb.reps}' : '';
-        return '$r라운드$extra';
+        return UnitConverter.formatAmrap(r, pb.reps);
     }
   }
 

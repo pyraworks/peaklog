@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'core/database/database_helper.dart';
-import 'core/models/exercise.dart';
 import 'core/theme/app_theme.dart';
 import 'features/exercise_detail/exercise_detail_screen.dart';
-import 'features/export/export_screen.dart';
-import 'features/share/quick_share_screen.dart';
+import 'features/share/quick_share_placeholder_screen.dart';
 import 'features/home/add_exercise_sheet.dart';
 import 'features/home/home_share_page_view.dart';
 import 'features/one_rm_table/one_rm_table_screen.dart';
@@ -19,7 +16,6 @@ import 'features/calculators/one_rm_calculator_screen.dart';
 import 'features/calculators/pace_calculator_screen.dart';
 import 'features/calculators/plate_calculator_screen.dart';
 import 'features/settings/settings_screen.dart';
-import 'providers/exercises_provider.dart';
 
 final _router = GoRouter(
   errorBuilder: (context, state) => const _Error404Screen(),
@@ -104,14 +100,12 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/quick-share',
-      builder: (context, state) => const QuickShareScreen(),
+      builder: (context, state) =>
+          const QuickSharePlaceholderScreen(backLabel: 'Home'),
     ),
     GoRoute(
       path: '/share/:recordId',
-      builder: (context, state) {
-        final recordId = state.pathParameters['recordId']!;
-        return _ExportScreenLoader(recordId: recordId);
-      },
+      builder: (context, state) => const QuickSharePlaceholderScreen(),
     ),
     GoRoute(
       path: '/categories',
@@ -130,56 +124,14 @@ class PeakLogApp extends StatelessWidget {
       theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
-    );
-  }
-}
-
-class _ExportScreenLoader extends ConsumerWidget {
-  final String recordId;
-  const _ExportScreenLoader({required this.recordId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
-    return FutureBuilder(
-      future: DatabaseHelper.instance.getRecordById(recordId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final record = snapshot.data;
-        if (record == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('공유하기')),
-            body: const Center(child: Text('기록을 찾을 수 없습니다')),
-          );
-        }
-        final exercise = exercises.where((e) => e.id == record.exerciseId).firstOrNull;
-        if (exercise == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('공유하기')),
-            body: const Center(child: CircularProgressIndicator()),
-          );
-        }
-        final double newValue;
-        switch (exercise.recordType!) {
-          case RecordType.weight:
-            newValue = record.weight ?? 0;
-          case RecordType.etc:
-            newValue = record.distance ?? 0;
-          case RecordType.forTime:
-            newValue = record.durationSeconds?.toDouble() ?? 0;
-          case RecordType.amrap:
-            newValue = record.rounds?.toDouble() ?? record.durationSeconds?.toDouble() ?? 0;
-        }
-        return ExportScreen(
-          exercise: exercise,
-          newValue: newValue,
-          date: DateTime.fromMillisecondsSinceEpoch(record.performedAt),
-        );
-      },
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+      ],
     );
   }
 }

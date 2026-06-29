@@ -27,6 +27,7 @@ class Exercise {
   final String? ownerId;
   final String baseUnit; // Internal values: 'kg' or 'lbs'. UI label: 'kg' / 'lb'.
   final bool hasPrBaseline; // true once user explicitly marks a first PR
+  final int? timeCap; // AMRAP time cap in minutes
 
   /// null → PR fallback (기존 데이터 호환)
   String get bestTypeLabel => (bestType ?? BestType.pr).label;
@@ -47,6 +48,7 @@ class Exercise {
     this.ownerId,
     this.baseUnit = 'kg',
     this.hasPrBaseline = false,
+    this.timeCap,
   });
 
   factory Exercise.create({
@@ -92,6 +94,7 @@ class Exercise {
     'sync_status': syncStatus.name,
     'base_unit': baseUnit,
     'has_pr_baseline': hasPrBaseline ? 1 : 0,
+    'time_cap': timeCap,
   };
 
   factory Exercise.fromMap(Map<String, dynamic> map) {
@@ -121,8 +124,11 @@ class Exercise {
       syncStatus: SyncStatus.values.byName(map['sync_status'] as String),
       baseUnit: (map['base_unit'] as String?) ?? 'kg',
       hasPrBaseline: ((map['has_pr_baseline'] as num?)?.toInt() ?? 0) == 1,
+      timeCap: map['time_cap'] != null ? (map['time_cap'] as num).toInt() : null,
     );
   }
+
+  static const _unset = Object();
 
   Exercise copyWith({
     String? id,
@@ -140,6 +146,7 @@ class Exercise {
     SyncStatus? syncStatus,
     String? baseUnit,
     bool? hasPrBaseline,
+    Object? timeCap = _unset,
   }) => Exercise(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
@@ -156,6 +163,7 @@ class Exercise {
     syncStatus: syncStatus ?? this.syncStatus,
     baseUnit: baseUnit ?? this.baseUnit,
     hasPrBaseline: hasPrBaseline ?? this.hasPrBaseline,
+    timeCap: identical(timeCap, _unset) ? this.timeCap : timeCap as int?,
   );
 
   // Legacy category name for the DB column

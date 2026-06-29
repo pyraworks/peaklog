@@ -51,12 +51,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
       case RecordType.etc:
         if (r.distance != null) {
-          final u = r.distanceUnit.isNotEmpty ? r.distanceUnit : unit;
-          return UnitConverter.formatEtc(r.distance!, u);
+          return UnitConverter.formatEtc(r.distance!, r.distanceUnit);
+        }
+        return '—';
+      case RecordType.amrap:
+        if (r.rounds != null) {
+          final extra = r.reps != null && r.reps! > 0 ? ' ${r.reps}' : '';
+          return '${r.rounds}R$extra';
         }
         return '—';
       case RecordType.forTime:
-      case RecordType.amrap:
         if (r.durationSeconds != null) {
           return UnitConverter.secondsToDisplay(r.durationSeconds!);
         }
@@ -130,7 +134,37 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   const SizedBox(height: AppSpacing.s24),
                 ],
 
-                // 2. 1RM Calculator (weight only)
+                // 2. Time cap (AMRAP only)
+                if (rt == RecordType.amrap && exercise.timeCap != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      border: Border.all(
+                          color: AppColors.separator, width: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'TIME CAP',
+                          style: AppTypography.sectionLabel
+                              .copyWith(color: AppColors.label2),
+                        ),
+                        const Spacer(),
+                        Text(
+                          UnitConverter.formatTimeCap(exercise.timeCap!),
+                          style: AppTypography.cardTitle
+                              .copyWith(color: AppColors.label1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s24),
+                ],
+
+                // 3. 1RM Calculator (weight only)
                 if (rt == RecordType.weight && bestKg != null) ...[
                   _OneRMCalculator(
                     bestKg: bestKg,

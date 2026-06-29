@@ -133,6 +133,24 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                         color: AppColors.label2,
                       ),
                     ),
+                    if (rt == RecordType.amrap) ...[
+                      Builder(builder: (context) {
+                        final cap = record.timeCap ?? exercise.timeCap;
+                        if (cap == null) return const SizedBox.shrink();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              'Time Cap ${UnitConverter.formatTimeCap(cap)}',
+                              style: AppTypography.footnote.copyWith(
+                                color: AppColors.label2,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
                   ],
                 ),
                 GestureDetector(
@@ -220,8 +238,13 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
           return UnitConverter.formatEtc(r.distance!, r.distanceUnit);
         }
         return '—';
-      case RecordType.forTime:
       case RecordType.amrap:
+        if (r.rounds != null) {
+          final extra = r.reps != null && r.reps! > 0 ? ' ${r.reps}' : '';
+          return '${r.rounds}R$extra';
+        }
+        return '—';
+      case RecordType.forTime:
         if (r.durationSeconds != null) {
           return UnitConverter.secondsToDisplay(r.durationSeconds!);
         }

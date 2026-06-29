@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/design/app_colors.dart';
-import '../share/quick_share_screen.dart';
+import '../share/quick_share_placeholder_screen.dart';
 import 'home_screen.dart';
 
 class HomeSharePageView extends StatefulWidget {
@@ -89,7 +89,7 @@ class _HomeSharePageViewState extends State<HomeSharePageView> {
         },
         children: [
           HomeScreen(searchFocus: _searchFocus, swipeHint: _showHint ? _buildSwipeHint() : null),
-          const QuickShareScreen(embedded: true),
+          const QuickSharePlaceholderScreen(embedded: true),
         ],
       ),
     );

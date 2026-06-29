@@ -66,14 +66,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           }
         case RecordType.etc:
           if (pb.etcValue != null) {
-            return UnitConverter.formatEtc(pb.etcValue!, exercise.baseUnit);
+            final src = records.where((r) => r.id == pb.sourceRecordId).firstOrNull;
+            return UnitConverter.formatEtc(pb.etcValue!, src?.distanceUnit ?? '');
           }
         case RecordType.forTime:
           if (pb.durationSeconds != null) {
             return UnitConverter.secondsToDisplay(pb.durationSeconds!);
           }
         case RecordType.amrap:
-          if (pb.rounds != null) return '${pb.rounds} rounds';
+          if (pb.rounds != null) {
+            return UnitConverter.formatAmrap(pb.rounds!, pb.reps);
+          }
         case null: break;
       }
     }
@@ -88,7 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case RecordType.etc:
         final best = active.where((r) => r.distance != null)
             .fold<Record?>(null, (b, r) => b == null || r.distance! > b.distance! ? r : b);
-        return best != null ? UnitConverter.formatEtc(best.distance!, exercise.baseUnit) : '—';
+        return best != null ? UnitConverter.formatEtc(best.distance!, best.distanceUnit) : '—';
       case RecordType.forTime:
         final best2 = active.where((r) => r.durationSeconds != null)
             .fold<Record?>(null, (b, r) => b == null || r.durationSeconds! < b.durationSeconds! ? r : b);
@@ -96,7 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case RecordType.amrap:
         final best = active.where((r) => r.rounds != null)
             .fold<Record?>(null, (b, r) => b == null || r.rounds! > b.rounds! ? r : b);
-        return best != null ? '${best.rounds} rounds' : '—';
+        return best != null ? UnitConverter.formatAmrap(best.rounds!, best.reps) : '—';
     }
   }
 

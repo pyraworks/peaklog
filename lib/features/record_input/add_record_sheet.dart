@@ -59,9 +59,20 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   void initState() {
     super.initState();
     final r = widget.initialRecord;
+
+    // Determine unit first — weight display conversion depends on it.
+    if (widget.exercise.recordType == RecordType.weight) {
+      _localWeightUnit = r?.weightUnit.isNotEmpty == true
+          ? r!.weightUnit
+          : widget.exercise.baseUnit;
+    }
+
     if (r != null) {
       if (r.weight != null) {
-        _weightCtrl.text = r.weight!
+        final displayWeight = _localWeightUnit == 'lbs'
+            ? UnitConverter.kgToLbs(r.weight!)
+            : r.weight!;
+        _weightCtrl.text = displayWeight
             .toStringAsFixed(2)
             .replaceAll(RegExp(r'\.?0+$'), '');
       }
@@ -76,15 +87,19 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
             .replaceAll(RegExp(r'\.?0+$'), '');
       }
       _etcUnitCtrl.text = r.distanceUnit;
-      _durationMinCtrl.text = r.durationMinutes?.toString() ?? '';
+      _durationMinCtrl.text = r.durationMinutes?.toString()
+          ?? widget.exercise.timeCap?.toString()
+          ?? '';
       if (r.durationSeconds != null) _durationSec = r.durationSeconds!;
       _selectedDate = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
     }
     if (r == null && widget.exercise.recordType == RecordType.etc) {
-      _etcUnitCtrl.text = widget.exercise.baseUnit;
+      final unit = widget.exercise.baseUnit;
+      if (unit != 'kg' && unit != 'lbs') _etcUnitCtrl.text = unit;
     }
-    if (widget.exercise.recordType == RecordType.weight) {
-      _localWeightUnit = widget.exercise.baseUnit;
+    if (r == null && widget.exercise.recordType == RecordType.amrap &&
+        widget.exercise.timeCap != null) {
+      _durationMinCtrl.text = widget.exercise.timeCap.toString();
     }
   }
 
@@ -171,6 +186,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                     ],
 
                     if (widget.exercise.recordType == null &&
+                        widget.initialRecord == null &&
                         _localRecordType == RecordType.weight) ...[
                       _UnitPicker(
                         value: _localWeightUnit ?? widget.exercise.baseUnit,
@@ -417,6 +433,13 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         }
       }
 
+      if (_effectiveType == RecordType.amrap && durationMinutes != null &&
+          durationMinutes != widget.exercise.timeCap) {
+        await ref
+            .read(exercisesProvider.notifier)
+            .updateExerciseSettings(widget.exercise.id, timeCap: durationMinutes);
+      }
+
       final notifier =
           ref.read(recordsProvider(widget.exercise.id).notifier);
 
@@ -432,6 +455,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
       await notifier.addRecord(
         performedAt: performedAt,
         weight: weight,
+        weightUnit: _effectiveType == RecordType.weight ? weightUnit : 'kg',
         reps: reps,
         rounds: rounds,
         durationSeconds: durationSeconds,
@@ -439,6 +463,11 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         distanceUnit: _effectiveType == RecordType.etc ? _etcUnitCtrl.text.trim() : '',
         durationMinutes: durationMinutes,
         metadataJson: metadataJson,
+        timeCap: _effectiveType == RecordType.amrap
+            ? (widget.initialRecord != null
+                ? widget.initialRecord!.timeCap
+                : durationMinutes)
+            : null,
       );
 
       if (_isPr && !widget.exercise.hasPrBaseline) {
@@ -518,7 +547,7 @@ class _RecordTypePicker extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(t.$2, size: 20, color: sel ? Colors.white : AppColors.label2),
+                      Icon(t.$2, size: 20, color: sel ? Colors.white : AppColors.label1),
                       const SizedBox(height: 4),
                       Text(
                         t.$3,

@@ -21,13 +21,15 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 17,
+      version: 20,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
         await _addColumnIfMissing(db, 'exercises', 'best_type', 'TEXT');
         await _addColumnIfMissing(
             db, 'exercises', 'base_unit', "TEXT NOT NULL DEFAULT 'kg'");
+        await _addColumnIfMissing(db, 'exercises', 'time_cap', 'INTEGER');
+        await _addColumnIfMissing(db, 'records', 'time_cap', 'INTEGER');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -72,6 +74,7 @@ class DatabaseHelper {
         record_type      TEXT,
         best_type        TEXT,
         base_unit        TEXT NOT NULL DEFAULT 'kg',
+        time_cap         INTEGER,
         is_system_preset INTEGER NOT NULL DEFAULT 0,
         visibility       TEXT NOT NULL DEFAULT 'private',
         is_archived      INTEGER NOT NULL DEFAULT 0,
@@ -100,6 +103,7 @@ class DatabaseHelper {
         metadata_json    TEXT,
         is_deleted       INTEGER NOT NULL DEFAULT 0,
         is_pr_candidate  INTEGER NOT NULL DEFAULT 1,
+        time_cap         INTEGER,
         created_at       INTEGER NOT NULL,
         updated_at       INTEGER NOT NULL,
         sync_status      TEXT NOT NULL DEFAULT 'pending'
@@ -408,6 +412,10 @@ class DatabaseHelper {
           "UPDATE exercises SET record_type = 'etc' WHERE record_type = 'distance'");
     }
 
+    if (oldVersion < 18) {
+      await _addColumnIfMissing(db, 'exercises', 'time_cap', 'INTEGER');
+    }
+
     if (oldVersion < 17) {
       // Ensure Uncategorized exists (new fallback category).
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -424,6 +432,18 @@ class DatabaseHelper {
         WHERE category_id IS NULL
            OR category_id NOT IN (SELECT id FROM categories)
       ''');
+    }
+
+    if (oldVersion < 19) {
+      await _addColumnIfMissing(db, 'records', 'time_cap', 'INTEGER');
+    }
+
+    if (oldVersion < 20) {
+      // Replace the flat unique index with a partial one so that archived
+      // exercises no longer block re-creation of a same-named active exercise.
+      await db.execute('DROP INDEX IF EXISTS idx_exercises_normalized_name');
+      await db.execute(
+          'CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_normalized_name ON exercises(normalized_name) WHERE is_archived = 0');
     }
   }
 
@@ -446,7 +466,7 @@ class DatabaseHelper {
     await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_exercises_category_id ON exercises(category_id)');
     await db.execute(
-        'CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_normalized_name ON exercises(normalized_name)');
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_normalized_name ON exercises(normalized_name) WHERE is_archived = 0');
     await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_public_records_display_order ON public_records(display_order)');
   }
@@ -502,6 +522,7 @@ class DatabaseHelper {
       'exercises',
       where: 'normalized_name = ?',
       whereArgs: [normalizedName],
+      orderBy: 'is_archived ASC',
       limit: 1,
     );
     if (maps.isEmpty) return null;

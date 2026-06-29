@@ -16,25 +16,14 @@ class AddExerciseUseCase {
 
     final normalized = normalize(trimmed);
 
-    // insertExercise uses ConflictAlgorithm.ignore, which silently drops the
-    // row when an archived exercise with the same normalized_name already
-    // occupies the UNIQUE INDEX.  The caller would get back a UUID that has no
-    // matching DB row, causing insertRecord to throw "exercise not found."
-    // Fix: detect that case before creating and unarchive the old exercise
-    // instead of creating a phantom new one.
+    // The partial UNIQUE index on normalized_name (WHERE is_archived = 0)
+    // allows a new active exercise to coexist with an archived one of the same
+    // name. Manual creation must NEVER unarchive — only the Health import path
+    // may do that. Return early only when an active exercise already exists.
     final existing = await DatabaseHelper.instance
         .findExerciseByNormalizedName(normalized);
 
-    if (existing != null && existing.isArchived) {
-      await DatabaseHelper.instance.unarchiveExercise(existing.id);
-      return existing.copyWith(isArchived: false);
-    }
-    if (existing != null) {
-      // An active exercise with the same normalized name already exists.
-      // Return it directly — creating a new one would generate a phantom UUID
-      // that insertExercise silently drops (ConflictAlgorithm.ignore + UNIQUE
-      // constraint on normalized_name), causing insertRecord to throw
-      // "exercise not found in DB".
+    if (existing != null && !existing.isArchived) {
       return existing;
     }
     final exercise = Exercise.create(

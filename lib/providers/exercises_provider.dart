@@ -24,8 +24,6 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
       currentCount: current.length,
     );
     if (exercise == null) return null;
-    // Remove any stale entry with the same id (e.g. if we unarchived an old
-    // exercise instead of creating a new one) before appending.
     state = AsyncData([
       ...current.where((e) => e.id != exercise.id),
       exercise,
@@ -39,12 +37,13 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
     String? categoryId,
     BestType? bestType,
     String? baseUnit,
+    int? timeCap,
   }) async {
     final current = state.valueOrNull ?? [];
     final existing = current.firstWhere((e) => e.id == id);
     final now = DateTime.now().millisecondsSinceEpoch;
     final newName = displayName?.trim();
-    final updated = existing.copyWith(
+    var updated = existing.copyWith(
       displayName: (newName != null && newName.isNotEmpty)
           ? newName
           : existing.displayName,
@@ -56,6 +55,7 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
       baseUnit: baseUnit ?? existing.baseUnit,
       updatedAt: now,
     );
+    if (timeCap != null) updated = updated.copyWith(timeCap: timeCap);
     await DatabaseHelper.instance.updateExercise(updated);
     state = AsyncData(current.map((e) => e.id == id ? updated : e).toList());
   }

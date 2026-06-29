@@ -45,6 +45,13 @@ class UnitConverter {
   static String formatEtc(double value, String unit) =>
       unit.isEmpty ? _fmt(value) : '${_fmt(value)} $unit';
 
+  static String formatAmrap(int rounds, int? reps) {
+    if (reps != null && reps > 0) return '${rounds}R $reps';
+    return '${rounds}R';
+  }
+
+  static String formatTimeCap(int minutes) => '$minutes:00';
+
   static String _fmt(double value) {
     final s = value.toStringAsFixed(1);
     return s.endsWith('.0') ? value.toStringAsFixed(0) : s;

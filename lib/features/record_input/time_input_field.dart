@@ -60,26 +60,27 @@ class _TimeInputFieldState extends State<TimeInputField> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _Field(controller: _h, label: 'h',   maxLength: 2, onChanged: (_) => _notify()),
+        _Field(controller: _h, label: 'h',   maxLength: 2, zeroText: '0',  onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
           child: Text(':', style: _valueStyle),
         ),
-        _Field(controller: _m, label: 'min', maxLength: 2, onChanged: (_) => _notify()),
+        _Field(controller: _m, label: 'min', maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
           child: Text(':', style: _valueStyle),
         ),
-        _Field(controller: _s, label: 'sec', maxLength: 2, onChanged: (_) => _notify()),
+        _Field(controller: _s, label: 'sec', maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
       ],
     );
   }
 }
 
-class _Field extends StatelessWidget {
+class _Field extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final int maxLength;
+  final String zeroText;
   final ValueChanged<String> onChanged;
 
   static const _valueStyle = TextStyle(
@@ -92,8 +93,44 @@ class _Field extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.maxLength,
+    required this.zeroText,
     required this.onChanged,
   });
+
+  @override
+  State<_Field> createState() => _FieldState();
+}
+
+class _FieldState extends State<_Field> {
+  late final FocusNode _focus;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus = FocusNode();
+    _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChange);
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (_focus.hasFocus) {
+      if (widget.controller.text == widget.zeroText) {
+        widget.controller.clear();
+        widget.onChanged('');
+      }
+    } else {
+      if (widget.controller.text.isEmpty) {
+        widget.controller.text = widget.zeroText;
+        widget.onChanged(widget.zeroText);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,24 +138,23 @@ class _Field extends StatelessWidget {
       child: Column(
         children: [
           TextField(
-            controller: controller,
+            controller: widget.controller,
+            focusNode: _focus,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: _valueStyle,
+            style: _Field._valueStyle,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(maxLength),
+              LengthLimitingTextInputFormatter(widget.maxLength),
             ],
-            // hintStyle matches _valueStyle so all digits share
-            // identical size, weight, and color regardless of state.
             decoration: const InputDecoration(
-              hintStyle: _valueStyle,
+              hintStyle: _Field._valueStyle,
             ),
-            onChanged: onChanged,
+            onChanged: widget.onChanged,
           ),
           const SizedBox(height: 4),
           Text(
-            label,
+            widget.label,
             style: const TextStyle(
               color: AppTheme.textSecondary,
               fontSize: 11,

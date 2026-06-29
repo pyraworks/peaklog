@@ -11,19 +11,22 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
   Future<Record> addRecord({
     required int performedAt,
     double? weight,
+    String weightUnit = 'kg',
     int? reps,
     int? rounds,
     int? durationSeconds,
     int? durationMinutes,
     double? distance,
-    String distanceUnit = 'km',
+    String distanceUnit = '',
     String? note,
     String? metadataJson,
+    int? timeCap,
   }) async {
     final record = Record.create(
       exerciseId: arg,
       performedAt: performedAt,
       weight: weight,
+      weightUnit: weightUnit,
       reps: reps,
       rounds: rounds,
       durationSeconds: durationSeconds,
@@ -32,6 +35,7 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
       distanceUnit: distanceUnit,
       note: note,
       metadataJson: metadataJson,
+      timeCap: timeCap,
     );
     await RecordRepositoryImpl.instance.insert(record);
     final current = state.valueOrNull ?? [];
