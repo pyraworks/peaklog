@@ -131,7 +131,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     pbLabel: exercise.bestTypeLabel,
                     onTap: () => context.push(
                         '/exercise/${widget.exerciseId}/record/${bestRecord.id}'),
-                    onShare: () => context.push('/share/${bestRecord.id}'),
                   ),
                   const SizedBox(height: AppSpacing.s24),
                 ],
@@ -268,14 +267,12 @@ class _PbCard extends StatelessWidget {
   final String dateText;
   final String pbLabel;
   final VoidCallback onTap;
-  final VoidCallback onShare;
 
   const _PbCard({
     required this.valueText,
     required this.dateText,
     required this.pbLabel,
     required this.onTap,
-    required this.onShare,
   });
 
   Widget _buildValue() {
@@ -316,55 +313,28 @@ class _PbCard extends StatelessWidget {
         ),
         clipBehavior: Clip.hardEdge,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left column
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      l10n.sectionPersonalBest,
-                      style: AppTypography.sectionLabel.copyWith(
-                        color: AppColors.label2,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    PbBadge(label: pbLabel),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                _buildValue(),
-                const SizedBox(height: 2),
                 Text(
-                  dateText,
-                  style: AppTypography.footnote.copyWith(
+                  l10n.sectionPersonalBest,
+                  style: AppTypography.sectionLabel.copyWith(
                     color: AppColors.label2,
                   ),
                 ),
+                const SizedBox(width: 6),
+                PbBadge(label: pbLabel),
               ],
             ),
-            // Right — share button
-            GestureDetector(
-              onTap: onShare,
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(AppIcons.share, size: 13, color: AppColors.label2),
-                  const SizedBox(width: 4),
-                  Text(
-                    l10n.share,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.label2,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 2),
+            _buildValue(),
+            const SizedBox(height: 2),
+            Text(
+              dateText,
+              style: AppTypography.footnote.copyWith(
+                color: AppColors.label2,
               ),
             ),
           ],

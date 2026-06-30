@@ -280,7 +280,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           return SwipeableRow(
                             id: exercise.id,
                             onEdit: () => context.push('/exercise/${exercise.id}'),
-                            onShare: () => context.push('/exercise/${exercise.id}'),
                             onDelete: () => _confirmDelete(context, exercise),
                             child: _ExerciseRow(
                               exercise: exercise,

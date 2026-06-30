@@ -447,7 +447,9 @@ class _CategoryTile extends StatelessWidget {
                 ],
               ),
               title: Text(
-                category.name,
+                category.id == Category.uncategorizedId
+                    ? AppLocalizations.of(context)!.categoryUncategorized
+                    : category.name,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,

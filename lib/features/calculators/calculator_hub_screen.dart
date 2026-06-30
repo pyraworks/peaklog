@@ -28,7 +28,7 @@ class CalculatorHubScreen extends StatelessWidget {
               ),
               children: [
                 _CalculatorCard(
-                  iconWidget: Icon(AppIcons.dumbbell, size: 28, color: AppColors.label1),
+                  iconWidget: Icon(AppIcons.dumbbell, size: 22, color: AppColors.label1),
                   title: l10n.oneRmCalculatorTitle,
                   description: l10n.oneRmCalculatorDescription,
                   onTap: () {

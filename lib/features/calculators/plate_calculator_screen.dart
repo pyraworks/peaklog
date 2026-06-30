@@ -20,7 +20,6 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
   String _unit = 'kg';
   double _barWeight = 20.0;
   Map<double, int> _counts = {};
-  bool _loaded = false;
 
   List<double> get _plateSizes =>
       _unit == 'kg' ? PlateCalculatorLogic.kgPlates : PlateCalculatorLogic.lbPlates;
@@ -33,28 +32,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    final unit = await CalculatorPrefs.getPlateUnit();
-    final barWeight = await CalculatorPrefs.getPlateBarWeight();
-    final totalWeight = await CalculatorPrefs.getPlateTotalWeight();
-    final savedCounts = await CalculatorPrefs.getPlateCounts(unit);
-
-    if (!mounted) return;
-    setState(() {
-      _unit = unit;
-      _barWeight = barWeight;
-      final sizes = unit == 'kg'
-          ? PlateCalculatorLogic.kgPlates
-          : PlateCalculatorLogic.lbPlates;
-      _counts = {
-        for (final s in sizes) s: savedCounts[s] ?? 0,
-      };
-      _totalCtrl.text = _fmtWeight(totalWeight);
-      _loaded = true;
-    });
+    _counts = {for (final s in PlateCalculatorLogic.kgPlates) s: 0};
   }
 
   @override
@@ -140,12 +118,6 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    if (!_loaded) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),

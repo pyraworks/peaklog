@@ -96,88 +96,60 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
       children: [
         // ── Main card ───────────────────────────────────────────────────────
-        GestureDetector(
-          onTap: () => context.push('/share/${record.id}'),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              border: Border.all(color: AppColors.separator, width: 0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            clipBehavior: Clip.hardEdge,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            border: Border.all(color: AppColors.separator, width: 0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.hardEdge,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isPr) ...[
+                Row(
                   children: [
-                    if (isPr) ...[
-                      Row(
-                        children: [
-                          Text(
-                            l10n.sectionPersonalBest,
-                            style: AppTypography.sectionLabel.copyWith(
-                              color: AppColors.label2,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          PbBadge(label: prLabel),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                    ],
-                    _buildPbValue(valueStr),
-                    const SizedBox(height: 2),
                     Text(
-                      dateStr,
-                      style: AppTypography.footnote.copyWith(
+                      l10n.sectionPersonalBest,
+                      style: AppTypography.sectionLabel.copyWith(
                         color: AppColors.label2,
                       ),
                     ),
-                    if (rt == RecordType.amrap) ...[
-                      Builder(builder: (context) {
-                        final cap = record.timeCap ?? exercise.timeCap;
-                        if (cap == null) return const SizedBox.shrink();
-                        final innerL10n = AppLocalizations.of(context)!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              innerL10n.timeCap(UnitConverter.formatTimeCap(cap)),
-                              style: AppTypography.footnote.copyWith(
-                                color: AppColors.label2,
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
+                    const SizedBox(width: 6),
+                    PbBadge(label: prLabel),
                   ],
                 ),
-                GestureDetector(
-                  onTap: () => context.push('/share/${record.id}'),
-                  behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 2),
+              ],
+              _buildPbValue(valueStr),
+              const SizedBox(height: 2),
+              Text(
+                dateStr,
+                style: AppTypography.footnote.copyWith(
+                  color: AppColors.label2,
+                ),
+              ),
+              if (rt == RecordType.amrap) ...[
+                Builder(builder: (context) {
+                  final cap = record.timeCap ?? exercise.timeCap;
+                  if (cap == null) return const SizedBox.shrink();
+                  final innerL10n = AppLocalizations.of(context)!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(AppIcons.share, size: 13, color: AppColors.label2),
-                      const SizedBox(width: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        l10n.share,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                        innerL10n.timeCap(UnitConverter.formatTimeCap(cap)),
+                        style: AppTypography.footnote.copyWith(
                           color: AppColors.label2,
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ],
-            ),
+            ],
           ),
         ),
         const SizedBox(height: 12),

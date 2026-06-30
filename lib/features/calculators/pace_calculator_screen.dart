@@ -22,35 +22,15 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
   final _timeFocus = FocusNode();
   final _paceFocus = FocusNode();
 
-  double _distanceKm = 5.0;
+  double _distanceKm = 0.0;
   String _lastEdited = '';
   bool _splitsExpanded = false;
-  bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
     _timeFocus.addListener(_onTimeFocusChange);
     _paceFocus.addListener(_onPaceFocusChange);
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    final distKm = await CalculatorPrefs.getPaceDistanceKm();
-    final timeText = await CalculatorPrefs.getPaceTimeText();
-    final paceText = await CalculatorPrefs.getPacePaceText();
-    final lastEdited = await CalculatorPrefs.getPaceLastEdited();
-    if (!mounted) return;
-    setState(() {
-      _distanceKm = distKm;
-      _distCtrl.text = distKm == distKm.roundToDouble()
-          ? distKm.toInt().toString()
-          : distKm.toStringAsFixed(2);
-      _timeCtrl.text = timeText;
-      _paceCtrl.text = paceText;
-      _lastEdited = lastEdited;
-      _loaded = true;
-    });
   }
 
   @override
@@ -159,13 +139,6 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final l10n = AppLocalizations.of(context)!;
     final (paceSecPerKm, _) = _computed;
     final hasSplits = paceSecPerKm != null && paceSecPerKm > 0;

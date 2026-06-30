@@ -20,26 +20,8 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
   static const _quickPcts = [70, 75, 80, 85, 90, 95];
 
   final _weightCtrl = TextEditingController();
-  final _pctCtrl = TextEditingController(text: '85');
+  final _pctCtrl = TextEditingController();
   String _unit = 'kg';
-  bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPrefs();
-  }
-
-  Future<void> _loadPrefs() async {
-    final weight = await CalculatorPrefs.get1rmWeight();
-    final unit = await CalculatorPrefs.get1rmUnit();
-    if (!mounted) return;
-    setState(() {
-      _weightCtrl.text = _fmtInput(weight);
-      _unit = unit;
-      _loaded = true;
-    });
-  }
 
   @override
   void dispose() {
@@ -117,13 +99,6 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final l10n = AppLocalizations.of(context)!;
     final wKg = _weightKg;
     final pct = _parsedPct;
