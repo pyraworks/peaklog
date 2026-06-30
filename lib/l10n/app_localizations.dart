@@ -491,7 +491,7 @@ abstract class AppLocalizations {
   /// Validation snackbar: missing weight value
   ///
   /// In en, this message translates to:
-  /// **'Enter a weight to save.'**
+  /// **'Please enter a weight.'**
   String get validationEnterWeight;
 
   /// Validation snackbar: missing ETC value

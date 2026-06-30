@@ -206,7 +206,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get validationSelectUnit => '단위를 선택해 주세요 (kg 또는 lb).';
 
   @override
-  String get validationEnterWeight => '저장할 무게를 입력해 주세요.';
+  String get validationEnterWeight => '무게를 입력해 주세요.';
 
   @override
   String get validationEnterValue => '저장할 값을 입력해 주세요.';

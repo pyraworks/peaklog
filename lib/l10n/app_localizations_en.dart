@@ -207,7 +207,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationSelectUnit => 'Please select a unit (kg or lb).';
 
   @override
-  String get validationEnterWeight => 'Enter a weight to save.';
+  String get validationEnterWeight => 'Please enter a weight.';
 
   @override
   String get validationEnterValue => 'Enter a value to save.';
