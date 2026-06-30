@@ -7,7 +7,7 @@ PODS:
   - ffmpeg_kit_flutter_new/full-gpl (1.0.0):
     - Flutter
   - Flutter (1.0.0)
-  - health (1.0.4):
+  - health (13.1.4):
     - Flutter
   - share_plus (0.0.1):
     - Flutter
@@ -35,7 +35,7 @@ SPEC CHECKSUMS:
   device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   ffmpeg_kit_flutter_new: 9b7ba1042fb45c9870375fb5b61fd9815b685e20
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  health: a4ddeac72091000e94776864d0028f6be31ec7a5
+  health: 32d2fbc7f26f9a2388d1a514ce168adbfa5bda65
   share_plus: 011d6fb4f9d2576b83179a3a5c5e323202cdabcf
 
 PODFILE CHECKSUM: d71a8f9d234bf288cee64b372c30c196c8075224
