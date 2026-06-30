@@ -30,6 +30,8 @@
 	<string>PeakLog reads your Apple Health workout data to import your workouts.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Apple requires this permission string because the HealthKit API includes write access. PeakLog does not write any health data to Apple Health.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access is used when adding photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>기록 이미지를 갤러리에 저장합니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
