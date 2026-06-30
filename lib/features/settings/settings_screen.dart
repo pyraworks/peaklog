@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
+import '../../providers/app_info_provider.dart';
 import '../../providers/nickname_provider.dart';
 import '../../widgets/screen_header.dart';
 import '../../l10n/app_localizations.dart';
@@ -17,15 +18,6 @@ class SettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     void openFeedback() {
-      if (kFeedbackFormUrl == 'REPLACE_WITH_GOOGLE_FORM_URL') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.feedbackNotAvailable),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        return;
-      }
       launchUrl(
         Uri.parse(kFeedbackFormUrl),
         mode: LaunchMode.externalApplication,
@@ -259,14 +251,14 @@ class _ProfileSummaryCard extends ConsumerWidget {
   }
 }
 
-class _AboutCard extends StatelessWidget {
+class _AboutCard extends ConsumerWidget {
   const _AboutCard();
 
-  static const _version = '1.0.0';
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final version = ref.watch(appVersionProvider).valueOrNull;
+    final versionText = version != null ? 'Beta $version' : '';
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -288,9 +280,9 @@ class _AboutCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Text(
-              _version,
-              style: TextStyle(
+            Text(
+              versionText,
+              style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
                 color: AppColors.label2,
