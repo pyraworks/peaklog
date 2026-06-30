@@ -39,34 +39,38 @@ class SettingsScreen extends StatelessWidget {
                 _ProfileSummaryCard(onTap: () => context.push('/profile')),
                 const SizedBox(height: 24),
 
-                // ── GENERAL ──────────────────────────────────────────
-                _SectionLabel(l10n.sectionGeneral),
-                _CardSection(
-                  items: [
-                    _CardItem(
+                // ── Grouped settings card ─────────────────────────────
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: AppColors.separator, width: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: Column(
+                    children: [
+                      _MenuRow(
                         title: l10n.categoriesTitle,
                         leadingIcon: AppIcons.folder,
-                        onTap: () => context.push('/categories')),
-                  ],
+                        onTap: () => context.push('/categories'),
+                      ),
+                      const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.separatorAlt),
+                      _MenuRow(
+                        title: l10n.sendFeedback,
+                        leadingIcon: AppIcons.feedback,
+                        onTap: openFeedback,
+                      ),
+                      const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.separatorAlt),
+                      const _VersionRow(),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 24),
-
-                // ── FEEDBACK ─────────────────────────────────────────
-                _SectionLabel(l10n.sectionFeedback),
-                _CardSection(
-                  items: [
-                    _CardItem(
-                      title: l10n.sendFeedback,
-                      leadingIcon: AppIcons.feedback,
-                      onTap: openFeedback,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // ── ABOUT ─────────────────────────────────────────────
-                _SectionLabel(l10n.sectionAbout),
-                const _AboutCard(),
               ],
             ),
           ),
@@ -77,68 +81,8 @@ class SettingsScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Reusable section label
+// Tappable menu row with leading icon and trailing chevron
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.label2,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Generic card section with divider-separated rows
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CardItem {
-  final String title;
-  final IconData? leadingIcon;
-  final VoidCallback onTap;
-  const _CardItem({required this.title, this.leadingIcon, required this.onTap});
-}
-
-class _CardSection extends StatelessWidget {
-  final List<_CardItem> items;
-
-  const _CardSection({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    for (var i = 0; i < items.length; i++) {
-      if (i > 0) {
-        rows.add(const Divider(
-            height: 1, thickness: 1, color: AppColors.separatorAlt));
-      }
-      rows.add(_MenuRow(title: items[i].title, leadingIcon: items[i].leadingIcon, onTap: items[i].onTap));
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.separator, width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Column(children: rows),
-    );
-  }
-}
 
 class _MenuRow extends StatelessWidget {
   final String title;
@@ -152,12 +96,11 @@ class _MenuRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: 18, color: AppColors.label2),
+              Icon(leadingIcon, size: 18, color: AppColors.label1),
               const SizedBox(width: 10),
             ],
             Expanded(
@@ -170,11 +113,7 @@ class _MenuRow extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(
-              AppIcons.forward,
-              size: 20,
-              color: AppColors.chevron,
-            ),
+            Icon(AppIcons.forward, size: 20, color: AppColors.chevron),
           ],
         ),
       ),
@@ -253,8 +192,12 @@ class _ProfileSummaryCard extends ConsumerWidget {
   }
 }
 
-class _AboutCard extends ConsumerWidget {
-  const _AboutCard();
+// ─────────────────────────────────────────────────────────────────────────────
+// Version row — tappable, copies version string to clipboard
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _VersionRow extends ConsumerWidget {
+  const _VersionRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -277,41 +220,33 @@ class _AboutCard extends ConsumerWidget {
       child: GestureDetector(
         onTap: copyVersion,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: AppColors.separator, width: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Icon(AppIcons.infoCircle, size: 18, color: AppColors.label2),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.version,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.label1,
-                    ),
-                  ),
-                ),
-                Text(
-                  versionText,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Icon(AppIcons.infoCircle, size: 18, color: AppColors.label1),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.version,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.label2,
+                    color: AppColors.label1,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(AppIcons.copy, size: 14, color: AppColors.label2),
-              ],
-            ),
+              ),
+              Text(
+                versionText,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.label2,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(AppIcons.copy, size: 12, color: AppColors.label2),
+            ],
           ),
         ),
       ),
