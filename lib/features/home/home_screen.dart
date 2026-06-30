@@ -237,7 +237,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ...categories.map((cat) => Padding(
                     padding: const EdgeInsets.only(left: 6),
                     child: _CategoryChip(
-                      label: cat.name,
+                      label: cat.id == Category.uncategorizedId ? l10n.categoryUncategorized : cat.name,
                       color: CategoryColor.toColor(cat.color),
                       selected: _filterCategoryId == cat.id,
                       onTap: () => setState(() => _filterCategoryId = cat.id),
