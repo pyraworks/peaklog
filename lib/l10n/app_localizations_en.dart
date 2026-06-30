@@ -111,7 +111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unitOptionalLabel => 'UNIT (optional)';
 
   @override
-  String get unitHint => 'e.g. reps, kg, km';
+  String get unitHint => 'Unit name';
 
   @override
   String get timeLabel => 'TIME';

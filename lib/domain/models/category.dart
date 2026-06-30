@@ -94,8 +94,8 @@ class Category {
     syncStatus: syncStatus ?? this.syncStatus,
   );
 
-  static String nameForId(String? id) {
-    if (id == uncategorizedId) return 'Uncategorized';
+  static String nameForId(String? id, {String uncategorizedLabel = 'Uncategorized'}) {
+    if (id == uncategorizedId) return uncategorizedLabel;
     // Legacy preset names — backward compat for existing data
     if (id == weightliftingId) return 'Weightlifting';
     if (id == powerliftingId)  return 'Powerlifting';
@@ -106,7 +106,7 @@ class Category {
     if (id == runId)           return 'Run';
     if (id == wodId)           return 'WOD';
     if (id == customId)        return 'Custom';
-    return 'Uncategorized';
+    return uncategorizedLabel;
   }
 
   /// Seeded on new installs only — Uncategorized is the sole default.

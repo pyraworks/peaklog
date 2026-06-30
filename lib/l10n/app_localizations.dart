@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// Placeholder text for ETC unit field
   ///
   /// In en, this message translates to:
-  /// **'e.g. reps, kg, km'**
+  /// **'Unit name'**
   String get unitHint;
 
   /// Time input field label (For Time record type)

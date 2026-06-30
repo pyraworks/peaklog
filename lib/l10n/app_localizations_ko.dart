@@ -111,7 +111,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get unitOptionalLabel => '단위 (선택)';
 
   @override
-  String get unitHint => '예: 횟수, kg, km';
+  String get unitHint => '단위 이름';
 
   @override
   String get timeLabel => '시간';

@@ -80,11 +80,11 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   void _initControllers(Record rec, Exercise? exercise) {
     _selectedDate = DateTime.fromMillisecondsSinceEpoch(rec.performedAt);
 
-    // Unit: read from the record snapshot only.
-    // Record.fromMap normalizes null/empty to 'kg', so this is always valid.
-    _weightUnit = rec.weightUnit;
+    // Unit: always use the exercise's current default, not the stale snapshot
+    // stored on the record. Weights are stored in kg regardless of display unit.
+    _weightUnit = exercise?.baseUnit ?? rec.weightUnit;
 
-    // Weight — convert stored kg to the original display unit.
+    // Weight — convert stored kg to the current display unit.
     if (rec.weight != null) {
       final displayWeight = _weightUnit == 'lbs'
           ? UnitConverter.kgToLbs(rec.weight!)

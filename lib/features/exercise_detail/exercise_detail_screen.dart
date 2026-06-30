@@ -219,7 +219,7 @@ class _ExerciseHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final categoryName = Category.nameForId(exercise.categoryId);
+    final categoryName = Category.nameForId(exercise.categoryId, uncategorizedLabel: l10n.categoryUncategorized);
     return ScreenHeader(
       backLabel: l10n.back,
       titleWidget: Row(

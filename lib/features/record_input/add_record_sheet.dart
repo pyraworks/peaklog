@@ -62,10 +62,10 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
     final r = widget.initialRecord;
 
     // Determine unit first — weight display conversion depends on it.
+    // Always use the exercise's current default; never read the stale unit
+    // cached on a previous record.
     if (widget.exercise.recordType == RecordType.weight) {
-      _localWeightUnit = r?.weightUnit.isNotEmpty == true
-          ? r!.weightUnit
-          : widget.exercise.baseUnit;
+      _localWeightUnit = widget.exercise.baseUnit;
     }
 
     if (r != null) {

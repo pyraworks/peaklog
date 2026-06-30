@@ -35,7 +35,7 @@
   "repsLabel": "횟수",
   "valueLabel": "값",
   "unitOptionalLabel": "단위 (선택)",
-  "unitHint": "예: 횟수, kg, km",
+  "unitHint": "단위 이름",
   "timeLabel": "시간",
   "timeCapLabel": "타임캡 (분)",
   "roundsLabel": "라운드",

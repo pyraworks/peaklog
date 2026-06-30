@@ -103,7 +103,7 @@
   "unitOptionalLabel": "UNIT (optional)",
   "@unitOptionalLabel": { "description": "Unit input field label for ETC records" },
 
-  "unitHint": "e.g. reps, kg, km",
+  "unitHint": "Unit name",
   "@unitHint": { "description": "Placeholder text for ETC unit field" },
 
   "timeLabel": "TIME",

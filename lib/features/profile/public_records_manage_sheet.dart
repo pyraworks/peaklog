@@ -136,7 +136,8 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                                   _ExerciseRow(
                                     name: exercises[i].displayName,
                                     categoryName: Category.nameForId(
-                                        exercises[i].categoryId),
+                                        exercises[i].categoryId,
+                                        uncategorizedLabel: l10n.categoryUncategorized),
                                     isOn: publicIds
                                         .contains(exercises[i].id),
                                     isDisabled: isMax &&
