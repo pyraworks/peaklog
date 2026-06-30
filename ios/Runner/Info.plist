@@ -27,7 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>러닝 데이터를 자동으로 기록하기 위해 건강 앱 접근 권한이 필요합니다.</string>
+	<string>PeakLog reads your Apple Health workout data to import your workouts.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Apple requires this permission string because the HealthKit API includes write access. PeakLog does not write any health data to Apple Health.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>기록 이미지를 갤러리에 저장합니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
