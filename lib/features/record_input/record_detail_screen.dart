@@ -179,8 +179,11 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
               _ActionRow(
                 icon: AppIcons.edit,
                 label: l10n.editRecord,
-                onTap: () => context.push(
-                    '/exercise/${widget.exerciseId}/record/${record.id}/edit'),
+                onTap: () async {
+                  await context.push(
+                      '/exercise/${widget.exerciseId}/record/${record.id}/edit');
+                  if (mounted) _load();
+                },
               ),
               const Divider(height: 1, color: AppColors.separatorAlt),
               _ActionRow(
