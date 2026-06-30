@@ -127,12 +127,12 @@ class _HeroSection extends StatelessWidget {
       children: [
         const SizedBox(height: 8),
 
-        // Avatar — primary-tinted circle, dark initials
+        // Avatar — black circle, white initials
         Container(
           width: 80,
           height: 80,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.10),
+          decoration: const BoxDecoration(
+            color: AppColors.label1,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -141,7 +141,7 @@ class _HeroSection extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppColors.label1,
+                color: Colors.white,
                 letterSpacing: -0.5,
               ),
             ),
