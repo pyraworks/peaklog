@@ -169,6 +169,9 @@
   "version": "Version",
   "@version": { "description": "Label for app version in about section" },
 
+  "versionCopied": "Version copied.",
+  "@versionCopied": { "description": "Snackbar after copying version to clipboard" },
+
   "peaklogUser": "Your Profile",
   "@peaklogUser": { "description": "Default profile name when no nickname is set" },
 

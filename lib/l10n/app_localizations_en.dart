@@ -177,6 +177,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
+  String get versionCopied => 'Version copied.';
+
+  @override
   String get peaklogUser => 'Your Profile';
 
   @override

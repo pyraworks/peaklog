@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Version'**
   String get version;
 
+  /// Snackbar after copying version to clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Version copied.'**
+  String get versionCopied;
+
   /// Default profile name when no nickname is set
   ///
   /// In en, this message translates to:

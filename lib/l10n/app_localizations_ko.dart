@@ -177,6 +177,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get version => '버전';
 
   @override
+  String get versionCopied => '버전이 복사되었습니다.';
+
+  @override
   String get peaklogUser => '내 프로필';
 
   @override

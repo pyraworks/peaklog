@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -44,6 +45,7 @@ class SettingsScreen extends StatelessWidget {
                   items: [
                     _CardItem(
                         title: l10n.categoriesTitle,
+                        leadingIcon: AppIcons.folder,
                         onTap: () => context.push('/categories')),
                   ],
                 ),
@@ -259,36 +261,58 @@ class _AboutCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final version = ref.watch(appVersionProvider).valueOrNull;
     final versionText = version != null ? 'Beta $version' : '';
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.separator, width: 0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                l10n.version,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.label1,
+
+    void copyVersion() {
+      if (versionText.isEmpty) return;
+      Clipboard.setData(ClipboardData(text: versionText));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.versionCopied)),
+      );
+    }
+
+    return Semantics(
+      label: l10n.version,
+      button: true,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: copyVersion,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: AppColors.separator, width: 0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Icon(AppIcons.infoCircle, size: 18, color: AppColors.label2),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.version,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.label1,
+                    ),
+                  ),
                 ),
-              ),
+                Text(
+                  versionText,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.label2,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(AppIcons.copy, size: 14, color: AppColors.label2),
+              ],
             ),
-            Text(
-              versionText,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                color: AppColors.label2,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
