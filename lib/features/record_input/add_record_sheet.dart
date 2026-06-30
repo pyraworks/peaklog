@@ -13,6 +13,7 @@ import '../../core/utils/unit_converter.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
 import 'time_input_field.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Opens the Add Record full-screen page for [exercise].
 /// Pass [initialRecord] to pre-populate fields for editing an existing record.
@@ -124,6 +125,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   }
 
   Future<void> _pickDate() async {
+    final l10n = AppLocalizations.of(context)!;
     await showCupertinoModalPopup<void>(
       context: context,
       builder: (ctx) => Container(
@@ -136,8 +138,8 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
               children: [
                 CupertinoButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Done',
-                      style: TextStyle(color: AppColors.textPrimaryAlt)),
+                  child: Text(l10n.done,
+                      style: const TextStyle(color: AppColors.textPrimaryAlt)),
                 ),
               ],
             ),
@@ -158,6 +160,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final weightUnit = _localWeightUnit ?? widget.exercise.baseUnit;
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -167,8 +170,8 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         child: Column(
           children: [
             ScreenHeader(
-              backLabel: 'Back',
-              title: widget.initialRecord != null ? 'Edit Record' : 'Add Record',
+              backLabel: l10n.back,
+              title: widget.initialRecord != null ? l10n.editRecordTitle : l10n.addRecordTitle,
               onBack: () => Navigator.pop(context),
             ),
             Expanded(
@@ -204,7 +207,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                         onTap: _pickDate,
                       ),
                       const SizedBox(height: AppSpacing.s12),
-                      _buildInputs(weightUnit),
+                      _buildInputs(weightUnit, l10n),
                       const SizedBox(height: AppSpacing.s16),
                       if (widget.initialRecord == null &&
                           !widget.exercise.hasPrBaseline) ...[
@@ -216,7 +219,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                         const SizedBox(height: AppSpacing.s16),
                       ],
                       _SaveButton(
-                        label: 'Save Record',
+                        label: l10n.saveRecord,
                         loading: _saving,
                         onPressed: _saving
                             ? null
@@ -236,7 +239,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
     );
   }
 
-  Widget _buildInputs(String weightUnit) {
+  Widget _buildInputs(String weightUnit, AppLocalizations l10n) {
     switch (_effectiveType!) {
       case RecordType.weight:
         return Row(
@@ -244,7 +247,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
           children: [
             Expanded(
               child: _InputCard(
-                label: 'WEIGHT',
+                label: l10n.weightLabel,
                 child: _NumTextField(
                   controller: _weightCtrl,
                   decimal: true,
@@ -254,7 +257,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
             const SizedBox(width: 10),
             Expanded(
               child: _InputCard(
-                label: 'REPS',
+                label: l10n.repsLabel,
                 child: _NumTextField(
                   controller: _repsCtrl,
                   decimal: false,
@@ -269,12 +272,12 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _InputCard(
-              label: 'VALUE',
+              label: l10n.valueLabel,
               child: _NumTextField(controller: _distCtrl, decimal: true),
             ),
             const SizedBox(height: 10),
             _InputCard(
-              label: 'UNIT (optional)',
+              label: l10n.unitOptionalLabel,
               child: TextField(
                 controller: _etcUnitCtrl,
                 style: const TextStyle(
@@ -283,15 +286,15 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                   color: AppColors.textPrimaryAlt,
                   letterSpacing: -0.44,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   filled: false,
                   contentPadding: EdgeInsets.zero,
                   isDense: true,
-                  hintText: 'e.g. reps, kg, km',
-                  hintStyle: TextStyle(
+                  hintText: l10n.unitHint,
+                  hintStyle: const TextStyle(
                     fontSize: 16,
                     color: AppColors.label2,
                   ),
@@ -303,7 +306,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
 
       case RecordType.forTime:
         return _InputCard(
-          label: 'TIME',
+          label: l10n.timeLabel,
           child: TimeInputField(
             onChanged: (s) => _durationSec = s,
             initialSeconds: _durationSec,
@@ -315,7 +318,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _InputCard(
-              label: 'TIME CAP (min)',
+              label: l10n.timeCapLabel,
               child: _NumTextField(controller: _durationMinCtrl, decimal: false),
             ),
             const SizedBox(height: 10),
@@ -324,7 +327,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
               children: [
                 Expanded(
                   child: _InputCard(
-                    label: 'ROUNDS',
+                    label: l10n.roundsLabel,
                     child: _NumTextField(
                       controller: _roundsCtrl,
                       decimal: false,
@@ -334,7 +337,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _InputCard(
-                    label: 'REPS',
+                    label: l10n.repsLabel,
                     child: _NumTextField(
                       controller: _amrapRepsCtrl,
                       decimal: false,
@@ -349,9 +352,10 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   }
 
   Future<void> _save(String weightUnit) async {
+    final l10n = AppLocalizations.of(context)!;
     if (_effectiveType == RecordType.weight && _localWeightUnit == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a unit (kg or lb).')),
+        SnackBar(content: Text(l10n.validationSelectUnit)),
       );
       return;
     }
@@ -368,7 +372,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         final raw = double.tryParse(_weightCtrl.text.trim());
         if (raw == null || raw <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter a weight to save.')),
+            SnackBar(content: Text(l10n.validationEnterWeight)),
           );
           return;
         }
@@ -379,7 +383,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         final rawEtc = double.tryParse(_distCtrl.text.trim());
         if (rawEtc == null || rawEtc <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter a value to save.')),
+            SnackBar(content: Text(l10n.validationEnterValue)),
           );
           return;
         }
@@ -388,7 +392,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
       case RecordType.forTime:
         if (_durationSec <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter a time to save.')),
+            SnackBar(content: Text(l10n.validationEnterTime)),
           );
           return;
         }
@@ -398,7 +402,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         final r = int.tryParse(_roundsCtrl.text.trim());
         if (r == null || r <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Enter rounds completed.')),
+            SnackBar(content: Text(l10n.validationEnterRounds)),
           );
           return;
         }
@@ -481,7 +485,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Save failed: $e'),
+            content: Text(l10n.saveFailed(e)),
             backgroundColor: Colors.red.shade700,
             duration: const Duration(seconds: 5),
           ),
@@ -502,20 +506,28 @@ class _RecordTypePicker extends StatelessWidget {
 
   // Ordered by expected usage frequency
   static const _types = [
-    (RecordType.weight,  Icons.fitness_center, 'Weight'),
-    (RecordType.amrap,   Icons.loop,           'AMRAP'),
-    (RecordType.forTime, Icons.timer,          'For Time'),
-    (RecordType.etc,     Icons.tag,            'ETC'),
+    (RecordType.weight,  Icons.fitness_center),
+    (RecordType.amrap,   Icons.loop),
+    (RecordType.forTime, Icons.timer),
+    (RecordType.etc,     Icons.tag),
   ];
+
+  String _typeLabel(RecordType rt, AppLocalizations l10n) => switch (rt) {
+    RecordType.weight  => l10n.recordTypeWeight,
+    RecordType.amrap   => l10n.recordTypeAmrap,
+    RecordType.forTime => l10n.recordTypeForTime,
+    RecordType.etc     => l10n.recordTypeEtc,
+  };
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'How do you track this exercise?',
-          style: TextStyle(
+        Text(
+          l10n.howToTrackQuestion,
+          style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimaryAlt,
@@ -550,7 +562,7 @@ class _RecordTypePicker extends StatelessWidget {
                       Icon(t.$2, size: 20, color: sel ? Colors.white : AppColors.label1),
                       const SizedBox(height: 4),
                       Text(
-                        t.$3,
+                        _typeLabel(t.$1, l10n),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
@@ -661,6 +673,7 @@ class _DateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -672,8 +685,8 @@ class _DateButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Text('Date',
-                style: TextStyle(
+            Text(l10n.dateLabel,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textSecondaryAlt,
@@ -708,6 +721,7 @@ class _PrCheckboxRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -727,7 +741,7 @@ class _PrCheckboxRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              'This is my $label!',
+              l10n.thisIsMyLabel(label),
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
@@ -755,12 +769,13 @@ class _UnitPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'UNIT',
-          style: TextStyle(
+        Text(
+          l10n.unitSelectorLabel,
+          style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondaryAlt,

@@ -7,18 +7,21 @@ import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../providers/nickname_provider.dart';
 import '../../widgets/screen_header.dart';
+import '../../l10n/app_localizations.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     void openFeedback() {
       if (kFeedbackFormUrl == 'REPLACE_WITH_GOOGLE_FORM_URL') {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Feedback form is not available yet.'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.feedbackNotAvailable),
+            duration: const Duration(seconds: 2),
           ),
         );
         return;
@@ -33,7 +36,7 @@ class SettingsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(backLabel: 'Home', title: 'Settings'),
+          ScreenHeader(backLabel: l10n.homeLabel, title: l10n.settingsLabel),
           Expanded(
             child: ListView(
               padding:
@@ -44,22 +47,22 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // ── GENERAL ──────────────────────────────────────────
-                const _SectionLabel('GENERAL'),
+                _SectionLabel(l10n.sectionGeneral),
                 _CardSection(
                   items: [
                     _CardItem(
-                        title: 'Categories',
+                        title: l10n.categoriesTitle,
                         onTap: () => context.push('/categories')),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // ── FEEDBACK ─────────────────────────────────────────
-                const _SectionLabel('FEEDBACK'),
+                _SectionLabel(l10n.sectionFeedback),
                 _CardSection(
                   items: [
                     _CardItem(
-                      title: 'Send Feedback',
+                      title: l10n.sendFeedback,
                       leadingIcon: AppIcons.feedback,
                       onTap: openFeedback,
                     ),
@@ -68,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // ── ABOUT ─────────────────────────────────────────────
-                const _SectionLabel('ABOUT'),
+                _SectionLabel(l10n.sectionAbout),
                 const _AboutCard(),
               ],
             ),
@@ -203,8 +206,9 @@ class _ProfileSummaryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final nickname = ref.watch(nicknameProvider).valueOrNull ?? '';
-    final displayName = nickname.isEmpty ? 'PeakLog User' : nickname;
+    final displayName = nickname.isEmpty ? l10n.peaklogUser : nickname;
 
     return GestureDetector(
       onTap: onTap,
@@ -262,6 +266,7 @@ class _AboutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -269,21 +274,21 @@ class _AboutCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       clipBehavior: Clip.hardEdge,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             Expanded(
               child: Text(
-                'Version',
-                style: TextStyle(
+                l10n.version,
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: AppColors.label1,
                 ),
               ),
             ),
-            Text(
+            const Text(
               _version,
               style: TextStyle(
                 fontSize: 15,
@@ -297,4 +302,3 @@ class _AboutCard extends StatelessWidget {
     );
   }
 }
-

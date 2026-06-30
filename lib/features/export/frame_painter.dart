@@ -15,6 +15,7 @@ Future<Uint8List> renderFrameToBytes({
   required String daysSinceStr,
   required OverlayOptions options,
   String badgeLabel = 'PR',
+  String personalBestLabel = 'Personal Best',
   bool overlayOnly = false,
 }) async {
   final size = aspectRatio.exportSize;
@@ -31,6 +32,7 @@ Future<Uint8List> renderFrameToBytes({
     daysSinceStr: daysSinceStr,
     options: options,
     badgeLabel: badgeLabel,
+    personalBestLabel: personalBestLabel,
     overlayOnly: overlayOnly,
   );
 
@@ -57,6 +59,7 @@ class _FrameData {
   final String daysSinceStr;
   final OverlayOptions options;
   final String badgeLabel;
+  final String personalBestLabel;
   final bool overlayOnly;
 
   const _FrameData({
@@ -66,6 +69,7 @@ class _FrameData {
     required this.daysSinceStr,
     required this.options,
     this.badgeLabel = 'PR',
+    this.personalBestLabel = 'Personal Best',
     required this.overlayOnly,
   });
 }
@@ -121,7 +125,7 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
     Rect.fromLTWH(pad, barY, w * 0.011, w * 0.042),
     Paint()..color = accent,
   );
-  _text(canvas, 'Personal Best',
+  _text(canvas, d.personalBestLabel,
       x: pad + w * 0.018, y: barY + w * 0.006,
       size: w * 0.022, weight: FontWeight.w700,
       color: accent, spacing: w * 0.002);

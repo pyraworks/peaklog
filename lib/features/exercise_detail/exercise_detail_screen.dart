@@ -19,6 +19,7 @@ import '../../widgets/screen_header.dart';
 import '../../widgets/swipeable_row.dart';
 import '../home/add_exercise_sheet.dart';
 import '../record_input/add_record_sheet.dart';
+import '../../l10n/app_localizations.dart';
 
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -111,6 +112,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             ? bestRecord!.weight!
             : null;
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -148,7 +150,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     child: Row(
                       children: [
                         Text(
-                          'TIME CAP',
+                          l10n.sectionTimeCap,
                           style: AppTypography.sectionLabel
                               .copyWith(color: AppColors.label2),
                         ),
@@ -216,9 +218,10 @@ class _ExerciseHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categoryName = Category.nameForId(exercise.categoryId);
     return ScreenHeader(
-      backLabel: 'Back',
+      backLabel: l10n.back,
       titleWidget: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -302,6 +305,7 @@ class _PbCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -323,7 +327,7 @@ class _PbCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'PERSONAL BEST',
+                      l10n.sectionPersonalBest,
                       style: AppTypography.sectionLabel.copyWith(
                         color: AppColors.label2,
                       ),
@@ -352,9 +356,9 @@ class _PbCard extends StatelessWidget {
                 children: [
                   Icon(AppIcons.share, size: 13, color: AppColors.label2),
                   const SizedBox(width: 4),
-                  const Text(
-                    'Share',
-                    style: TextStyle(
+                  Text(
+                    l10n.share,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.label2,
@@ -434,6 +438,7 @@ class _OneRMCalculatorState extends State<_OneRMCalculator> {
     final resultDisplay = resultKg != null ? _formatResult(resultKg) : '—';
     final activeChip = _activeChip;
 
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       behavior: HitTestBehavior.translucent,
@@ -452,7 +457,7 @@ class _OneRMCalculatorState extends State<_OneRMCalculator> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '1RM CALCULATOR',
+                l10n.section1rmCalculator,
                 style: AppTypography.sectionLabel
                     .copyWith(color: AppColors.label2),
               ),
@@ -464,9 +469,9 @@ class _OneRMCalculatorState extends State<_OneRMCalculator> {
                   children: [
                     Icon(AppIcons.chart, size: 12, color: AppColors.textTertiary),
                     const SizedBox(width: 4),
-                    const Text(
-                      'View Table',
-                      style: TextStyle(
+                    Text(
+                      l10n.viewTable,
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textTertiary,
@@ -630,6 +635,7 @@ class _AddRecordButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -641,14 +647,14 @@ class _AddRecordButton extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s16, vertical: 11),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('+', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w300)),
-            SizedBox(width: AppSpacing.s8),
+            const Text('+', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w300)),
+            const SizedBox(width: AppSpacing.s8),
             Text(
-              'Add Record',
-              style: TextStyle(
+              l10n.addRecordButton,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
@@ -687,12 +693,13 @@ class _HistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Section label
         Text(
-          'HISTORY',
+          l10n.sectionHistory,
           style: AppTypography.sectionLabel
               .copyWith(color: AppColors.label2),
         ),
@@ -751,20 +758,21 @@ class _HistorySection extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, Record r) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Record'),
-        content: const Text('This record will be permanently deleted.'),
+        title: Text(l10n.deleteRecord),
+        content: Text(l10n.deleteRecordContent),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

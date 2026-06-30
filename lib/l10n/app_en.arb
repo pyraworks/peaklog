@@ -154,9 +154,6 @@
   "sectionAbout": "ABOUT",
   "@sectionAbout": { "description": "Settings section: about" },
 
-  "sectionPublicRecords": "PUBLIC RECORDS",
-  "@sectionPublicRecords": { "description": "Profile section: public records" },
-
   "noExercises": "No exercises",
   "@noExercises": { "description": "Empty state message for exercise list" },
 
@@ -172,8 +169,8 @@
   "version": "Version",
   "@version": { "description": "Label for app version in about section" },
 
-  "peaklogUser": "PeakLog User",
-  "@peaklogUser": { "description": "Default username placeholder" },
+  "peaklogUser": "Your Profile",
+  "@peaklogUser": { "description": "Default profile name when no nickname is set" },
 
   "editRecord": "Edit Record",
   "@editRecord": { "description": "Action row label to edit a record" },
@@ -262,7 +259,7 @@
   "colorLabel": "Color",
   "@colorLabel": { "description": "Color picker label in category edit bottom sheet" },
 
-  "searchExercises": "Search exercises...",
+  "searchExercises": "Search",
   "@searchExercises": { "description": "Placeholder text for exercise search bar" },
 
   "filterAll": "All",
@@ -281,9 +278,6 @@
 
   "no1RmRecord": "No 1RM record",
   "@no1RmRecord": { "description": "Empty state on 1RM table screen when no PB exists" },
-
-  "managePublicExercises": "Manage Public Exercises",
-  "@managePublicExercises": { "description": "Title of the public-records management bottom sheet" },
 
   "publicExercisesHint": "Select up to 8 exercises to show on your profile.",
   "@publicExercisesHint": { "description": "Hint text below the title in public-records management sheet" },
@@ -329,5 +323,233 @@
   "@healthPermissionOpenSettings": { "description": "Button to open system Settings when Health permission is denied" },
 
   "noRecords": "No records",
-  "@noRecords": { "description": "Empty state for the record picker sheet in quick_share_screen" }
+  "@noRecords": { "description": "Empty state for the record picker sheet in quick_share_screen" },
+
+  "categoryUncategorized": "Uncategorized",
+  "@categoryUncategorized": { "description": "Label for the built-in uncategorized category" },
+
+  "unitSelectorLabel": "UNIT",
+  "@unitSelectorLabel": { "description": "Section label above the kg/lb unit picker when selecting Weight record type for the first time" },
+
+  "weightWithUnit": "WEIGHT ({unit})",
+  "@weightWithUnit": {
+    "description": "Input card label for weight field in Edit Record, with the current unit in parentheses",
+    "placeholders": {
+      "unit": { "type": "String", "description": "The weight unit, e.g. 'kg' or 'lb'" }
+    }
+  },
+
+  "noRecordTypeConfigured": "No record type is configured for this exercise.",
+  "@noRecordTypeConfigured": { "description": "Error state on the Edit Record screen when the exercise has no record type set" },
+
+  "importActivityTitle": "Import Activity",
+  "@importActivityTitle": { "description": "Title of the Apple Health activity picker bottom sheet" },
+
+  "importActivitySubtitle": "Recent activities from Apple Health",
+  "@importActivitySubtitle": { "description": "Subtitle below the title in the activity picker sheet" },
+
+  "importActivityError": "Could not load activities.",
+  "@importActivityError": { "description": "Error state in the activity picker sheet when the Health fetch fails" },
+
+  "importActivityEmpty": "No activities found in the last 90 days.",
+  "@importActivityEmpty": { "description": "Empty state in the activity picker sheet when no workouts exist" },
+
+  "today": "Today",
+  "@today": { "description": "Date label for a workout that happened today" },
+
+  "yesterday": "Yesterday",
+  "@yesterday": { "description": "Date label for a workout that happened yesterday" },
+
+  "activityRunning": "Running",
+  "@activityRunning": { "description": "Activity type label: running" },
+
+  "activityCycling": "Cycling",
+  "@activityCycling": { "description": "Activity type label: cycling" },
+
+  "activitySwimming": "Swimming",
+  "@activitySwimming": { "description": "Activity type label: swimming" },
+
+  "activityOther": "Workout",
+  "@activityOther": { "description": "Activity type label: generic workout" },
+
+  "timeHourLabel": "h",
+  "@timeHourLabel": { "description": "Hour unit label in the time input field" },
+
+  "timeMinuteLabel": "min",
+  "@timeMinuteLabel": { "description": "Minute unit label in the time input field" },
+
+  "timeSecondLabel": "sec",
+  "@timeSecondLabel": { "description": "Second unit label in the time input field" },
+
+  "sectionPublicExercises": "PUBLIC EXERCISES",
+  "@sectionPublicExercises": { "description": "Section header label for the public exercises grid on the profile screen" },
+
+  "editProfile": "Edit Profile",
+  "@editProfile": { "description": "Pill button on profile hero to open the nickname editor sheet" },
+
+  "setNickname": "Set Nickname",
+  "@setNickname": { "description": "Sheet title for the nickname editor bottom sheet" },
+
+  "nicknameHint": "Enter your nickname",
+  "@nicknameHint": { "description": "Placeholder text for the nickname input field" },
+
+  "publicExercisesTitle": "Public Exercises",
+  "@publicExercisesTitle": { "description": "Title of the public exercises management bottom sheet" },
+
+  "selectedLabel": "selected",
+  "@selectedLabel": { "description": "Suffix after the count fraction in the manage sheet — EN: '3 / 8 selected', KO: '3 / 8 선택'" },
+
+  "sectionFeedback": "FEEDBACK",
+  "@sectionFeedback": { "description": "Settings section header for feedback row" },
+
+  "sendFeedback": "Send Feedback",
+  "@sendFeedback": { "description": "Settings menu row label to open the feedback form" },
+
+  "feedbackNotAvailable": "Feedback form is not available yet.",
+  "@feedbackNotAvailable": { "description": "Snackbar shown when the feedback URL placeholder has not been replaced" },
+
+  "shareOptionRecordTitle": "PeakLog Record",
+  "@shareOptionRecordTitle": { "description": "Share option card title for PeakLog records" },
+
+  "shareOptionRecordSubtitle": "Share your tracked records",
+  "@shareOptionRecordSubtitle": { "description": "Share option card subtitle for PeakLog records" },
+
+  "shareOptionActivityTitle": "Health Activity",
+  "@shareOptionActivityTitle": { "description": "Share option card title for Apple Health activities" },
+
+  "shareOptionActivitySubtitle": "Share a workout from Apple Health",
+  "@shareOptionActivitySubtitle": { "description": "Share option card subtitle for Apple Health activities" },
+
+  "exportLabelRatio": "Ratio",
+  "@exportLabelRatio": { "description": "Control label for aspect ratio selector on export screen" },
+
+  "exportLabelFrame": "Frame",
+  "@exportLabelFrame": { "description": "Control label for frame style selector on export screen" },
+
+  "exportLabelBackground": "Background",
+  "@exportLabelBackground": { "description": "Control label for background media picker on export screen" },
+
+  "exportLabelSticker": "Sticker",
+  "@exportLabelSticker": { "description": "Control label for overlay sticker toggles on export screen" },
+
+  "frameStyleClean": "Clean",
+  "@frameStyleClean": { "description": "Frame style option: clean minimal design" },
+
+  "frameStyleRough": "Rough",
+  "@frameStyleRough": { "description": "Frame style option: rough bold design" },
+
+  "stickerName": "Name",
+  "@stickerName": { "description": "Sticker toggle label: show exercise name overlay" },
+
+  "stickerValue": "Value",
+  "@stickerValue": { "description": "Sticker toggle label: show record value overlay" },
+
+  "stickerDays": "Days",
+  "@stickerDays": { "description": "Sticker toggle label: show days-since-PR overlay" },
+
+  "exportPhoto": "Photo",
+  "@exportPhoto": { "description": "Media picker chip label for photo" },
+
+  "exportVideo": "Video",
+  "@exportVideo": { "description": "Media picker chip label for video" },
+
+  "saveImage": "Save Image",
+  "@saveImage": { "description": "Button to save export card as image to Photos" },
+
+  "saveVideo": "Save Video",
+  "@saveVideo": { "description": "Button to save export card composited over video to Photos" },
+
+  "exportSavingImage": "Saving image…",
+  "@exportSavingImage": { "description": "Progress label while saving an image to Photos" },
+
+  "exportSavingVideo": "Saving video…",
+  "@exportSavingVideo": { "description": "Progress label while saving a video to Photos" },
+
+  "exportPreparing": "Preparing…",
+  "@exportPreparing": { "description": "Progress label while preparing a share export" },
+
+  "savedToPhotos": "Saved to Photos",
+  "@savedToPhotos": { "description": "Snackbar after successfully saving image or video to Photos" },
+
+  "videoSaveFailed": "Video save failed",
+  "@videoSaveFailed": { "description": "Snackbar when video compositing or save fails" },
+
+  "shareSubjectRecord": "PeakLog — {name} New {badge}!",
+  "@shareSubjectRecord": {
+    "description": "Share sheet subject line when sharing a record PR/PB",
+    "placeholders": {
+      "name": { "type": "String", "description": "Exercise display name" },
+      "badge": { "type": "String", "description": "PR or PB label" }
+    }
+  },
+
+  "shareSubjectActivity": "PeakLog — {name}",
+  "@shareSubjectActivity": {
+    "description": "Share sheet subject line when sharing an Apple Health activity",
+    "placeholders": {
+      "name": { "type": "String", "description": "Activity description including distance" }
+    }
+  },
+
+  "oneRmTableTitle": "1RM Table",
+  "@oneRmTableTitle": { "description": "Screen title for 1RM percentage table when no exercise context" },
+
+  "exerciseOneRmTableTitle": "{name} — 1RM Table",
+  "@exerciseOneRmTableTitle": {
+    "description": "Screen title for 1RM percentage table when an exercise is provided",
+    "placeholders": {
+      "name": { "type": "String", "description": "Exercise display name" }
+    }
+  },
+
+  "current1rm": "Current 1RM",
+  "@current1rm": { "description": "Label in the 100% row of the 1RM table" },
+
+  "editCategoryTitle": "Edit Category",
+  "@editCategoryTitle": { "description": "Bottom sheet title when editing an existing category" },
+
+  "calculatorsTitle": "Calculators",
+  "@calculatorsTitle": { "description": "Calculator hub screen title and back label from child calculator screens" },
+
+  "paceCalculatorTitle": "Pace Calculator",
+  "@paceCalculatorTitle": { "description": "Screen title for the pace calculator" },
+
+  "plateCalculatorTitle": "Plate Calculator",
+  "@plateCalculatorTitle": { "description": "Screen title for the plate calculator" },
+
+  "oneRmCalculatorDescription": "Estimate your one-rep max and training percentages.",
+  "@oneRmCalculatorDescription": { "description": "Hub card description for the 1RM calculator" },
+
+  "paceCalculatorDescription": "Calculate pace, finish time, and race splits.",
+  "@paceCalculatorDescription": { "description": "Hub card description for the pace calculator" },
+
+  "plateCalculatorDescription": "Calculate barbell loading and total weight.",
+  "@plateCalculatorDescription": { "description": "Hub card description for the plate calculator" },
+
+  "oneRmWeightLabel": "1RM WEIGHT",
+  "@oneRmWeightLabel": { "description": "Section label for the weight input card on the 1RM calculator screen" },
+
+  "paceLabel": "PACE",
+  "@paceLabel": { "description": "Input card label for the pace field on the pace calculator screen" },
+
+  "totalWeightLabel": "TOTAL WEIGHT",
+  "@totalWeightLabel": { "description": "Section label for the total weight input on the plate calculator screen" },
+
+  "barLabel": "BAR",
+  "@barLabel": { "description": "Section label for the bar weight selector on the plate calculator screen" },
+
+  "resetLabel": "Reset",
+  "@resetLabel": { "description": "Button to reset plate counts on the plate calculator screen" },
+
+  "platesLabel": "PLATES",
+  "@platesLabel": { "description": "Section label for the plate rows on the plate calculator screen" },
+
+  "moreLabel": "More",
+  "@moreLabel": { "description": "Button to expand the split table on the pace calculator screen" },
+
+  "hideLabel": "Hide",
+  "@hideLabel": { "description": "Button to collapse the split table on the pace calculator screen" },
+
+  "aspectRatioOriginal": "Original",
+  "@aspectRatioOriginal": { "description": "Aspect ratio chip label for 'Original' ratio on export screen" }
 }

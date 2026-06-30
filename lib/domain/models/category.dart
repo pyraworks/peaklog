@@ -10,14 +10,14 @@ class CategoryColor {
   ];
 
   static Color toColor(String? key) => switch (key) {
-    'amber'  => const Color(0xFFCA8A2A),  // muted warm amber
-    'red'    => const Color(0xFFD75C50),  // calm coral-red
-    'blue'   => const Color(0xFF3A7DC8),  // calm azure
-    'green'  => const Color(0xFF35A865),  // muted sage green
-    'purple' => const Color(0xFF8268BC),  // soft violet
-    'pink'   => const Color(0xFFCC587E),  // muted rose
-    'gray'   => const Color(0xFF8E8E93),  // Apple system gray
-    'brown'  => const Color(0xFFA2845E),  // Apple system brown
+    'amber'  => const Color(0xFF6DBEFF),
+    'red'    => const Color(0xFFA3D900),
+    'blue'   => const Color(0xFFFFA000),
+    'green'  => const Color(0xFFE64A19),
+    'purple' => const Color(0xFF6A1B9A),
+    'pink'   => const Color(0xFF00796B),
+    'gray'   => const Color(0xFFC4A484),
+    'brown'  => const Color(0xFF8E8E93),
     _        => const Color(0xFF8E8E93),
   };
 }

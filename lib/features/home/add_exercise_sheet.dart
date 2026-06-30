@@ -7,9 +7,11 @@ import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/models/exercise.dart';
 import '../../domain/models/category.dart';
+import '../../widgets/category_color_indicator.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../widgets/screen_header.dart';
+import '../../l10n/app_localizations.dart';
 
 Future<void> showAddExerciseSheet(BuildContext context) {
   return Navigator.push<void>(
@@ -67,10 +69,10 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
     super.dispose();
   }
 
-  String _categoryLabel(String id, List<Category> categories) {
+  String _categoryLabel(String id, List<Category> categories, String uncategorizedLabel) {
     return categories.firstWhere(
       (c) => c.id == id,
-      orElse: () => categories.isNotEmpty ? categories.first : const Category(id: Category.uncategorizedId, name: 'Uncategorized', color: 'gray', sortOrder: 0, createdAt: 0, updatedAt: 0),
+      orElse: () => categories.isNotEmpty ? categories.first : Category(id: Category.uncategorizedId, name: uncategorizedLabel, color: 'gray', sortOrder: 0, createdAt: 0, updatedAt: 0),
     ).name;
   }
 
@@ -79,6 +81,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
     final nameEmpty = _nameCtrl.text.trim().isEmpty;
 
@@ -87,8 +90,8 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
       body: Column(
         children: [
           ScreenHeader(
-            backLabel: _isEditMode ? 'Back' : 'Home',
-            title: _isEditMode ? 'Edit Exercise' : 'Add Exercise',
+            backLabel: _isEditMode ? l10n.back : l10n.homeLabel,
+            title: _isEditMode ? l10n.editExerciseTitle : l10n.addExerciseTitle,
             onBack: () => Navigator.pop(context),
           ),
           // ── Body ──────────────────────────────────────────────────────────
@@ -106,7 +109,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                   _CategoryDropdown(
                     selectedId: _selectedCategoryId,
                     categoryLabel: _selectedCategoryId != null
-                        ? _categoryLabel(_selectedCategoryId!, categories)
+                        ? _categoryLabel(_selectedCategoryId!, categories, l10n.categoryUncategorized)
                         : null,
                     open: _categoryOpen,
                     categories: categories,
@@ -146,6 +149,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
     setState(() => _saving = true);
@@ -175,7 +179,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save: $e'),
+            content: Text(l10n.saveFailed(e)),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -195,6 +199,7 @@ class _NameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -204,11 +209,11 @@ class _NameCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 10, 16, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Text(
-              'EXERCISE NAME',
-              style: TextStyle(
+              l10n.exerciseNameLabel,
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondaryAlt,
@@ -228,13 +233,13 @@ class _NameCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                     color: AppColors.textPrimaryAlt,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.fromLTRB(16, 2, 8, 11),
-                    hintText: 'e.g. Back Squat',
-                    hintStyle: TextStyle(color: Color(0xFFD1D5DA)),
+                    contentPadding: const EdgeInsets.fromLTRB(16, 2, 8, 11),
+                    hintText: l10n.exerciseNameHint,
+                    hintStyle: const TextStyle(color: AppColors.label2),
                   ),
                 ),
               ),
@@ -277,6 +282,7 @@ class _CategoryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedCat = (selectedId != null && categories.isNotEmpty)
         ? categories.firstWhere((c) => c.id == selectedId,
             orElse: () => categories.first)
@@ -298,9 +304,9 @@ class _CategoryDropdown extends StatelessWidget {
                   horizontal: 10, vertical: 12),
               child: Row(
                 children: [
-                  const Text(
-                    'Category',
-                    style: TextStyle(
+                  Text(
+                    l10n.categoryLabel,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textSecondaryAlt,
@@ -308,16 +314,13 @@ class _CategoryDropdown extends StatelessWidget {
                   ),
                   if (!open && categoryLabel != null) ...[
                     const SizedBox(width: 8),
-                    if (selectedCat != null)
-                      Container(
-                        width: 8,
-                        height: 8,
-                        margin: const EdgeInsets.only(right: 5),
-                        decoration: BoxDecoration(
-                          color: CategoryColor.toColor(selectedCat.color),
-                          shape: BoxShape.circle,
-                        ),
+                    if (selectedCat != null) ...[
+                      CategoryColorIndicator(
+                        color: CategoryColor.toColor(selectedCat.color),
+                        size: 10,
                       ),
+                      const SizedBox(width: 5),
+                    ],
                     Text(
                       categoryLabel!,
                       style: const TextStyle(
@@ -352,13 +355,11 @@ class _CategoryDropdown extends StatelessWidget {
                         horizontal: 14, vertical: 10),
                     child: Row(
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: CategoryColorIndicator(
                             color: CategoryColor.toColor(c.color),
-                            shape: BoxShape.circle,
+                            size: 10,
                           ),
                         ),
                         Expanded(
@@ -397,6 +398,7 @@ class _BestTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -432,10 +434,10 @@ class _BestTypeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          const Text(
-            'Personal Best (PB)  ·  Personal Record (PR)',
+          Text(
+            l10n.pbPrDescription,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               color: AppColors.textSecondaryAlt,
             ),
@@ -508,6 +510,7 @@ class _UnitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -542,10 +545,10 @@ class _UnitCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 7),
-          const Text(
-            'Default weight unit for this exercise',
+          Text(
+            l10n.defaultWeightUnit,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               color: AppColors.textSecondaryAlt,
             ),
@@ -570,6 +573,7 @@ class _AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final active = !disabled && !loading;
     return GestureDetector(
       onTap: onPressed,
@@ -598,7 +602,7 @@ class _AddButton extends StatelessWidget {
                         strokeWidth: 2, color: Colors.white),
                   )
                 : Text(
-                    isEdit ? 'Save Changes' : 'Add Exercise',
+                    isEdit ? l10n.saveChanges : l10n.addExerciseButton,
                     style: AppTypography.button.copyWith(
                       color: Colors.white,
                     ),

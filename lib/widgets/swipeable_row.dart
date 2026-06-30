@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/design/app_colors.dart';
 import '../core/design/app_icons.dart';
+import '../l10n/app_localizations.dart';
 
 class SwipeableRow extends StatefulWidget {
   final String id;
@@ -43,10 +44,11 @@ class _SwipeableRowState extends State<SwipeableRow> {
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Swipe left on records for Share and Delete actions.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: Text(l10n.swipeHint),
+          duration: const Duration(seconds: 3),
         ),
       );
     });

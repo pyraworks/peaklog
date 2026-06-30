@@ -3,6 +3,7 @@ import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'pace_calculator_logic.dart';
@@ -165,6 +166,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
       );
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final (paceSecPerKm, _) = _computed;
     final hasSplits = paceSecPerKm != null && paceSecPerKm > 0;
     final splits = hasSplits
@@ -178,8 +180,8 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
         backgroundColor: AppColors.background,
         body: Column(
           children: [
-            const ScreenHeader(
-                backLabel: 'Calculators', title: 'Pace Calculator'),
+            ScreenHeader(
+                backLabel: l10n.calculatorsTitle, title: l10n.paceCalculatorTitle),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -226,7 +228,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 
                   // ── Time input ────────────────────────────────────────
                   _InputCard(
-                    label: 'TIME',
+                    label: l10n.timeLabel,
                     child: SizedBox(
                       width: 140,
                       child: TextField(
@@ -252,7 +254,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
 
                   // ── Pace input ────────────────────────────────────────
                   _InputCard(
-                    label: 'PACE',
+                    label: l10n.paceLabel,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -391,7 +393,9 @@ class _SplitTable extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      expanded ? 'Hide' : 'More',
+                      expanded
+                          ? AppLocalizations.of(context)!.hideLabel
+                          : AppLocalizations.of(context)!.moreLabel,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

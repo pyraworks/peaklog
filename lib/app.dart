@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/exercise_detail/exercise_detail_screen.dart';
 import 'features/share/quick_share_placeholder_screen.dart';
@@ -101,7 +102,7 @@ final _router = GoRouter(
     GoRoute(
       path: '/quick-share',
       builder: (context, state) =>
-          const QuickSharePlaceholderScreen(backLabel: 'Home'),
+          QuickSharePlaceholderScreen(backLabel: AppLocalizations.of(context)!.homeLabel),
     ),
     GoRoute(
       path: '/share/:recordId',
@@ -125,12 +126,14 @@ class PeakLogApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
         Locale('en'),
+        Locale('ko'),
       ],
     );
   }
@@ -141,6 +144,7 @@ class _Error404Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
         child: Column(
@@ -148,11 +152,11 @@ class _Error404Screen extends StatelessWidget {
           children: [
             const Text('404', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text('Page not found'),
+            Text(l10n.pageNotFound),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => context.go('/'),
-              child: const Text('Go Home'),
+              child: Text(l10n.goHome),
             ),
           ],
         ),

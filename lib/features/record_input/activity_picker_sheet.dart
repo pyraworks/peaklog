@@ -6,6 +6,7 @@ import '../../core/design/app_typography.dart';
 import '../../core/models/health_workout.dart';
 import '../../core/services/health_sync_service.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 
 Future<HealthWorkout?> showActivityPickerSheet(BuildContext context) =>
     showModalBottomSheet<HealthWorkout>(
@@ -33,6 +34,7 @@ class _ActivityPickerSheetState extends State<ActivityPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
@@ -55,7 +57,7 @@ class _ActivityPickerSheetState extends State<ActivityPickerSheet> {
             children: [
               Expanded(
                 child: Text(
-                  'Import Activity',
+                  l10n.importActivityTitle,
                   style: AppTypography.headline.copyWith(color: AppColors.label1),
                 ),
               ),
@@ -69,7 +71,7 @@ class _ActivityPickerSheetState extends State<ActivityPickerSheet> {
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
-            'Recent activities from Apple Health',
+            l10n.importActivitySubtitle,
             style: AppTypography.caption.copyWith(color: AppColors.label2),
           ),
           const SizedBox(height: AppSpacing.s16),
@@ -77,6 +79,7 @@ class _ActivityPickerSheetState extends State<ActivityPickerSheet> {
             child: FutureBuilder<List<HealthWorkout>>(
               future: _future,
               builder: (context, snap) {
+                final innerL10n = AppLocalizations.of(context)!;
                 if (snap.connectionState != ConnectionState.done) {
                   return const Center(
                     child: Padding(
@@ -86,16 +89,16 @@ class _ActivityPickerSheetState extends State<ActivityPickerSheet> {
                   );
                 }
                 if (snap.hasError) {
-                  return const _EmptyState(
+                  return _EmptyState(
                     emoji: '⚠️',
-                    message: 'Could not load activities',
+                    message: innerL10n.importActivityError,
                   );
                 }
                 final workouts = snap.data!;
                 if (workouts.isEmpty) {
-                  return const _EmptyState(
+                  return _EmptyState(
                     emoji: '⌚',
-                    message: 'No activities found in the last 90 days',
+                    message: innerL10n.importActivityEmpty,
                   );
                 }
                 return ListView.separated(
@@ -121,6 +124,7 @@ class _ActivityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final date = workout.startTime;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -129,9 +133,9 @@ class _ActivityRow extends StatelessWidget {
 
     final String dateLabel;
     if (actDate == today) {
-      dateLabel = 'Today';
+      dateLabel = l10n.today;
     } else if (actDate == yesterday) {
-      dateLabel = 'Yesterday';
+      dateLabel = l10n.yesterday;
     } else {
       dateLabel =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
@@ -164,7 +168,7 @@ class _ActivityRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _activityLabel(workout.activityType),
+                    _activityLabel(workout.activityType, l10n),
                     style: AppTypography.body.copyWith(color: AppColors.label1),
                   ),
                   const SizedBox(height: 2),
@@ -182,16 +186,16 @@ class _ActivityRow extends StatelessWidget {
     );
   }
 
-  String _activityLabel(HealthActivityType type) {
+  String _activityLabel(HealthActivityType type, AppLocalizations l10n) {
     switch (type) {
       case HealthActivityType.running:
-        return 'Running';
+        return l10n.activityRunning;
       case HealthActivityType.cycling:
-        return 'Cycling';
+        return l10n.activityCycling;
       case HealthActivityType.swimming:
-        return 'Swimming';
+        return l10n.activitySwimming;
       case HealthActivityType.other:
-        return 'Workout';
+        return l10n.activityOther;
     }
   }
 }

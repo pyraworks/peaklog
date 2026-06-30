@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/database/database_helper.dart';
 import '../../domain/models/category.dart';
+import '../../widgets/category_color_indicator.dart';
 import '../../providers/categories_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 import '../../widgets/swipeable_row.dart';
 
@@ -22,22 +24,23 @@ class _CategoryManagementScreenState
     extends ConsumerState<CategoryManagementScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(
-            backLabel: 'Settings',
-            title: 'Categories',
+          ScreenHeader(
+            backLabel: l10n.settingsLabel,
+            title: l10n.categoriesTitle,
           ),
           Expanded(
             child: categories.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
-                      'No categories',
-                      style: TextStyle(color: AppColors.textTertiary, fontSize: 15),
+                      l10n.noCategories,
+                      style: const TextStyle(color: AppColors.textTertiary, fontSize: 15),
                     ),
                   )
                 : ListView(
@@ -96,18 +99,18 @@ class _CategoryManagementScreenState
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.actionDarkBorder),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('+',
+                          const Text('+',
                               style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w300)),
-                          SizedBox(width: 6),
-                          Text('Add Category',
-                              style: TextStyle(
+                          const SizedBox(width: 6),
+                          Text(l10n.addCategoryButton,
+                              style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white)),
@@ -140,9 +143,10 @@ class _CategoryManagementScreenState
   }
 
   Future<void> _showAddSheet(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await _openSheet(
       context,
-      title: 'Add Category',
+      title: l10n.addCategoryButton,
       initialName: '',
       initialColor: 'gray',
     );
@@ -163,9 +167,10 @@ class _CategoryManagementScreenState
   }
 
   Future<void> _showEditSheet(BuildContext context, Category cat) async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await _openSheet(
       context,
-      title: 'Edit Category',
+      title: l10n.editCategoryTitle,
       initialName: cat.name,
       initialColor: cat.color,
     );
@@ -201,21 +206,21 @@ class _CategoryManagementScreenState
   }
 
   Future<void> _confirmDelete(BuildContext context, Category cat) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Category?'),
-        content: const Text(
-            'Exercises in this category will be moved to Uncategorized.'),
+        title: Text(l10n.deleteCategoryTitle),
+        content: Text(l10n.deleteCategoryContent),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -262,6 +267,7 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       decoration: const BoxDecoration(
@@ -288,7 +294,7 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
             onChanged: (_) => setState(() {}),
             style: const TextStyle(fontSize: 15, color: AppColors.textPrimaryAlt),
             decoration: InputDecoration(
-              hintText: 'Category name',
+              hintText: l10n.categoryNameHint,
               hintStyle: const TextStyle(color: AppColors.textSecondaryAlt),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
@@ -306,9 +312,9 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Color',
-            style: TextStyle(
+          Text(
+            l10n.colorLabel,
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondaryAlt,
@@ -323,26 +329,10 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
               final color = CategoryColor.toColor(key);
               return GestureDetector(
                 onTap: () => setState(() => _selectedColor = key),
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
-                    border: isSelected
-                        ? Border.all(color: color, width: 2.0)
-                        : null,
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 13,
-                      height: 13,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
+                child: CategoryColorIndicator(
+                  color: color,
+                  size: 32,
+                  isSelected: isSelected,
                 ),
               );
             }).toList(),
@@ -360,9 +350,9 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.separatorAlt),
                     ),
-                    child: const Center(
-                      child: Text('Cancel',
-                          style: TextStyle(
+                    child: Center(
+                      child: Text(l10n.cancel,
+                          style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textPrimaryAlt)),
@@ -386,9 +376,9 @@ class _CategoryEditSheetState extends State<_CategoryEditSheet> {
                         color: AppColors.actionDark,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Center(
-                        child: Text('Save',
-                            style: TextStyle(
+                      child: Center(
+                        child: Text(l10n.save,
+                            style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white)),
@@ -424,21 +414,8 @@ class _CategoryTile extends StatelessWidget {
   });
 
   Widget _colorIndicator() {
-    final color = CategoryColor.toColor(category.color);
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-      ),
+    return CategoryColorIndicator(
+      color: CategoryColor.toColor(category.color),
     );
   }
 

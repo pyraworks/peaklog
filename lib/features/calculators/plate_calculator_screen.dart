@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'plate_calculator_logic.dart';
@@ -138,6 +139,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (!_loaded) {
       return const Scaffold(
         backgroundColor: AppColors.background,
@@ -152,8 +154,9 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
         backgroundColor: AppColors.background,
         body: Column(
           children: [
-            const ScreenHeader(
-                backLabel: 'Calculators', title: 'Plate Calculator'),
+            ScreenHeader(
+                backLabel: l10n.calculatorsTitle,
+                title: l10n.plateCalculatorTitle),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -183,7 +186,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'TOTAL WEIGHT',
+                          l10n.totalWeightLabel,
                           style: AppTypography.sectionLabel
                               .copyWith(color: AppColors.label2),
                         ),
@@ -229,7 +232,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
 
                   // ── Bar selector ───────────────────────────────────
                   Text(
-                    'BAR',
+                    l10n.barLabel,
                     style: AppTypography.sectionLabel
                         .copyWith(color: AppColors.label2),
                   ),
@@ -270,9 +273,9 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
                       const Spacer(),
                       GestureDetector(
                         onTap: _resetPlates,
-                        child: const Text(
-                          'Reset',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.resetLabel,
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.label2,
@@ -285,7 +288,7 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
 
                   // ── Plate rows ─────────────────────────────────────
                   Text(
-                    'PLATES',
+                    l10n.platesLabel,
                     style: AppTypography.sectionLabel
                         .copyWith(color: AppColors.label2),
                   ),

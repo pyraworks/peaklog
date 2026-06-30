@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class TimeInputField extends StatefulWidget {
   final ValueChanged<int> onChanged;
@@ -58,19 +59,20 @@ class _TimeInputFieldState extends State<TimeInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
-        _Field(controller: _h, label: 'h',   maxLength: 2, zeroText: '0',  onChanged: (_) => _notify()),
+        _Field(controller: _h, label: l10n.timeHourLabel,   maxLength: 2, zeroText: '0',  onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
           child: Text(':', style: _valueStyle),
         ),
-        _Field(controller: _m, label: 'min', maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
+        _Field(controller: _m, label: l10n.timeMinuteLabel, maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
           child: Text(':', style: _valueStyle),
         ),
-        _Field(controller: _s, label: 'sec', maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
+        _Field(controller: _s, label: l10n.timeSecondLabel, maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
       ],
     );
   }

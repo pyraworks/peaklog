@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 import 'export_models.dart';
 
 class CleanFrame extends StatelessWidget {
@@ -28,6 +29,7 @@ class CleanFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final displayValue = _formatValue();
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
@@ -114,7 +116,7 @@ class CleanFrame extends StatelessWidget {
                           width: w * 0.011, height: w * 0.042, color: accent),
                       SizedBox(width: w * 0.018),
                       Text(
-                        'Personal Best',
+                        l10n.personalBestLabel,
                         style: TextStyle(
                             fontFamily: 'Pretendard',
                             color: accent,

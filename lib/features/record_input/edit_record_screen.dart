@@ -15,6 +15,7 @@ import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../widgets/screen_header.dart';
 import 'time_input_field.dart';
+import '../../l10n/app_localizations.dart';
 
 class EditRecordScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -131,6 +132,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
       ),
     );
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: GestureDetector(
@@ -138,22 +140,22 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
         behavior: HitTestBehavior.translucent,
         child: Column(
           children: [
-            const ScreenHeader(backLabel: 'Back', title: 'Edit Record'),
+            ScreenHeader(backLabel: l10n.back, title: l10n.editRecordTitle),
             if (_loading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_record == null)
-              const Expanded(child: Center(child: Text('Record not found')))
+              Expanded(child: Center(child: Text(l10n.recordNotFound)))
             else if (exercise == null)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (exercise.recordType == null)
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Padding(
-                    padding: EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(32),
                     child: Text(
-                      'No record type is configured for this exercise.',
+                      l10n.noRecordTypeConfigured,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 15,
                         color: AppColors.label2,
                       ),
@@ -196,6 +198,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   // ── Input panels per RecordType ───────────────────────────────────────────
 
   Widget _buildInputs(RecordType rt) {
+    final l10n = AppLocalizations.of(context)!;
     switch (rt) {
       case RecordType.weight:
         final unitLabel = _weightUnit == 'lbs' ? 'lb' : _weightUnit;
@@ -205,14 +208,14 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
             Expanded(
               flex: 3,
               child: _InputCard(
-                label: 'WEIGHT ($unitLabel)',
+                label: l10n.weightWithUnit(unitLabel),
                 child: _NumTextField(controller: _weightCtrl, decimal: true),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _InputCard(
-                label: 'REPS',
+                label: l10n.repsLabel,
                 child: _NumTextField(controller: _repsCtrl, decimal: false),
               ),
             ),
@@ -221,7 +224,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
 
       case RecordType.forTime:
         return _InputCard(
-          label: 'TIME',
+          label: l10n.timeLabel,
           child: TimeInputField(
             onChanged: (s) => _durationSec = s,
             initialSeconds: _durationSec,
@@ -235,7 +238,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
           children: [
             if (timeCap != null) ...[
               _ReadOnlyCard(
-                label: 'TIME CAP',
+                label: l10n.sectionTimeCap,
                 value: UnitConverter.formatTimeCap(timeCap),
               ),
               const SizedBox(height: 10),
@@ -245,14 +248,14 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
               children: [
                 Expanded(
                   child: _InputCard(
-                    label: 'ROUNDS',
+                    label: l10n.roundsLabel,
                     child: _NumTextField(controller: _roundsCtrl, decimal: false),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _InputCard(
-                    label: 'REPS',
+                    label: l10n.repsLabel,
                     child: _NumTextField(controller: _amrapRepsCtrl, decimal: false),
                   ),
                 ),
@@ -266,12 +269,12 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _InputCard(
-              label: 'VALUE',
+              label: l10n.valueLabel,
               child: _NumTextField(controller: _distCtrl, decimal: true),
             ),
             const SizedBox(height: 10),
             _InputCard(
-              label: 'UNIT (optional)',
+              label: l10n.unitOptionalLabel,
               child: TextField(
                 controller: _etcUnitCtrl,
                 style: const TextStyle(
@@ -280,15 +283,15 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
                   color: AppColors.textPrimaryAlt,
                   letterSpacing: -0.44,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   filled: false,
                   contentPadding: EdgeInsets.zero,
                   isDense: true,
-                  hintText: 'e.g. reps, kg, km',
-                  hintStyle: TextStyle(fontSize: 16, color: AppColors.label2),
+                  hintText: l10n.unitHint,
+                  hintStyle: const TextStyle(fontSize: 16, color: AppColors.label2),
                 ),
               ),
             ),
@@ -300,6 +303,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _pickDate() async {
+    final l10n = AppLocalizations.of(context)!;
     await showCupertinoModalPopup<void>(
       context: context,
       builder: (ctx) => Container(
@@ -312,8 +316,8 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
               children: [
                 CupertinoButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Done',
-                      style: TextStyle(color: AppColors.textPrimaryAlt)),
+                  child: Text(l10n.done,
+                      style: const TextStyle(color: AppColors.textPrimaryAlt)),
                 ),
               ],
             ),
@@ -332,6 +336,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   }
 
   Future<void> _save(Exercise exercise) async {
+    final l10n = AppLocalizations.of(context)!;
     final record = _record;
     if (record == null) return;
     final rt = exercise.recordType;
@@ -345,7 +350,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
       case RecordType.weight:
         final raw = double.tryParse(_weightCtrl.text.trim());
         if (raw == null || raw <= 0) {
-          _showSnack('Enter a weight to save.');
+          _showSnack(l10n.validationEnterWeight);
           return;
         }
         final weightKg =
@@ -360,7 +365,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
 
       case RecordType.forTime:
         if (_durationSec <= 0) {
-          _showSnack('Enter a time to save.');
+          _showSnack(l10n.validationEnterTime);
           return;
         }
         updated = record.copyWith(
@@ -372,7 +377,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
       case RecordType.amrap:
         final rounds = int.tryParse(_roundsCtrl.text.trim());
         if (rounds == null || rounds <= 0) {
-          _showSnack('Enter rounds completed.');
+          _showSnack(l10n.validationEnterRounds);
           return;
         }
         final extraReps = int.tryParse(_amrapRepsCtrl.text.trim());
@@ -387,7 +392,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
       case RecordType.etc:
         final rawVal = double.tryParse(_distCtrl.text.trim());
         if (rawVal == null || rawVal <= 0) {
-          _showSnack('Enter a value to save.');
+          _showSnack(l10n.validationEnterValue);
           return;
         }
         updated = record.copyWith(
@@ -405,28 +410,29 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
           .updateRecord(updated);
       if (mounted) context.pop();
     } catch (e) {
-      if (mounted) _showSnack('Save failed: $e');
+      if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final router = GoRouter.of(context);
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Record'),
-        content: const Text('This record will be permanently deleted.'),
+        title: Text(l10n.deleteRecord),
+        content: Text(l10n.deleteRecordContent),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -581,6 +587,7 @@ class _DateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -592,9 +599,9 @@ class _DateButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Text(
-              'Date',
-              style: TextStyle(
+            Text(
+              l10n.dateLabel,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textSecondaryAlt,
@@ -646,9 +653,9 @@ class _SaveButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: Colors.white),
               )
-            : const Text(
-                'Save Changes',
-                style: TextStyle(
+            : Text(
+                AppLocalizations.of(context)!.saveChanges,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -666,14 +673,15 @@ class _DeleteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onPressed,
-      child: const Center(
+      child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'Delete Record',
-            style: TextStyle(
+            l10n.deleteRecord,
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.destructive,

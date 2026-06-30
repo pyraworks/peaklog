@@ -162,9 +162,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionAbout => 'ABOUT';
 
   @override
-  String get sectionPublicRecords => 'PUBLIC RECORDS';
-
-  @override
   String get noExercises => 'No exercises';
 
   @override
@@ -180,7 +177,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get peaklogUser => 'PeakLog User';
+  String get peaklogUser => 'Your Profile';
 
   @override
   String get editRecord => 'Edit Record';
@@ -253,7 +250,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get colorLabel => 'Color';
 
   @override
-  String get searchExercises => 'Search exercises...';
+  String get searchExercises => 'Search';
 
   @override
   String get filterAll => 'All';
@@ -265,9 +262,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no1RmRecord => 'No 1RM record';
-
-  @override
-  String get managePublicExercises => 'Manage Public Exercises';
 
   @override
   String get publicExercisesHint =>
@@ -305,4 +299,223 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noRecords => 'No records';
+
+  @override
+  String get categoryUncategorized => 'Uncategorized';
+
+  @override
+  String get unitSelectorLabel => 'UNIT';
+
+  @override
+  String weightWithUnit(String unit) {
+    return 'WEIGHT ($unit)';
+  }
+
+  @override
+  String get noRecordTypeConfigured =>
+      'No record type is configured for this exercise.';
+
+  @override
+  String get importActivityTitle => 'Import Activity';
+
+  @override
+  String get importActivitySubtitle => 'Recent activities from Apple Health';
+
+  @override
+  String get importActivityError => 'Could not load activities.';
+
+  @override
+  String get importActivityEmpty => 'No activities found in the last 90 days.';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String get activityRunning => 'Running';
+
+  @override
+  String get activityCycling => 'Cycling';
+
+  @override
+  String get activitySwimming => 'Swimming';
+
+  @override
+  String get activityOther => 'Workout';
+
+  @override
+  String get timeHourLabel => 'h';
+
+  @override
+  String get timeMinuteLabel => 'min';
+
+  @override
+  String get timeSecondLabel => 'sec';
+
+  @override
+  String get sectionPublicExercises => 'PUBLIC EXERCISES';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get setNickname => 'Set Nickname';
+
+  @override
+  String get nicknameHint => 'Enter your nickname';
+
+  @override
+  String get publicExercisesTitle => 'Public Exercises';
+
+  @override
+  String get selectedLabel => 'selected';
+
+  @override
+  String get sectionFeedback => 'FEEDBACK';
+
+  @override
+  String get sendFeedback => 'Send Feedback';
+
+  @override
+  String get feedbackNotAvailable => 'Feedback form is not available yet.';
+
+  @override
+  String get shareOptionRecordTitle => 'PeakLog Record';
+
+  @override
+  String get shareOptionRecordSubtitle => 'Share your tracked records';
+
+  @override
+  String get shareOptionActivityTitle => 'Health Activity';
+
+  @override
+  String get shareOptionActivitySubtitle => 'Share a workout from Apple Health';
+
+  @override
+  String get exportLabelRatio => 'Ratio';
+
+  @override
+  String get exportLabelFrame => 'Frame';
+
+  @override
+  String get exportLabelBackground => 'Background';
+
+  @override
+  String get exportLabelSticker => 'Sticker';
+
+  @override
+  String get frameStyleClean => 'Clean';
+
+  @override
+  String get frameStyleRough => 'Rough';
+
+  @override
+  String get stickerName => 'Name';
+
+  @override
+  String get stickerValue => 'Value';
+
+  @override
+  String get stickerDays => 'Days';
+
+  @override
+  String get exportPhoto => 'Photo';
+
+  @override
+  String get exportVideo => 'Video';
+
+  @override
+  String get saveImage => 'Save Image';
+
+  @override
+  String get saveVideo => 'Save Video';
+
+  @override
+  String get exportSavingImage => 'Saving image…';
+
+  @override
+  String get exportSavingVideo => 'Saving video…';
+
+  @override
+  String get exportPreparing => 'Preparing…';
+
+  @override
+  String get savedToPhotos => 'Saved to Photos';
+
+  @override
+  String get videoSaveFailed => 'Video save failed';
+
+  @override
+  String shareSubjectRecord(String name, String badge) {
+    return 'PeakLog — $name New $badge!';
+  }
+
+  @override
+  String shareSubjectActivity(String name) {
+    return 'PeakLog — $name';
+  }
+
+  @override
+  String get oneRmTableTitle => '1RM Table';
+
+  @override
+  String exerciseOneRmTableTitle(String name) {
+    return '$name — 1RM Table';
+  }
+
+  @override
+  String get current1rm => 'Current 1RM';
+
+  @override
+  String get editCategoryTitle => 'Edit Category';
+
+  @override
+  String get calculatorsTitle => 'Calculators';
+
+  @override
+  String get paceCalculatorTitle => 'Pace Calculator';
+
+  @override
+  String get plateCalculatorTitle => 'Plate Calculator';
+
+  @override
+  String get oneRmCalculatorDescription =>
+      'Estimate your one-rep max and training percentages.';
+
+  @override
+  String get paceCalculatorDescription =>
+      'Calculate pace, finish time, and race splits.';
+
+  @override
+  String get plateCalculatorDescription =>
+      'Calculate barbell loading and total weight.';
+
+  @override
+  String get oneRmWeightLabel => '1RM WEIGHT';
+
+  @override
+  String get paceLabel => 'PACE';
+
+  @override
+  String get totalWeightLabel => 'TOTAL WEIGHT';
+
+  @override
+  String get barLabel => 'BAR';
+
+  @override
+  String get resetLabel => 'Reset';
+
+  @override
+  String get platesLabel => 'PLATES';
+
+  @override
+  String get moreLabel => 'More';
+
+  @override
+  String get hideLabel => 'Hide';
+
+  @override
+  String get aspectRatioOriginal => 'Original';
 }

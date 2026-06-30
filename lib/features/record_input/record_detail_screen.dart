@@ -14,6 +14,7 @@ import '../../providers/personal_best_provider.dart';
 import '../../widgets/pb_badge.dart';
 import '../../widgets/screen_header.dart';
 import '../../providers/records_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class RecordDetailScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -60,16 +61,17 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
 
     final weightUnit = exercise?.baseUnit ?? 'kg';
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(backLabel: 'Back', title: 'Record Detail'),
+          ScreenHeader(backLabel: l10n.back, title: l10n.recordDetailTitle),
           if (_loading || exercise == null)
             const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_record == null)
-            const Expanded(
-                child: Center(child: Text('Record not found')))
+            Expanded(
+                child: Center(child: Text(l10n.recordNotFound)))
           else
             Expanded(
               child: _buildBody(context, exercise, _record!, weightUnit),
@@ -82,6 +84,7 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
 
   Widget _buildBody(BuildContext context, Exercise exercise, Record record,
       String weightUnit) {
+    final l10n = AppLocalizations.of(context)!;
     final rt = exercise.recordType;
     final valueStr = rt != null ? _formatValue(record, rt, weightUnit) : '—';
     final dateStr = _dateStr(record.performedAt);
@@ -114,7 +117,7 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                       Row(
                         children: [
                           Text(
-                            'PERSONAL BEST',
+                            l10n.sectionPersonalBest,
                             style: AppTypography.sectionLabel.copyWith(
                               color: AppColors.label2,
                             ),
@@ -137,12 +140,13 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                       Builder(builder: (context) {
                         final cap = record.timeCap ?? exercise.timeCap;
                         if (cap == null) return const SizedBox.shrink();
+                        final innerL10n = AppLocalizations.of(context)!;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 4),
                             Text(
-                              'Time Cap ${UnitConverter.formatTimeCap(cap)}',
+                              innerL10n.timeCap(UnitConverter.formatTimeCap(cap)),
                               style: AppTypography.footnote.copyWith(
                                 color: AppColors.label2,
                               ),
@@ -161,9 +165,9 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
                     children: [
                       Icon(AppIcons.share, size: 13, color: AppColors.label2),
                       const SizedBox(width: 4),
-                      const Text(
-                        'Share',
-                        style: TextStyle(
+                      Text(
+                        l10n.share,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: AppColors.label2,
@@ -179,11 +183,11 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
         const SizedBox(height: 12),
 
         // ── Actions ─────────────────────────────────────────────────────────
-        const Padding(
-          padding: EdgeInsets.only(left: 2, bottom: 6),
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 6),
           child: Text(
-            'ACTIONS',
-            style: TextStyle(
+            l10n.sectionActions,
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondaryAlt,
@@ -202,20 +206,20 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
             children: [
               _ActionRow(
                 icon: AppIcons.edit,
-                label: 'Edit Record',
+                label: l10n.editRecord,
                 onTap: () => context.push(
                     '/exercise/${widget.exerciseId}/record/${record.id}/edit'),
               ),
               const Divider(height: 1, color: AppColors.separatorAlt),
               _ActionRow(
                 icon: AppIcons.share,
-                label: 'Share',
+                label: l10n.share,
                 onTap: () => context.push('/share/${record.id}'),
               ),
               const Divider(height: 1, color: AppColors.separatorAlt),
               _ActionRow(
                 icon: AppIcons.delete,
-                label: 'Delete Record',
+                label: l10n.deleteRecord,
                 color: AppColors.destructive,
                 onTap: () => _confirmDelete(context),
               ),
@@ -283,21 +287,22 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final router = GoRouter.of(context);
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Record'),
-        content: const Text('This record will be permanently deleted.'),
+        title: Text(l10n.deleteRecord),
+        content: Text(l10n.deleteRecordContent),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

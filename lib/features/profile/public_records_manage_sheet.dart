@@ -7,12 +7,14 @@ import '../../domain/models/category.dart';
 import '../../domain/models/public_record.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/public_records_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class PublicRecordsManageSheet extends ConsumerWidget {
   const PublicRecordsManageSheet({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
     final publicRecords = ref.watch(publicRecordsProvider).valueOrNull ?? [];
     final publicIds = {for (final pr in publicRecords) pr.exerciseId};
@@ -52,7 +54,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Public Exercises',
+                        l10n.publicExercisesTitle,
                         style: AppTypography.headline
                             .copyWith(color: AppColors.label1),
                       ),
@@ -71,7 +73,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
                 child: Text(
-                  'Select up to 8 exercises to show on your profile.',
+                  l10n.publicExercisesHint,
                   style: AppTypography.footnote
                       .copyWith(color: AppColors.label2),
                 ),
@@ -90,7 +92,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                         ),
                       ),
                       TextSpan(
-                        text: ' selected',
+                        text: ' ${l10n.selectedLabel}',
                         style: AppTypography.footnote
                             .copyWith(color: AppColors.label2),
                       ),
@@ -101,10 +103,10 @@ class PublicRecordsManageSheet extends ConsumerWidget {
               // 운동 목록
               Expanded(
                 child: exercises.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
-                          'No exercises yet.',
-                          style: TextStyle(
+                          l10n.noExercisesYet,
+                          style: const TextStyle(
                               fontSize: 15, color: AppColors.label2),
                         ),
                       )
@@ -155,7 +157,7 @@ class PublicRecordsManageSheet extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                   child: Text(
-                    'Maximum 8 exercises allowed.',
+                    l10n.publicExercisesMaxHint,
                     textAlign: TextAlign.center,
                     style: AppTypography.footnote
                         .copyWith(color: AppColors.label2),

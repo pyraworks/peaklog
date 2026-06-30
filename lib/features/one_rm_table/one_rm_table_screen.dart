@@ -3,6 +3,7 @@ import '../../core/design/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../widgets/screen_header.dart';
@@ -24,9 +25,10 @@ class OneRMTableScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     double? pbKg = directWeightKg;
     String weightUnit = directWeightUnit ?? 'kg';
-    String title = '1RM Table';
+    String title = l10n.oneRmTableTitle;
 
     if (exerciseId != null) {
       final pb = ref.watch(personalBestProvider(exerciseId!));
@@ -35,8 +37,8 @@ class OneRMTableScreen extends ConsumerWidget {
           exercises.where((e) => e.id == exerciseId).firstOrNull;
       weightUnit = exercise?.baseUnit ?? 'kg';
       title = exercise != null
-          ? '${exercise.displayName} — 1RM Table'
-          : '1RM Table';
+          ? l10n.exerciseOneRmTableTitle(exercise.displayName)
+          : l10n.oneRmTableTitle;
       pbKg = pb?.weight;
     }
 
@@ -44,13 +46,13 @@ class OneRMTableScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          ScreenHeader(backLabel: 'Back', title: title),
+          ScreenHeader(backLabel: l10n.back, title: title),
           Expanded(
             child: pbKg == null
-                ? const Center(
+                ? Center(
                     child: Text(
-                      'No 1RM records',
-                      style: TextStyle(
+                      l10n.no1RmRecord,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6E7781),
                       ),
@@ -207,16 +209,16 @@ class _HundredRow extends StatelessWidget {
           Row(
             children: [
               Expanded(child: _Cell(pct: 100, value: pbValue)),
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('🏆', style: TextStyle(fontSize: 12)),
-                      SizedBox(width: 4),
+                      const Text('🏆', style: TextStyle(fontSize: 12)),
+                      const SizedBox(width: 4),
                       Text(
-                        'Current 1RM',
-                        style: TextStyle(
+                        AppLocalizations.of(context)!.current1rm,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFFB8860B),

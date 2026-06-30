@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/design/app_colors.dart';
+import '../../core/design/app_assets.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 
@@ -12,11 +14,12 @@ class CalculatorHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(backLabel: 'Home', title: 'Calculators'),
+          ScreenHeader(backLabel: l10n.homeLabel, title: l10n.calculatorsTitle),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(
@@ -25,9 +28,9 @@ class CalculatorHubScreen extends StatelessWidget {
               ),
               children: [
                 _CalculatorCard(
-                  icon: AppIcons.dumbbell,
+                  iconWidget: Icon(AppIcons.dumbbell, size: 28, color: AppColors.label1),
                   title: '1RM Calculator',
-                  description: 'Estimate your one-rep max and training percentages.',
+                  description: l10n.oneRmCalculatorDescription,
                   onTap: () {
                     CalculatorPrefs.setLastScreen('1rm');
                     context.push('/calculators/1rm');
@@ -35,9 +38,9 @@ class CalculatorHubScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 _CalculatorCard(
-                  icon: AppIcons.run,
-                  title: 'Pace Calculator',
-                  description: 'Calculate pace, finish time, and race splits.',
+                  iconWidget: Icon(AppIcons.run, size: 28, color: AppColors.label1),
+                  title: l10n.paceCalculatorTitle,
+                  description: l10n.paceCalculatorDescription,
                   onTap: () {
                     CalculatorPrefs.setLastScreen('pace');
                     context.push('/calculators/pace');
@@ -45,9 +48,13 @@ class CalculatorHubScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 _CalculatorCard(
-                  icon: AppIcons.ruler,
-                  title: 'Plate Calculator',
-                  description: 'Calculate barbell loading and total weight.',
+                  iconWidget: Image.asset(
+                    AppAssets.plateCalculator,
+                    width: 28,
+                    height: 28,
+                  ),
+                  title: l10n.plateCalculatorTitle,
+                  description: l10n.plateCalculatorDescription,
                   onTap: () {
                     CalculatorPrefs.setLastScreen('plate');
                     context.push('/calculators/plate');
@@ -63,13 +70,13 @@ class CalculatorHubScreen extends StatelessWidget {
 }
 
 class _CalculatorCard extends StatelessWidget {
-  final IconData icon;
+  final Widget iconWidget;
   final String title;
   final String description;
   final VoidCallback onTap;
 
   const _CalculatorCard({
-    required this.icon,
+    required this.iconWidget,
     required this.title,
     required this.description,
     required this.onTap,
@@ -91,7 +98,7 @@ class _CalculatorCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 28, color: AppColors.label1),
+            SizedBox(width: 28, height: 28, child: iconWidget),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(

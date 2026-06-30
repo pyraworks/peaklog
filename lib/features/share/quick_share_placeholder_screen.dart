@@ -3,6 +3,7 @@ import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 
 class QuickSharePlaceholderScreen extends StatelessWidget {
@@ -12,6 +13,7 @@ class QuickSharePlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (embedded) {
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -23,7 +25,7 @@ class QuickSharePlaceholderScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Text(
-                  'Quick Share',
+                  l10n.quickShareTitle,
                   style: AppTypography.appTitle.copyWith(
                     color: AppColors.label1,
                   ),
@@ -40,7 +42,7 @@ class QuickSharePlaceholderScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          ScreenHeader(backLabel: backLabel, title: 'Quick Share'),
+          ScreenHeader(backLabel: backLabel, title: l10n.quickShareTitle),
           const Expanded(child: _PlaceholderContent()),
         ],
       ),
@@ -53,6 +55,7 @@ class _PlaceholderContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s32),
@@ -66,7 +69,7 @@ class _PlaceholderContent extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s24),
             Text(
-              'Create beautiful workout cards.',
+              l10n.quickShareTagline,
               style: AppTypography.body.copyWith(
                 color: AppColors.label2,
               ),
@@ -74,7 +77,7 @@ class _PlaceholderContent extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(
-              'Available after the beta.',
+              l10n.quickShareBeta,
               style: AppTypography.footnote.copyWith(
                 color: AppColors.label3,
               ),

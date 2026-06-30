@@ -5,6 +5,7 @@ import '../../core/design/app_icons.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 
@@ -123,6 +124,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
       );
     }
 
+    final l10n = AppLocalizations.of(context)!;
     final wKg = _weightKg;
     final pct = _parsedPct;
     final resultKg = (wKg != null && pct != null) ? wKg * pct / 100 : null;
@@ -136,7 +138,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
         backgroundColor: AppColors.background,
         body: Column(
           children: [
-            const ScreenHeader(backLabel: 'Calculators', title: '1RM Calculator'),
+            ScreenHeader(backLabel: l10n.calculatorsTitle, title: '1RM Calculator'),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -159,7 +161,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '1RM WEIGHT',
+                          l10n.oneRmWeightLabel,
                           style: AppTypography.sectionLabel
                               .copyWith(color: AppColors.label2),
                         ),
@@ -225,7 +227,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '1RM CALCULATOR',
+                              l10n.section1rmCalculator,
                               style: AppTypography.sectionLabel
                                   .copyWith(color: AppColors.label2),
                             ),
@@ -242,7 +244,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
                                           : AppColors.disabled),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'View Table',
+                                    l10n.viewTable,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,

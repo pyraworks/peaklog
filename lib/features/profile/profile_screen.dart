@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/models/exercise.dart';
@@ -14,6 +13,7 @@ import '../../providers/public_records_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../widgets/screen_header.dart';
 import 'public_records_manage_sheet.dart';
+import '../../l10n/app_localizations.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -29,11 +29,12 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final nickname = ref.watch(nicknameProvider).valueOrNull ?? '';
     final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
     final publicRecords = ref.watch(publicRecordsProvider).valueOrNull ?? [];
 
-    final displayName = nickname.isEmpty ? 'PeakLog User' : nickname;
+    final displayName = nickname.isEmpty ? l10n.peaklogUser : nickname;
     final limited = publicRecords.take(8).toList();
 
     void openNicknameSheet() {
@@ -58,7 +59,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(backLabel: 'Settings', title: 'Profile'),
+          ScreenHeader(backLabel: l10n.settingsLabel, title: l10n.profileTitle),
           Expanded(
             child: ListView(
               padding:
@@ -74,17 +75,17 @@ class ProfileScreen extends ConsumerWidget {
 
                 // ── Public Exercises ─────────────────────────────────────
                 _SectionHeader(
-                  label: 'PUBLIC EXERCISES',
-                  actionLabel: 'Manage',
+                  label: l10n.sectionPublicExercises,
+                  actionLabel: l10n.manage,
                   onAction: openManageSheet,
                 ),
                 if (limited.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
                     child: Center(
                       child: Text(
-                        'No public exercises selected.',
-                        style: TextStyle(
+                        l10n.noPublicExercises,
+                        style: const TextStyle(
                           fontSize: 15,
                           color: AppColors.textTertiary,
                         ),
@@ -96,13 +97,6 @@ class ProfileScreen extends ConsumerWidget {
                     publicRecords: limited,
                     exercises: exercises,
                   ),
-                const SizedBox(height: 28),
-
-                // ── Settings ─────────────────────────────────────────────
-                const _SectionHeader(label: 'SETTINGS'),
-                _SettingsCard(
-                  onCategoriesTap: () => context.push('/categories'),
-                ),
               ],
             ),
           ),
@@ -176,9 +170,9 @@ class _HeroSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.separator, width: 1),
             ),
-            child: const Text(
-              'Edit Profile',
-              style: TextStyle(
+            child: Text(
+              AppLocalizations.of(context)!.editProfile,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.label2,
@@ -245,48 +239,6 @@ class _SectionHeader extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Settings card
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SettingsCard extends StatelessWidget {
-  final VoidCallback onCategoriesTap;
-  const _SettingsCard({required this.onCategoriesTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.separator, width: 0.5),
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: InkWell(
-        onTap: onCategoriesTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Categories',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.label1,
-                  ),
-                ),
-              ),
-              Icon(AppIcons.forward, size: 20, color: AppColors.chevron),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -445,6 +397,7 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       decoration: const BoxDecoration(
@@ -456,9 +409,9 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Set Nickname',
-            style: TextStyle(
+          Text(
+            l10n.setNickname,
+            style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimaryAlt,
@@ -473,7 +426,7 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
             style: const TextStyle(
                 fontSize: 15, color: AppColors.textPrimaryAlt),
             decoration: InputDecoration(
-              hintText: 'e.g. Daniel',
+              hintText: l10n.nicknameHint,
               hintStyle:
                   const TextStyle(color: AppColors.textSecondaryAlt),
               counterText: '',
@@ -509,10 +462,10 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
                       border:
                           Border.all(color: AppColors.separatorAlt),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'Cancel',
-                        style: TextStyle(
+                        l10n.cancel,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textPrimaryAlt,
@@ -537,10 +490,10 @@ class _NicknameSheetState extends ConsumerState<_NicknameSheet> {
                       color: AppColors.actionDark,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'Save',
-                        style: TextStyle(
+                        l10n.save,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           color: Colors.white,

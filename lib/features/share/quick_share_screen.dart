@@ -10,6 +10,7 @@ import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
 import '../../core/services/health_sync_service.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/unit_settings_provider.dart';
@@ -34,6 +35,7 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     if (widget.embedded) {
       return Scaffold(
         backgroundColor: AppColors.background,
@@ -47,7 +49,7 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Text(
-                      'Share',
+                      l10n.share,
                       style: AppTypography.appTitle.copyWith(
                         color: AppColors.label1,
                       ),
@@ -61,16 +63,16 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
                         _ShareOptionCard(
                           icon: AppIcons.medal,
                           iconColor: AppColors.pbGold,
-                          title: 'PeakLog Record',
-                          subtitle: 'Share your tracked records',
+                          title: l10n.shareOptionRecordTitle,
+                          subtitle: l10n.shareOptionRecordSubtitle,
                           onTap: () => _showRecordPicker(),
                         ),
                         const SizedBox(height: AppSpacing.s12),
                         _ShareOptionCard(
                           icon: AppIcons.heart,
                           iconColor: const Color(0xFFFF3B30),
-                          title: 'Health Activity',
-                          subtitle: 'Share a workout from Apple Health',
+                          title: l10n.shareOptionActivityTitle,
+                          subtitle: l10n.shareOptionActivitySubtitle,
                           onTap: () => _showActivityPicker(),
                         ),
                       ],
@@ -88,9 +90,9 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          const ScreenHeader(
-            backLabel: 'Home',
-            title: 'Share',
+          ScreenHeader(
+            backLabel: l10n.homeLabel,
+            title: l10n.share,
           ),
           Expanded(
             child: ListView(
@@ -99,16 +101,16 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
                 _ShareOptionCard(
                   icon: AppIcons.medal,
                   iconColor: AppColors.pbGold,
-                  title: 'PeakLog Record',
-                  subtitle: 'Share your tracked records',
+                  title: l10n.shareOptionRecordTitle,
+                  subtitle: l10n.shareOptionRecordSubtitle,
                   onTap: () => _showRecordPicker(),
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 _ShareOptionCard(
                   icon: AppIcons.heart,
                   iconColor: const Color(0xFFFF3B30),
-                  title: 'Health Activity',
-                  subtitle: 'Share a workout from Apple Health',
+                  title: l10n.shareOptionActivityTitle,
+                  subtitle: l10n.shareOptionActivitySubtitle,
                   onTap: () => _showActivityPicker(),
                 ),
               ],
@@ -129,25 +131,26 @@ class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
   }
 
   Future<void> _showActivityPicker() async {
+    final l10n = AppLocalizations.of(context)!;
     final granted = await healthSyncService.requestPermission();
     if (!mounted) return;
     if (!granted) {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Apple Health Access Required'),
-          content: const Text('Please allow Health app access in Settings.'),
+          title: Text(l10n.healthPermissionTitle),
+          content: Text(l10n.healthPermissionContent),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 AppSettings.openAppSettings();
               },
-              child: const Text('Open Settings'),
+              child: Text(l10n.healthPermissionOpenSettings),
             ),
           ],
         ),
@@ -261,6 +264,7 @@ class _RecordPickerSheetState extends ConsumerState<RecordPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final exercises = ref.watch(exercisesProvider).valueOrNull ?? [];
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
     final weightUnit = settings?.weightUnit ?? 'kg';
@@ -295,7 +299,7 @@ class _RecordPickerSheetState extends ConsumerState<RecordPickerSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'PeakLog Record',
+                    l10n.shareOptionRecordTitle,
                     style: AppTypography.headline.copyWith(
                       color: AppColors.label1,
                     ),
@@ -319,10 +323,10 @@ class _RecordPickerSheetState extends ConsumerState<RecordPickerSheet> {
                 }
                 final records = snap.data ?? [];
                 if (records.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'No records',
-                      style: TextStyle(color: AppColors.label2),
+                      l10n.noRecords,
+                      style: const TextStyle(fontSize: 15, color: AppColors.label2),
                     ),
                   );
                 }
@@ -432,11 +436,12 @@ class _RecordRow extends StatelessWidget {
     final yesterday = today.subtract(const Duration(days: 1));
     final recDate = DateTime(date.year, date.month, date.day);
 
+    final l10n = AppLocalizations.of(context)!;
     final String dateLabel;
     if (recDate == today) {
-      dateLabel = 'Today';
+      dateLabel = l10n.today;
     } else if (recDate == yesterday) {
-      dateLabel = 'Yesterday';
+      dateLabel = l10n.yesterday;
     } else {
       dateLabel =
           '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';

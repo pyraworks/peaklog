@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_ko.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('ko'),
+  ];
 
   /// Application name
   ///
@@ -400,12 +404,6 @@ abstract class AppLocalizations {
   /// **'ABOUT'**
   String get sectionAbout;
 
-  /// Profile section: public records
-  ///
-  /// In en, this message translates to:
-  /// **'PUBLIC RECORDS'**
-  String get sectionPublicRecords;
-
   /// Empty state message for exercise list
   ///
   /// In en, this message translates to:
@@ -436,10 +434,10 @@ abstract class AppLocalizations {
   /// **'Version'**
   String get version;
 
-  /// Default username placeholder
+  /// Default profile name when no nickname is set
   ///
   /// In en, this message translates to:
-  /// **'PeakLog User'**
+  /// **'Your Profile'**
   String get peaklogUser;
 
   /// Action row label to edit a record
@@ -571,7 +569,7 @@ abstract class AppLocalizations {
   /// Placeholder text for exercise search bar
   ///
   /// In en, this message translates to:
-  /// **'Search exercises...'**
+  /// **'Search'**
   String get searchExercises;
 
   /// Category filter chip: show all categories
@@ -591,12 +589,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No 1RM record'**
   String get no1RmRecord;
-
-  /// Title of the public-records management bottom sheet
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Public Exercises'**
-  String get managePublicExercises;
 
   /// Hint text below the title in public-records management sheet
   ///
@@ -657,6 +649,420 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No records'**
   String get noRecords;
+
+  /// Label for the built-in uncategorized category
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get categoryUncategorized;
+
+  /// Section label above the kg/lb unit picker when selecting Weight record type for the first time
+  ///
+  /// In en, this message translates to:
+  /// **'UNIT'**
+  String get unitSelectorLabel;
+
+  /// Input card label for weight field in Edit Record, with the current unit in parentheses
+  ///
+  /// In en, this message translates to:
+  /// **'WEIGHT ({unit})'**
+  String weightWithUnit(String unit);
+
+  /// Error state on the Edit Record screen when the exercise has no record type set
+  ///
+  /// In en, this message translates to:
+  /// **'No record type is configured for this exercise.'**
+  String get noRecordTypeConfigured;
+
+  /// Title of the Apple Health activity picker bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Import Activity'**
+  String get importActivityTitle;
+
+  /// Subtitle below the title in the activity picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Recent activities from Apple Health'**
+  String get importActivitySubtitle;
+
+  /// Error state in the activity picker sheet when the Health fetch fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load activities.'**
+  String get importActivityError;
+
+  /// Empty state in the activity picker sheet when no workouts exist
+  ///
+  /// In en, this message translates to:
+  /// **'No activities found in the last 90 days.'**
+  String get importActivityEmpty;
+
+  /// Date label for a workout that happened today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// Date label for a workout that happened yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
+  /// Activity type label: running
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get activityRunning;
+
+  /// Activity type label: cycling
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling'**
+  String get activityCycling;
+
+  /// Activity type label: swimming
+  ///
+  /// In en, this message translates to:
+  /// **'Swimming'**
+  String get activitySwimming;
+
+  /// Activity type label: generic workout
+  ///
+  /// In en, this message translates to:
+  /// **'Workout'**
+  String get activityOther;
+
+  /// Hour unit label in the time input field
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get timeHourLabel;
+
+  /// Minute unit label in the time input field
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get timeMinuteLabel;
+
+  /// Second unit label in the time input field
+  ///
+  /// In en, this message translates to:
+  /// **'sec'**
+  String get timeSecondLabel;
+
+  /// Section header label for the public exercises grid on the profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'PUBLIC EXERCISES'**
+  String get sectionPublicExercises;
+
+  /// Pill button on profile hero to open the nickname editor sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// Sheet title for the nickname editor bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Set Nickname'**
+  String get setNickname;
+
+  /// Placeholder text for the nickname input field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your nickname'**
+  String get nicknameHint;
+
+  /// Title of the public exercises management bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Public Exercises'**
+  String get publicExercisesTitle;
+
+  /// Suffix after the count fraction in the manage sheet — EN: '3 / 8 selected', KO: '3 / 8 선택'
+  ///
+  /// In en, this message translates to:
+  /// **'selected'**
+  String get selectedLabel;
+
+  /// Settings section header for feedback row
+  ///
+  /// In en, this message translates to:
+  /// **'FEEDBACK'**
+  String get sectionFeedback;
+
+  /// Settings menu row label to open the feedback form
+  ///
+  /// In en, this message translates to:
+  /// **'Send Feedback'**
+  String get sendFeedback;
+
+  /// Snackbar shown when the feedback URL placeholder has not been replaced
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback form is not available yet.'**
+  String get feedbackNotAvailable;
+
+  /// Share option card title for PeakLog records
+  ///
+  /// In en, this message translates to:
+  /// **'PeakLog Record'**
+  String get shareOptionRecordTitle;
+
+  /// Share option card subtitle for PeakLog records
+  ///
+  /// In en, this message translates to:
+  /// **'Share your tracked records'**
+  String get shareOptionRecordSubtitle;
+
+  /// Share option card title for Apple Health activities
+  ///
+  /// In en, this message translates to:
+  /// **'Health Activity'**
+  String get shareOptionActivityTitle;
+
+  /// Share option card subtitle for Apple Health activities
+  ///
+  /// In en, this message translates to:
+  /// **'Share a workout from Apple Health'**
+  String get shareOptionActivitySubtitle;
+
+  /// Control label for aspect ratio selector on export screen
+  ///
+  /// In en, this message translates to:
+  /// **'Ratio'**
+  String get exportLabelRatio;
+
+  /// Control label for frame style selector on export screen
+  ///
+  /// In en, this message translates to:
+  /// **'Frame'**
+  String get exportLabelFrame;
+
+  /// Control label for background media picker on export screen
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get exportLabelBackground;
+
+  /// Control label for overlay sticker toggles on export screen
+  ///
+  /// In en, this message translates to:
+  /// **'Sticker'**
+  String get exportLabelSticker;
+
+  /// Frame style option: clean minimal design
+  ///
+  /// In en, this message translates to:
+  /// **'Clean'**
+  String get frameStyleClean;
+
+  /// Frame style option: rough bold design
+  ///
+  /// In en, this message translates to:
+  /// **'Rough'**
+  String get frameStyleRough;
+
+  /// Sticker toggle label: show exercise name overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get stickerName;
+
+  /// Sticker toggle label: show record value overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Value'**
+  String get stickerValue;
+
+  /// Sticker toggle label: show days-since-PR overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get stickerDays;
+
+  /// Media picker chip label for photo
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get exportPhoto;
+
+  /// Media picker chip label for video
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get exportVideo;
+
+  /// Button to save export card as image to Photos
+  ///
+  /// In en, this message translates to:
+  /// **'Save Image'**
+  String get saveImage;
+
+  /// Button to save export card composited over video to Photos
+  ///
+  /// In en, this message translates to:
+  /// **'Save Video'**
+  String get saveVideo;
+
+  /// Progress label while saving an image to Photos
+  ///
+  /// In en, this message translates to:
+  /// **'Saving image…'**
+  String get exportSavingImage;
+
+  /// Progress label while saving a video to Photos
+  ///
+  /// In en, this message translates to:
+  /// **'Saving video…'**
+  String get exportSavingVideo;
+
+  /// Progress label while preparing a share export
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing…'**
+  String get exportPreparing;
+
+  /// Snackbar after successfully saving image or video to Photos
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to Photos'**
+  String get savedToPhotos;
+
+  /// Snackbar when video compositing or save fails
+  ///
+  /// In en, this message translates to:
+  /// **'Video save failed'**
+  String get videoSaveFailed;
+
+  /// Share sheet subject line when sharing a record PR/PB
+  ///
+  /// In en, this message translates to:
+  /// **'PeakLog — {name} New {badge}!'**
+  String shareSubjectRecord(String name, String badge);
+
+  /// Share sheet subject line when sharing an Apple Health activity
+  ///
+  /// In en, this message translates to:
+  /// **'PeakLog — {name}'**
+  String shareSubjectActivity(String name);
+
+  /// Screen title for 1RM percentage table when no exercise context
+  ///
+  /// In en, this message translates to:
+  /// **'1RM Table'**
+  String get oneRmTableTitle;
+
+  /// Screen title for 1RM percentage table when an exercise is provided
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — 1RM Table'**
+  String exerciseOneRmTableTitle(String name);
+
+  /// Label in the 100% row of the 1RM table
+  ///
+  /// In en, this message translates to:
+  /// **'Current 1RM'**
+  String get current1rm;
+
+  /// Bottom sheet title when editing an existing category
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get editCategoryTitle;
+
+  /// Calculator hub screen title and back label from child calculator screens
+  ///
+  /// In en, this message translates to:
+  /// **'Calculators'**
+  String get calculatorsTitle;
+
+  /// Screen title for the pace calculator
+  ///
+  /// In en, this message translates to:
+  /// **'Pace Calculator'**
+  String get paceCalculatorTitle;
+
+  /// Screen title for the plate calculator
+  ///
+  /// In en, this message translates to:
+  /// **'Plate Calculator'**
+  String get plateCalculatorTitle;
+
+  /// Hub card description for the 1RM calculator
+  ///
+  /// In en, this message translates to:
+  /// **'Estimate your one-rep max and training percentages.'**
+  String get oneRmCalculatorDescription;
+
+  /// Hub card description for the pace calculator
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate pace, finish time, and race splits.'**
+  String get paceCalculatorDescription;
+
+  /// Hub card description for the plate calculator
+  ///
+  /// In en, this message translates to:
+  /// **'Calculate barbell loading and total weight.'**
+  String get plateCalculatorDescription;
+
+  /// Section label for the weight input card on the 1RM calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'1RM WEIGHT'**
+  String get oneRmWeightLabel;
+
+  /// Input card label for the pace field on the pace calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'PACE'**
+  String get paceLabel;
+
+  /// Section label for the total weight input on the plate calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL WEIGHT'**
+  String get totalWeightLabel;
+
+  /// Section label for the bar weight selector on the plate calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'BAR'**
+  String get barLabel;
+
+  /// Button to reset plate counts on the plate calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetLabel;
+
+  /// Section label for the plate rows on the plate calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'PLATES'**
+  String get platesLabel;
+
+  /// Button to expand the split table on the pace calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get moreLabel;
+
+  /// Button to collapse the split table on the pace calculator screen
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hideLabel;
+
+  /// Aspect ratio chip label for 'Original' ratio on export screen
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get aspectRatioOriginal;
 }
 
 class _AppLocalizationsDelegate
@@ -670,7 +1076,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'ko'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -681,6 +1087,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'ko':
+      return AppLocalizationsKo();
   }
 
   throw FlutterError(

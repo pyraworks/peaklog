@@ -18,6 +18,7 @@ import '../../core/design/app_radius.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 import '../../widgets/screen_header.dart';
@@ -82,16 +83,18 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   }
 
   String _activityLabel(HealthActivityType type) {
+    final l10n = AppLocalizations.of(context)!;
     switch (type) {
-      case HealthActivityType.running:  return 'Running';
-      case HealthActivityType.cycling:  return 'Cycling';
-      case HealthActivityType.swimming: return 'Swimming';
-      case HealthActivityType.other:    return 'Workout';
+      case HealthActivityType.running:  return l10n.activityRunning;
+      case HealthActivityType.cycling:  return l10n.activityCycling;
+      case HealthActivityType.swimming: return l10n.activitySwimming;
+      case HealthActivityType.other:    return l10n.activityOther;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
     final distanceUnit = settings?.distanceUnit ?? 'km';
 
@@ -114,8 +117,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       body: Column(
         children: [
           ScreenHeader(
-            backLabel: 'Back',
-            title: 'Share',
+            backLabel: l10n.back,
+            title: l10n.share,
             onBack: () => context.pop(),
           ),
           Expanded(
@@ -210,7 +213,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
                       // Frame
                       _OptionRow(
-                        label: 'Frame',
+                        label: l10n.exportLabelFrame,
                         child: _FrameSelector(
                           selected: _frameStyle,
                           onChanged: (s) => setState(() => _frameStyle = s),
@@ -219,7 +222,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       const Divider(height: 1, thickness: 0.5, color: AppColors.separator),
                       // Background media
                       _OptionRow(
-                        label: 'Background',
+                        label: l10n.exportLabelBackground,
                         child: _MediaPicker(
                           mediaFile: _mediaFile,
                           onPickImage: () => _pickMedia(video: false),
@@ -304,7 +307,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String dateStr,
     required String daysSinceStr,
   }) async {
-    setState(() { _exporting = true; _exportLabel = 'Saving image...'; });
+    final l10n = AppLocalizations.of(context)!;
+    setState(() { _exporting = true; _exportLabel = l10n.exportSavingImage; });
     try {
       final ex = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
@@ -313,14 +317,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         prValue: prValueStr, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay,
         badgeLabel: ex.bestTypeLabel,
+        personalBestLabel: l10n.personalBestLabel,
       );
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(path).writeAsBytes(bytes);
       await Gal.putImage(path, album: 'PeakLog');
-      if (mounted) _showSnack('Saved to Photos');
+      if (mounted) _showSnack(l10n.savedToPhotos);
     } catch (e) {
-      if (mounted) _showSnack('Save failed: $e');
+      if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -332,7 +337,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String daysSinceStr,
   }) async {
     if (_mediaFile == null) return;
-    setState(() { _exporting = true; _exportLabel = 'Saving video...'; });
+    final l10n = AppLocalizations.of(context)!;
+    setState(() { _exporting = true; _exportLabel = l10n.exportSavingVideo; });
     try {
       final tempDir = await getTemporaryDirectory();
       final exV = widget.exercise ?? _effectiveExercise();
@@ -342,6 +348,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         prValue: prValueStr, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay, overlayOnly: true,
         badgeLabel: exV.bestTypeLabel,
+        personalBestLabel: l10n.personalBestLabel,
       );
       final overlayPath = '${tempDir.path}/overlay_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(overlayPath).writeAsBytes(overlayBytes);
@@ -365,12 +372,12 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final rc = await session.getReturnCode();
       if (ReturnCode.isSuccess(rc)) {
         await Gal.putVideo(outputPath, album: 'PeakLog');
-        if (mounted) _showSnack('Saved to Photos');
+        if (mounted) _showSnack(l10n.savedToPhotos);
       } else {
-        if (mounted) _showSnack('Video save failed');
+        if (mounted) _showSnack(l10n.videoSaveFailed);
       }
     } catch (e) {
-      if (mounted) _showSnack('Error: $e');
+      if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -381,7 +388,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     required String dateStr,
     required String daysSinceStr,
   }) async {
-    setState(() { _exporting = true; _exportLabel = 'Preparing...'; });
+    final l10n = AppLocalizations.of(context)!;
+    setState(() { _exporting = true; _exportLabel = l10n.exportPreparing; });
     final box = context.findRenderObject() as RenderBox?;
     try {
       final exS = widget.exercise ?? _effectiveExercise();
@@ -391,6 +399,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         prValue: prValueStr, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay,
         badgeLabel: exS.bestTypeLabel,
+        personalBestLabel: l10n.personalBestLabel,
       );
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/peaklog_share.png';
@@ -398,14 +407,17 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
       final shareExercise = widget.exercise ?? _effectiveExercise();
       final exerciseName = shareExercise.displayName;
+      final subject = _isActivityMode
+          ? l10n.shareSubjectActivity(exerciseName)
+          : l10n.shareSubjectRecord(exerciseName, shareExercise.bestTypeLabel);
       await Share.shareXFiles(
         [XFile(path, mimeType: 'image/png')],
-        subject: 'PeakLog — $exerciseName${_isActivityMode ? '' : ' New ${shareExercise.bestTypeLabel}!'}',
+        subject: subject,
         sharePositionOrigin:
             box != null ? box.localToGlobal(Offset.zero) & box.size : null,
       );
     } catch (e) {
-      if (mounted) _showSnack('Share error: $e');
+      if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -492,15 +504,16 @@ class _RatioRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 48,
       child: Row(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: AppSpacing.s16),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.s16),
             child: Text(
-              'Ratio',
-              style: TextStyle(
+              l10n.exportLabelRatio,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.label2,
@@ -531,7 +544,9 @@ class _RatioRow extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        r.label,
+                        r == ExportAspectRatio.original
+                            ? l10n.aspectRatioOriginal
+                            : r.label,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -560,15 +575,16 @@ class _StickerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       height: 48,
       child: Row(
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: AppSpacing.s16),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.s16),
             child: Text(
-              'Sticker',
-              style: TextStyle(
+              l10n.exportLabelSticker,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: AppColors.label2,
@@ -582,25 +598,25 @@ class _StickerRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 _Toggle(
-                  label: 'Name',
+                  label: l10n.stickerName,
                   value: overlay.showName,
                   onTap: () => onChanged(overlay.copyWith(showName: !overlay.showName)),
                 ),
                 const SizedBox(width: 6),
                 _Toggle(
-                  label: 'Value',
+                  label: l10n.stickerValue,
                   value: overlay.showValue,
                   onTap: () => onChanged(overlay.copyWith(showValue: !overlay.showValue)),
                 ),
                 const SizedBox(width: 6),
                 _Toggle(
-                  label: 'Date',
+                  label: l10n.dateLabel,
                   value: overlay.showDate,
                   onTap: () => onChanged(overlay.copyWith(showDate: !overlay.showDate)),
                 ),
                 const SizedBox(width: 6),
                 _Toggle(
-                  label: 'Days',
+                  label: l10n.stickerDays,
                   value: overlay.showDaysSince,
                   onTap: () => onChanged(overlay.copyWith(showDaysSince: !overlay.showDaysSince)),
                 ),
@@ -653,6 +669,7 @@ class _FrameSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -673,7 +690,7 @@ class _FrameSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                s == FrameStyle.clean ? 'Clean' : 'Rough',
+                s == FrameStyle.clean ? l10n.frameStyleClean : l10n.frameStyleRough,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -704,12 +721,13 @@ class _MediaPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _PickerChip(label: 'Photo', icon: AppIcons.image, onTap: onPickImage),
+        _PickerChip(label: l10n.exportPhoto, icon: AppIcons.image, onTap: onPickImage),
         const SizedBox(width: 8),
-        _PickerChip(label: 'Video', icon: AppIcons.video, onTap: onPickVideo),
+        _PickerChip(label: l10n.exportVideo, icon: AppIcons.video, onTap: onPickVideo),
         if (mediaFile != null) ...[
           const SizedBox(width: 8),
           GestureDetector(
@@ -743,6 +761,7 @@ class _ExportActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Padding(
@@ -778,7 +797,7 @@ class _ExportActions extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _PrimaryButton(
-                          label: 'Save Image',
+                          label: l10n.saveImage,
                           icon: AppIcons.download,
                           onTap: onSaveImage,
                           secondary: true,
@@ -787,7 +806,7 @@ class _ExportActions extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _PrimaryButton(
-                          label: 'Share',
+                          label: l10n.share,
                           icon: AppIcons.share,
                           onTap: onShare,
                         ),
@@ -798,7 +817,7 @@ class _ExportActions extends StatelessWidget {
                   if (canSaveVideo) ...[
                     const SizedBox(height: 8),
                     _PrimaryButton(
-                      label: 'Save Video',
+                      label: l10n.saveVideo,
                       icon: AppIcons.video,
                       onTap: onSaveVideo,
                       secondary: true,

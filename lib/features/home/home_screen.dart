@@ -9,12 +9,14 @@ import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../domain/models/category.dart';
+import '../../widgets/category_color_indicator.dart';
 import '../../domain/models/personal_best.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../widgets/swipeable_row.dart';
+import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocus;
@@ -104,20 +106,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _confirmDelete(BuildContext context, Exercise exercise) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
-        title: const Text('Delete Exercise'),
-        content: Text('"${exercise.displayName}" and all its records will be deleted.'),
+        title: Text(l10n.deleteExerciseTitle),
+        content: Text(l10n.deleteExerciseContent(exercise.displayName)),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -130,6 +133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final exercises  = ref.watch(exercisesProvider).valueOrNull ?? [];
     final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
 
@@ -196,7 +200,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     color: AppColors.label1,
                   ),
                   decoration: InputDecoration(
-                    hintText: _searchFocus.hasFocus ? null : 'Search exercises...',
+                    hintText: _searchFocus.hasFocus ? null : l10n.searchExercises,
                     hintStyle: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
@@ -225,7 +229,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _CategoryChip(
-                    label: 'All',
+                    label: l10n.filterAll,
                     color: null,
                     selected: _filterCategoryId == null,
                     onTap: () => setState(() => _filterCategoryId = null),
@@ -246,10 +250,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             // ── Exercise list (flat, no section headers) ─────────────
             Expanded(
               child: filtered.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'No exercises',
-                        style: TextStyle(color: AppColors.label2),
+                        l10n.noExercises,
+                        style: const TextStyle(fontSize: 15, color: AppColors.label2),
                       ),
                     )
                   : Container(
@@ -315,7 +319,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                     color: Colors.white,
                                     fontWeight: FontWeight.w300)),
                             const SizedBox(width: 6),
-                            Text('Add Exercise',
+                            Text(l10n.addExerciseButton,
                                 style: AppTypography.button.copyWith(color: Colors.white)),
                           ],
                         ),
@@ -383,24 +387,7 @@ class _CategoryChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (color != null) ...[
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: color!.withValues(alpha: 0.20),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 5,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
+              CategoryColorIndicator(color: color!, size: 14),
               const SizedBox(width: 5),
             ],
             Text(
@@ -446,12 +433,7 @@ class _ExerciseRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          // Category color dot
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: categoryColor, shape: BoxShape.circle),
-          ),
+          CategoryColorIndicator(color: categoryColor, size: 10),
           const SizedBox(width: 10),
           // Exercise name
           Expanded(
@@ -481,6 +463,16 @@ class _ExerciseRow extends StatelessWidget {
             Text(
               bestValue,
               style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.label2,
+              ),
+            ),
+            const SizedBox(width: 4),
+          ] else ...[
+            const Text(
+              '—',
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 color: AppColors.label2,
