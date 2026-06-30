@@ -27,7 +27,7 @@
   "viewTable": "표 보기",
   "goHome": "홈으로",
   "exerciseNameLabel": "운동 이름",
-  "exerciseNameHint": "예: 백 스쿼트",
+  "exerciseNameHint": "운동 이름 입력",
   "categoryLabel": "카테고리",
   "pbPrDescription": "개인 최고 기록 (PB)  ·  개인 기록 (PR)",
   "defaultWeightUnit": "이 운동의 기본 무게 단위",
@@ -41,10 +41,10 @@
   "roundsLabel": "라운드",
   "dateLabel": "날짜",
   "howToTrackQuestion": "이 운동을 어떻게 기록하나요?",
-  "recordTypeWeight": "무게",
+  "recordTypeWeight": "Weight",
   "recordTypeAmrap": "AMRAP",
-  "recordTypeForTime": "타임",
-  "recordTypeEtc": "기타",
+  "recordTypeForTime": "For Time",
+  "recordTypeEtc": "Custom",
   "sectionPersonalBest": "개인 최고 기록",
   "sectionActions": "작업",
   "sectionHistory": "기록 내역",
@@ -64,7 +64,7 @@
   "deleteExerciseTitle": "운동 삭제",
   "deleteExerciseContent": "\"{name}\" 운동과 모든 기록이 삭제됩니다.",
   "deleteCategoryTitle": "카테고리 삭제",
-  "deleteCategoryContent": "이 카테고리의 운동들이 미분류로 이동됩니다.",
+  "deleteCategoryContent": "이 카테고리의 운동들이 미지정으로 이동됩니다.",
   "validationSelectUnit": "단위를 선택해 주세요 (kg 또는 lb).",
   "validationEnterWeight": "저장할 무게를 입력해 주세요.",
   "validationEnterValue": "저장할 값을 입력해 주세요.",
@@ -75,7 +75,7 @@
   "swipeHint": "기록을 왼쪽으로 밀면 공유 및 삭제할 수 있습니다.",
   "profileUrlCopied": "프로필 URL이 복사되었습니다",
   "noPublicExercises": "공개된 운동이 없습니다.",
-  "quickShareTagline": "아름다운 운동 카드를 만드세요.",
+  "quickShareTagline": "운동을 멋지게 공유하세요.",
   "quickShareBeta": "베타 이후 사용 가능합니다.",
   "categoryNameHint": "카테고리 이름",
   "colorLabel": "색상",
@@ -93,7 +93,7 @@
   "healthPermissionContent": "설정에서 건강 앱 접근을 허용해 주세요.",
   "healthPermissionOpenSettings": "설정에서 허용하기",
   "noRecords": "기록이 없습니다.",
-  "categoryUncategorized": "미분류",
+  "categoryUncategorized": "미지정",
 
   "unitSelectorLabel": "단위",
   "weightWithUnit": "중량 ({unit})",
@@ -170,5 +170,7 @@
   "platesLabel": "플레이트",
   "moreLabel": "더 보기",
   "hideLabel": "접기",
-  "aspectRatioOriginal": "원본"
+  "aspectRatioOriginal": "원본",
+
+  "oneRmCalculatorTitle": "1RM 계산기"
 }

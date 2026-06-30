@@ -120,7 +120,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                       _categoryOpen = false;
                     }),
                   ),
-                  if (_isEditMode) ...[
+                  if (_isEditMode && widget.initialExercise!.recordType == RecordType.weight) ...[
                     const SizedBox(height: AppSpacing.s12),
                     _UnitCard(
                       value: _baseUnit,
@@ -398,7 +398,6 @@ class _BestTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -431,15 +430,6 @@ class _BestTypeCard extends StatelessWidget {
                   isFirst: false,
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            l10n.pbPrDescription,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondaryAlt,
             ),
           ),
         ],

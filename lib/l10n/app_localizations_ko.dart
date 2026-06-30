@@ -87,7 +87,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseNameLabel => '운동 이름';
 
   @override
-  String get exerciseNameHint => '예: 백 스쿼트';
+  String get exerciseNameHint => '운동 이름 입력';
 
   @override
   String get categoryLabel => '카테고리';
@@ -129,16 +129,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get howToTrackQuestion => '이 운동을 어떻게 기록하나요?';
 
   @override
-  String get recordTypeWeight => '무게';
+  String get recordTypeWeight => 'Weight';
 
   @override
   String get recordTypeAmrap => 'AMRAP';
 
   @override
-  String get recordTypeForTime => '타임';
+  String get recordTypeForTime => 'For Time';
 
   @override
-  String get recordTypeEtc => '기타';
+  String get recordTypeEtc => 'Custom';
 
   @override
   String get sectionPersonalBest => '개인 최고 기록';
@@ -200,7 +200,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteCategoryTitle => '카테고리 삭제';
 
   @override
-  String get deleteCategoryContent => '이 카테고리의 운동들이 미분류로 이동됩니다.';
+  String get deleteCategoryContent => '이 카테고리의 운동들이 미지정으로 이동됩니다.';
 
   @override
   String get validationSelectUnit => '단위를 선택해 주세요 (kg 또는 lb).';
@@ -237,7 +237,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noPublicExercises => '공개된 운동이 없습니다.';
 
   @override
-  String get quickShareTagline => '아름다운 운동 카드를 만드세요.';
+  String get quickShareTagline => '운동을 멋지게 공유하세요.';
 
   @override
   String get quickShareBeta => '베타 이후 사용 가능합니다.';
@@ -297,7 +297,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noRecords => '기록이 없습니다.';
 
   @override
-  String get categoryUncategorized => '미분류';
+  String get categoryUncategorized => '미지정';
 
   @override
   String get unitSelectorLabel => '단위';
@@ -510,4 +510,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get aspectRatioOriginal => '원본';
+
+  @override
+  String get oneRmCalculatorTitle => '1RM 계산기';
 }

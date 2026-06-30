@@ -21,7 +21,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 20,
+      version: 21,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -444,6 +444,13 @@ class DatabaseHelper {
       await db.execute('DROP INDEX IF EXISTS idx_exercises_normalized_name');
       await db.execute(
           'CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_normalized_name ON exercises(normalized_name) WHERE is_archived = 0');
+    }
+
+    if (oldVersion < 21) {
+      // Correct Uncategorized color key from 'brown' (dev-cycle mistake) to 'gray'.
+      await db.execute(
+        "UPDATE categories SET color = 'gray' WHERE id = '${Category.uncategorizedId}' AND color = 'brown'",
+      );
     }
   }
 

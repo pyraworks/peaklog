@@ -87,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exerciseNameLabel => 'EXERCISE NAME';
 
   @override
-  String get exerciseNameHint => 'e.g. Back Squat';
+  String get exerciseNameHint => 'Enter exercise name';
 
   @override
   String get categoryLabel => 'Category';
@@ -138,7 +138,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordTypeForTime => 'For Time';
 
   @override
-  String get recordTypeEtc => 'ETC';
+  String get recordTypeEtc => 'Custom';
 
   @override
   String get sectionPersonalBest => 'PERSONAL BEST';
@@ -238,7 +238,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPublicExercises => 'No public exercises selected.';
 
   @override
-  String get quickShareTagline => 'Create beautiful workout cards.';
+  String get quickShareTagline => 'Share your workout beautifully.';
 
   @override
   String get quickShareBeta => 'Available after the beta.';
@@ -518,4 +518,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aspectRatioOriginal => 'Original';
+
+  @override
+  String get oneRmCalculatorTitle => '1RM Calculator';
 }

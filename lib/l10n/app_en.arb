@@ -79,7 +79,7 @@
   "exerciseNameLabel": "EXERCISE NAME",
   "@exerciseNameLabel": { "description": "Label above exercise name input" },
 
-  "exerciseNameHint": "e.g. Back Squat",
+  "exerciseNameHint": "Enter exercise name",
   "@exerciseNameHint": { "description": "Placeholder text for exercise name field" },
 
   "categoryLabel": "Category",
@@ -130,7 +130,7 @@
   "recordTypeForTime": "For Time",
   "@recordTypeForTime": { "description": "Record type chip: timed workout" },
 
-  "recordTypeEtc": "ETC",
+  "recordTypeEtc": "Custom",
   "@recordTypeEtc": { "description": "Record type chip: custom / other metric" },
 
   "sectionPersonalBest": "PERSONAL BEST",
@@ -247,7 +247,7 @@
   "noPublicExercises": "No public exercises selected.",
   "@noPublicExercises": { "description": "Empty state for public records grid on profile screen" },
 
-  "quickShareTagline": "Create beautiful workout cards.",
+  "quickShareTagline": "Share your workout beautifully.",
   "@quickShareTagline": { "description": "Quick share placeholder main text" },
 
   "quickShareBeta": "Available after the beta.",
@@ -551,5 +551,8 @@
   "@hideLabel": { "description": "Button to collapse the split table on the pace calculator screen" },
 
   "aspectRatioOriginal": "Original",
-  "@aspectRatioOriginal": { "description": "Aspect ratio chip label for 'Original' ratio on export screen" }
+  "@aspectRatioOriginal": { "description": "Aspect ratio chip label for 'Original' ratio on export screen" },
+
+  "oneRmCalculatorTitle": "1RM Calculator",
+  "@oneRmCalculatorTitle": { "description": "Hub card title and screen header title for the 1RM calculator" }
 }

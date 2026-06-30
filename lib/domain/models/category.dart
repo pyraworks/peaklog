@@ -16,8 +16,8 @@ class CategoryColor {
     'green'  => const Color(0xFFE64A19),
     'purple' => const Color(0xFF6A1B9A),
     'pink'   => const Color(0xFF00796B),
-    'gray'   => const Color(0xFFC4A484),
-    'brown'  => const Color(0xFF8E8E93),
+    'gray'   => const Color(0xFF8E8E93),
+    'brown'  => const Color(0xFFC4A484),
     _        => const Color(0xFF8E8E93),
   };
 }

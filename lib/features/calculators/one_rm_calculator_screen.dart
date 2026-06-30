@@ -138,7 +138,7 @@ class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
         backgroundColor: AppColors.background,
         body: Column(
           children: [
-            ScreenHeader(backLabel: l10n.calculatorsTitle, title: '1RM Calculator'),
+            ScreenHeader(backLabel: l10n.calculatorsTitle, title: l10n.oneRmCalculatorTitle),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(

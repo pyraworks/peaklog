@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// Placeholder text for exercise name field
   ///
   /// In en, this message translates to:
-  /// **'e.g. Back Squat'**
+  /// **'Enter exercise name'**
   String get exerciseNameHint;
 
   /// Category selector label
@@ -359,7 +359,7 @@ abstract class AppLocalizations {
   /// Record type chip: custom / other metric
   ///
   /// In en, this message translates to:
-  /// **'ETC'**
+  /// **'Custom'**
   String get recordTypeEtc;
 
   /// Section label for personal best card
@@ -545,7 +545,7 @@ abstract class AppLocalizations {
   /// Quick share placeholder main text
   ///
   /// In en, this message translates to:
-  /// **'Create beautiful workout cards.'**
+  /// **'Share your workout beautifully.'**
   String get quickShareTagline;
 
   /// Quick share placeholder beta notice
@@ -1063,6 +1063,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Original'**
   String get aspectRatioOriginal;
+
+  /// Hub card title and screen header title for the 1RM calculator
+  ///
+  /// In en, this message translates to:
+  /// **'1RM Calculator'**
+  String get oneRmCalculatorTitle;
 }
 
 class _AppLocalizationsDelegate

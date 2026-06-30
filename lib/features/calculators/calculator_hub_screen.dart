@@ -29,7 +29,7 @@ class CalculatorHubScreen extends StatelessWidget {
               children: [
                 _CalculatorCard(
                   iconWidget: Icon(AppIcons.dumbbell, size: 28, color: AppColors.label1),
-                  title: '1RM Calculator',
+                  title: l10n.oneRmCalculatorTitle,
                   description: l10n.oneRmCalculatorDescription,
                   onTap: () {
                     CalculatorPrefs.setLastScreen('1rm');
