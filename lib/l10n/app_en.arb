@@ -204,7 +204,7 @@
   "validationSelectUnit": "Please select a unit (kg or lb).",
   "@validationSelectUnit": { "description": "Validation snackbar: no weight unit selected" },
 
-  "validationEnterWeight": "Enter a weight to save.",
+  "validationEnterWeight": "Please enter a weight.",
   "@validationEnterWeight": { "description": "Validation snackbar: missing weight value" },
 
   "validationEnterValue": "Enter a value to save.",

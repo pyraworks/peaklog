@@ -66,7 +66,7 @@
   "deleteCategoryTitle": "카테고리 삭제",
   "deleteCategoryContent": "이 카테고리의 운동들이 미지정으로 이동됩니다.",
   "validationSelectUnit": "단위를 선택해 주세요 (kg 또는 lb).",
-  "validationEnterWeight": "저장할 무게를 입력해 주세요.",
+  "validationEnterWeight": "무게를 입력해 주세요.",
   "validationEnterValue": "저장할 값을 입력해 주세요.",
   "validationEnterTime": "저장할 시간을 입력해 주세요.",
   "validationEnterRounds": "완료한 라운드 수를 입력해 주세요.",

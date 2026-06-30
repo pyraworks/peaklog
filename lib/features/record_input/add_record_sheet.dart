@@ -183,7 +183,12 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                     if (widget.exercise.recordType == null) ...[
                       _RecordTypePicker(
                         selected: _localRecordType,
-                        onSelect: (rt) => setState(() => _localRecordType = rt),
+                        onSelect: (rt) => setState(() {
+                          _localRecordType = rt;
+                          if (rt == RecordType.weight) {
+                            _localWeightUnit ??= widget.exercise.baseUnit;
+                          }
+                        }),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                     ],
