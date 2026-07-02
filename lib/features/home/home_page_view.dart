@@ -93,6 +93,11 @@ class _HomePageViewState extends State<HomePageView> {
           HomeScreen(
             searchFocus: _searchFocus,
             swipeHint: _showHint ? _buildSwipeHint(l10n) : null,
+            onCalendarTap: () => _pageController.animateToPage(
+              1,
+              duration: const Duration(milliseconds: 235),
+              curve: Curves.easeOutCubic,
+            ),
           ),
           const CalendarScreen(),
         ],

@@ -529,6 +529,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarLabel => 'Calendar';
 
   @override
+  String get calendarCardSwipeHint => 'Swipe →';
+
+  @override
   String calendarSummary(int workoutDays, int prCount) {
     return '$workoutDays workouts · $prCount PR';
   }

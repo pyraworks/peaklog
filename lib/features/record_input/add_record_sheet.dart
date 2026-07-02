@@ -50,6 +50,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   int  _durationSec = 0;
   bool _saving      = false;
   bool _isPr        = false;
+  bool _pbHigherIsBetter = true;
   DateTime _selectedDate = DateTime.now();
   RecordType? _localRecordType;
   String? _localWeightUnit;
@@ -59,6 +60,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   @override
   void initState() {
     super.initState();
+    _pbHigherIsBetter = widget.exercise.pbHigherIsBetter;
     final r = widget.initialRecord;
 
     // Determine unit first — weight display conversion depends on it.
@@ -356,6 +358,17 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
     }
   }
 
+  Future<bool?> _showPbDirectionSheet() {
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _PbDirectionSheet(initial: _pbHigherIsBetter),
+    );
+  }
+
   Future<void> _save(String weightUnit) async {
     final l10n = AppLocalizations.of(context)!;
     if (_effectiveType == RecordType.weight && _localWeightUnit == null) {
@@ -418,6 +431,19 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         if (cap != null && cap > 0) durationMinutes = cap;
     }
 
+    // Show PB direction picker once, before the first ETC record is saved.
+    // After save, exercise.recordType == etc, so this condition is never true again.
+    final isFirstEtcRecord = _effectiveType == RecordType.etc &&
+        widget.initialRecord == null &&
+        widget.exercise.recordType != RecordType.etc;
+
+    if (isFirstEtcRecord) {
+      final direction = await _showPbDirectionSheet();
+      if (!mounted) return;
+      if (direction == null) return; // dismissed without confirming — abort save
+      _pbHigherIsBetter = direction;
+    }
+
     setState(() => _saving = true);
 
     try {
@@ -425,6 +451,13 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         await ref
             .read(exercisesProvider.notifier)
             .setRecordType(widget.exercise.id, _localRecordType!);
+      }
+
+      if (isFirstEtcRecord) {
+        await ref
+            .read(exercisesProvider.notifier)
+            .updateExerciseSettings(widget.exercise.id,
+                pbHigherIsBetter: _pbHigherIsBetter);
       }
 
       if (_localWeightUnit != null &&
@@ -500,6 +533,114 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+// ── PB direction picker (first ETC record only) ───────────────────────────────
+
+class _PbDirectionSheet extends StatefulWidget {
+  final bool initial;
+  const _PbDirectionSheet({required this.initial});
+
+  @override
+  State<_PbDirectionSheet> createState() => _PbDirectionSheetState();
+}
+
+class _PbDirectionSheetState extends State<_PbDirectionSheet> {
+  late bool _higher;
+
+  @override
+  void initState() {
+    super.initState();
+    _higher = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.pbDirectionLabel,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.label1,
+                letterSpacing: -0.2,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _PbOption(
+              label: l10n.pbDirectionHigher,
+              selected: _higher,
+              onTap: () => setState(() => _higher = true),
+            ),
+            const SizedBox(height: 8),
+            _PbOption(
+              label: l10n.pbDirectionLower,
+              selected: !_higher,
+              onTap: () => setState(() => _higher = false),
+            ),
+            const SizedBox(height: 20),
+            _SaveButton(
+              label: l10n.done,
+              onPressed: () => Navigator.pop(context, _higher),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PbOption extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _PbOption({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          border: Border.all(
+            color: selected ? AppColors.label1 : AppColors.separator,
+            width: selected ? 1.5 : 0.5,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? CupertinoIcons.largecircle_fill_circle
+                  : CupertinoIcons.circle,
+              size: 20,
+              color: selected ? AppColors.label1 : AppColors.label3,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: AppColors.label1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

@@ -23,7 +23,8 @@ import 'add_exercise_sheet.dart';
 class HomeScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocus;
   final Widget? swipeHint;
-  const HomeScreen({super.key, this.searchFocus, this.swipeHint});
+  final VoidCallback? onCalendarTap;
+  const HomeScreen({super.key, this.searchFocus, this.swipeHint, this.onCalendarTap});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -147,7 +148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           e.displayName.toLowerCase().contains(_search.toLowerCase());
       final matchesCat = _filterCategoryId == null || e.categoryId == _filterCategoryId;
       return matchesSearch && matchesCat;
-    }).toList();
+    }).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -294,41 +296,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
             ),
-            // ── Add Exercise button ──────────────────────────────────
+            // ── Calendar entry card + Add Exercise button ────────────
             Container(
               color: AppColors.background,
               child: SafeArea(
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                  child: GestureDetector(
-                    onTap: () => showAddExerciseSheet(
-                      context,
-                      initialCategoryId: _filterCategoryId,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: AppColors.actionDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.actionDarkBorder),
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('+',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w300)),
-                            const SizedBox(width: 6),
-                            Text(l10n.addExerciseButton,
-                                style: AppTypography.button.copyWith(color: Colors.white)),
-                          ],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _CalendarEntryCard(onTap: widget.onCalendarTap),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final selectedCategoryId = await showAddExerciseSheet(
+                            context,
+                            initialCategoryId: _filterCategoryId,
+                          );
+                          if (selectedCategoryId != null && mounted) {
+                            setState(() => _filterCategoryId = selectedCategoryId);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: AppColors.actionDark,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.actionDarkBorder),
+                          ),
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('+',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w300)),
+                                const SizedBox(width: 6),
+                                Text(l10n.addExerciseButton,
+                                    style: AppTypography.button.copyWith(color: Colors.white)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -357,6 +371,49 @@ class _IconButton extends StatelessWidget {
         border: Border.all(color: AppColors.separator),
       ),
       child: Center(child: Icon(icon, size: 17, color: AppColors.textPrimaryAlt)),
+    );
+  }
+}
+
+/// Compact card that taps (or swipes) to the Calendar page.
+class _CalendarEntryCard extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _CalendarEntryCard({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.separator, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Icon(AppIcons.calendar, size: 17, color: AppColors.label2),
+            const SizedBox(width: 9),
+            Text(
+              l10n.calendarLabel,
+              style: AppTypography.body.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.label1,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              l10n.calendarCardSwipeHint,
+              style: AppTypography.footnote.copyWith(color: AppColors.label5),
+            ),
+            const SizedBox(width: 2),
+            Icon(AppIcons.forward, size: 18, color: AppColors.chevron),
+          ],
+        ),
+      ),
     );
   }
 }

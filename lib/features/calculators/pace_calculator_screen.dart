@@ -177,6 +177,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                             style: AppTypography.inputValue
                                 .copyWith(color: AppColors.label1),
                             cursorColor: AppColors.label1,
+                            cursorHeight: 22,
                             decoration: InputDecoration(
                               hintText: '5',
                               hintStyle: AppTypography.inputValue
@@ -211,6 +212,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                         style: AppTypography.inputValue
                             .copyWith(color: AppColors.label1),
                         cursorColor: AppColors.label1,
+                        cursorHeight: 22,
                         decoration: InputDecoration(
                           hintText: '20:00',
                           hintStyle: AppTypography.inputValue
@@ -240,6 +242,7 @@ class _PaceCalculatorScreenState extends State<PaceCalculatorScreen> {
                             style: AppTypography.inputValue
                                 .copyWith(color: AppColors.label1),
                             cursorColor: AppColors.label1,
+                            cursorHeight: 22,
                             decoration: InputDecoration(
                               hintText: '4:00',
                               hintStyle: AppTypography.inputValue

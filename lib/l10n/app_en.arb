@@ -562,6 +562,9 @@
   "calendarLabel": "Calendar",
   "@calendarLabel": { "description": "Bottom nav / page label for the calendar screen" },
 
+  "calendarCardSwipeHint": "Swipe →",
+  "@calendarCardSwipeHint": { "description": "Subtle swipe-direction hint on the calendar entry card at the bottom of the home screen" },
+
   "calendarSummary": "{workoutDays} workouts · {prCount} PR",
   "@calendarSummary": {
     "description": "Month summary line showing workout day count and PR count",

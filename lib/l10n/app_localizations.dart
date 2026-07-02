@@ -1082,6 +1082,12 @@ abstract class AppLocalizations {
   /// **'Calendar'**
   String get calendarLabel;
 
+  /// Subtle swipe-direction hint on the calendar entry card at the bottom of the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe →'**
+  String get calendarCardSwipeHint;
+
   /// Month summary line showing workout day count and PR count
   ///
   /// In en, this message translates to:

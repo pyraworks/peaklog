@@ -175,6 +175,7 @@
   "oneRmCalculatorTitle": "1RM 계산기",
 
   "calendarLabel": "달력",
+  "calendarCardSwipeHint": "스와이프 →",
   "calendarSummary": "{workoutDays}일 운동 · {prCount} PR",
   "@calendarSummary": {
     "placeholders": {

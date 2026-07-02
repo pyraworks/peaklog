@@ -119,6 +119,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 20, 0),
+              child: Text(
+                l10n.calendarLabel,
+                style: AppTypography.appTitle.copyWith(color: AppColors.label1),
+              ),
+            ),
             _buildHeader(l10n, dataAsync),
             _buildWeekdayRow(l10n),
             ClipRect(child: _buildGrid(dataAsync)),
@@ -148,7 +155,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   Widget _buildHeader(
       AppLocalizations l10n, AsyncValue<CalendarMonthData> dataAsync) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 18, 20, 10),
+      padding: const EdgeInsets.fromLTRB(24, 6, 20, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -370,10 +377,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
-          label: l10n.calendarRecordsLabel,
-          sublabel: 'RECORDS',
-        ),
+        _SectionHeader(label: l10n.calendarRecordsLabel),
         if (dayRecords.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -439,10 +443,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
-          label: l10n.calendarNotesLabel,
-          sublabel: 'NOTES',
-        ),
+        _SectionHeader(label: l10n.calendarNotesLabel),
         if (notes.isEmpty)
           GestureDetector(
             onTap: () => _showNoteEditSheet(performedOn: performedOn),
@@ -784,32 +785,19 @@ class _LegendItem extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String label;
-  final String sublabel;
-  const _SectionHeader({required this.label, required this.sublabel});
+  const _SectionHeader({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 22, 22, 10),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: AppTypography.footnote.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.label2,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            sublabel,
-            style: AppTypography.sectionLabel.copyWith(
-              color: AppColors.label5,
-              fontSize: 10,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: AppTypography.footnote.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.label2,
+        ),
       ),
     );
   }
@@ -893,6 +881,14 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
 
   Future<void> _save() async {
     if (_saving) return;
+    if (widget.initialNote == null) {
+      final title = _titleCtrl.text.trim();
+      final body = _bodyCtrl.text.trim();
+      if (title.isEmpty && body.isEmpty) {
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+    }
     setState(() => _saving = true);
     final notifier =
         ref.read(notesProvider(widget.performedOn).notifier);

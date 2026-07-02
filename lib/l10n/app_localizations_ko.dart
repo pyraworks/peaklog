@@ -521,6 +521,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendarLabel => '달력';
 
   @override
+  String get calendarCardSwipeHint => '스와이프 →';
+
+  @override
   String calendarSummary(int workoutDays, int prCount) {
     return '$workoutDays일 운동 · $prCount PR';
   }
