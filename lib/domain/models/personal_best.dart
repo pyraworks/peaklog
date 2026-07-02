@@ -27,8 +27,9 @@ class PersonalBest {
   static PersonalBest? fromRecords(
     String exerciseId,
     RecordType recordType,
-    List<Record> records,
-  ) {
+    List<Record> records, {
+    bool pbHigherIsBetter = true,
+  }) {
     final active = records.where((r) => !r.isDeleted).toList();
     if (active.isEmpty) return null;
 
@@ -80,7 +81,10 @@ class PersonalBest {
         final candidates = active.where((r) => r.distance != null).toList();
         if (candidates.isEmpty) return null;
         candidates.sort((a, b) {
-          final cmp = b.distance!.compareTo(a.distance!);
+          // Direction: higher value wins when pbHigherIsBetter, else lower wins.
+          final cmp = pbHigherIsBetter
+              ? b.distance!.compareTo(a.distance!)
+              : a.distance!.compareTo(b.distance!);
           if (cmp != 0) return cmp;
           final tCmp = a.performedAt.compareTo(b.performedAt);
           if (tCmp != 0) return tCmp;

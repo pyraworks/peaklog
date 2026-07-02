@@ -22,7 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 22,
+      version: 23,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -31,6 +31,8 @@ class DatabaseHelper {
             db, 'exercises', 'base_unit', "TEXT NOT NULL DEFAULT 'kg'");
         await _addColumnIfMissing(db, 'exercises', 'time_cap', 'INTEGER');
         await _addColumnIfMissing(db, 'records', 'time_cap', 'INTEGER');
+        await _addColumnIfMissing(db, 'exercises', 'pb_higher_is_better',
+            'INTEGER NOT NULL DEFAULT 1');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -74,9 +76,10 @@ class DatabaseHelper {
         category_id      TEXT REFERENCES categories(id),
         record_type      TEXT,
         best_type        TEXT,
-        base_unit        TEXT NOT NULL DEFAULT 'kg',
-        time_cap         INTEGER,
-        is_system_preset INTEGER NOT NULL DEFAULT 0,
+        base_unit              TEXT NOT NULL DEFAULT 'kg',
+        pb_higher_is_better   INTEGER NOT NULL DEFAULT 1,
+        time_cap               INTEGER,
+        is_system_preset       INTEGER NOT NULL DEFAULT 0,
         visibility       TEXT NOT NULL DEFAULT 'private',
         is_archived      INTEGER NOT NULL DEFAULT 0,
         has_pr_baseline  INTEGER NOT NULL DEFAULT 0,
@@ -482,6 +485,11 @@ class DatabaseHelper {
       await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_notes_performed_on ON notes(performed_on)',
       );
+    }
+
+    if (oldVersion < 23) {
+      await _addColumnIfMissing(db, 'exercises', 'pb_higher_is_better',
+          'INTEGER NOT NULL DEFAULT 1');
     }
   }
 

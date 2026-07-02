@@ -28,6 +28,7 @@ class Exercise {
   final String baseUnit; // Internal values: 'kg' or 'lbs'. UI label: 'kg' / 'lb'.
   final bool hasPrBaseline; // true once user explicitly marks a first PR
   final int? timeCap; // AMRAP time cap in minutes
+  final bool pbHigherIsBetter; // Custom (etc) exercises: true = higher value wins PB
 
   /// null → PR fallback (기존 데이터 호환)
   String get bestTypeLabel => (bestType ?? BestType.pr).label;
@@ -49,6 +50,7 @@ class Exercise {
     this.baseUnit = 'kg',
     this.hasPrBaseline = false,
     this.timeCap,
+    this.pbHigherIsBetter = true,
   });
 
   factory Exercise.create({
@@ -95,6 +97,7 @@ class Exercise {
     'base_unit': baseUnit,
     'has_pr_baseline': hasPrBaseline ? 1 : 0,
     'time_cap': timeCap,
+    'pb_higher_is_better': pbHigherIsBetter ? 1 : 0,
   };
 
   factory Exercise.fromMap(Map<String, dynamic> map) {
@@ -125,6 +128,7 @@ class Exercise {
       baseUnit: (map['base_unit'] as String?) ?? 'kg',
       hasPrBaseline: ((map['has_pr_baseline'] as num?)?.toInt() ?? 0) == 1,
       timeCap: map['time_cap'] != null ? (map['time_cap'] as num).toInt() : null,
+      pbHigherIsBetter: ((map['pb_higher_is_better'] as num?)?.toInt() ?? 1) == 1,
     );
   }
 
@@ -147,6 +151,7 @@ class Exercise {
     String? baseUnit,
     bool? hasPrBaseline,
     Object? timeCap = _unset,
+    bool? pbHigherIsBetter,
   }) => Exercise(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
@@ -164,6 +169,7 @@ class Exercise {
     baseUnit: baseUnit ?? this.baseUnit,
     hasPrBaseline: hasPrBaseline ?? this.hasPrBaseline,
     timeCap: identical(timeCap, _unset) ? this.timeCap : timeCap as int?,
+    pbHigherIsBetter: pbHigherIsBetter ?? this.pbHigherIsBetter,
   );
 
   // Legacy category name for the DB column

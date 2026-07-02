@@ -592,4 +592,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weekdaySat => 'S';
+
+  @override
+  String get etcDefaultUnitLabel => 'Default Unit';
+
+  @override
+  String get etcDefaultUnitHint => 'e.g. km, min/km';
+
+  @override
+  String get pbDirectionLabel => 'PB Direction';
+
+  @override
+  String get pbDirectionHigher => 'Higher ↑';
+
+  @override
+  String get pbDirectionLower => 'Lower ↓';
 }

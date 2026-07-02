@@ -18,6 +18,7 @@ import '../../providers/records_provider.dart';
 import '../../widgets/exercise_record_row.dart';
 import '../../widgets/swipeable_row.dart';
 import '../../l10n/app_localizations.dart';
+import 'add_exercise_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocus;
@@ -301,7 +302,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                   child: GestureDetector(
-                    onTap: () => context.push('/add-exercise'),
+                    onTap: () => showAddExerciseSheet(
+                      context,
+                      initialCategoryId: _filterCategoryId,
+                    ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(

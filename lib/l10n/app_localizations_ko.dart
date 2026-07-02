@@ -584,4 +584,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get weekdaySat => '토';
+
+  @override
+  String get etcDefaultUnitLabel => '기본 단위';
+
+  @override
+  String get etcDefaultUnitHint => '예: km, min/km';
+
+  @override
+  String get pbDirectionLabel => '최고 기록 방향';
+
+  @override
+  String get pbDirectionHigher => '높음 ↑';
+
+  @override
+  String get pbDirectionLower => '낮음 ↓';
 }

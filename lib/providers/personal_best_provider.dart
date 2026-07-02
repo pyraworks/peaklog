@@ -10,6 +10,11 @@ final personalBestProvider = Provider.family<PersonalBest?, String>(
     final exercise = exercises.where((e) => e.id == exerciseId).firstOrNull;
     if (exercise == null || exercise.recordType == null) return null;
     if (!exercise.hasPrBaseline) return null;
-    return PersonalBest.fromRecords(exerciseId, exercise.recordType!, records);
+    return PersonalBest.fromRecords(
+      exerciseId,
+      exercise.recordType!,
+      records,
+      pbHigherIsBetter: exercise.pbHigherIsBetter,
+    );
   },
 );

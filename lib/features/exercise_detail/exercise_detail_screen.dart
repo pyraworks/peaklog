@@ -12,6 +12,7 @@ import '../../providers/personal_best_provider.dart';
 import '../../domain/models/category.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../providers/categories_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../widgets/pb_badge.dart';
@@ -211,14 +212,18 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
 // ── _ExerciseHeader ──────────────────────────────────────────────────────────
 
-class _ExerciseHeader extends StatelessWidget {
+class _ExerciseHeader extends ConsumerWidget {
   final Exercise exercise;
   const _ExerciseHeader({required this.exercise});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final categoryName = Category.nameForId(exercise.categoryId, uncategorizedLabel: l10n.categoryUncategorized);
+    final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
+    final match = categories.where((c) => c.id == exercise.categoryId).firstOrNull;
+    final categoryName = match?.name ??
+        Category.nameForId(exercise.categoryId,
+            uncategorizedLabel: l10n.categoryUncategorized);
     return ScreenHeader(
       backLabel: l10n.back,
       titleWidget: Row(

@@ -427,7 +427,8 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
             .setRecordType(widget.exercise.id, _localRecordType!);
       }
 
-      if (widget.exercise.recordType == null && _localWeightUnit != null) {
+      if (_localWeightUnit != null &&
+          _localWeightUnit != widget.exercise.baseUnit) {
         await ref
             .read(exercisesProvider.notifier)
             .updateExerciseSettings(widget.exercise.id, baseUnit: _localWeightUnit!);

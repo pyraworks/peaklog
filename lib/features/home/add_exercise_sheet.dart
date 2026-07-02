@@ -13,12 +13,15 @@ import '../../providers/exercises_provider.dart';
 import '../../widgets/screen_header.dart';
 import '../../l10n/app_localizations.dart';
 
-Future<void> showAddExerciseSheet(BuildContext context) {
+Future<void> showAddExerciseSheet(
+  BuildContext context, {
+  String? initialCategoryId,
+}) {
   return Navigator.push<void>(
     context,
     MaterialPageRoute(
       fullscreenDialog: true,
-      builder: (_) => const AddExerciseSheet(),
+      builder: (_) => AddExerciseSheet(initialCategoryId: initialCategoryId),
     ),
   );
 }
@@ -35,7 +38,8 @@ Future<void> showEditExerciseSheet(BuildContext context, Exercise exercise) {
 
 class AddExerciseSheet extends ConsumerStatefulWidget {
   final Exercise? initialExercise;
-  const AddExerciseSheet({this.initialExercise, super.key});
+  final String? initialCategoryId;
+  const AddExerciseSheet({this.initialExercise, this.initialCategoryId, super.key});
 
   @override
   ConsumerState<AddExerciseSheet> createState() => _AddExerciseSheetState();
@@ -43,9 +47,11 @@ class AddExerciseSheet extends ConsumerStatefulWidget {
 
 class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
   final _nameCtrl = TextEditingController();
+  late final TextEditingController _etcUnitCtrl;
   String? _selectedCategoryId;
   BestType _bestType = BestType.pb;
   String _baseUnit = 'kg';
+  bool _pbHigherIsBetter = true;
   bool _saving = false;
   bool _categoryOpen = false;
 
@@ -60,12 +66,20 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
       _selectedCategoryId = ex.categoryId;
       _bestType = ex.bestType ?? BestType.pb;
       _baseUnit = ex.baseUnit;
+      _pbHigherIsBetter = ex.pbHigherIsBetter;
+      _etcUnitCtrl = TextEditingController(
+        text: ex.recordType == RecordType.etc ? ex.baseUnit : '',
+      );
+    } else {
+      _selectedCategoryId = widget.initialCategoryId;
+      _etcUnitCtrl = TextEditingController();
     }
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _etcUnitCtrl.dispose();
     super.dispose();
   }
 
@@ -120,6 +134,20 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                       _categoryOpen = false;
                     }),
                   ),
+                  const SizedBox(height: AppSpacing.s12),
+                  _BestTypeCard(
+                    value: _bestType,
+                    onChanged: (v) => setState(() => _bestType = v),
+                  ),
+                  if (_isEditMode && widget.initialExercise!.recordType == RecordType.etc) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    _PbDirectionCard(
+                      value: _pbHigherIsBetter,
+                      onChanged: (v) => setState(() => _pbHigherIsBetter = v),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    _EtcUnitCard(controller: _etcUnitCtrl),
+                  ],
                   if (_isEditMode && widget.initialExercise!.recordType == RecordType.weight) ...[
                     const SizedBox(height: AppSpacing.s12),
                     _UnitCard(
@@ -127,11 +155,6 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                       onChanged: (v) => setState(() => _baseUnit = v),
                     ),
                   ],
-                  const SizedBox(height: AppSpacing.s12),
-                  _BestTypeCard(
-                    value: _bestType,
-                    onChanged: (v) => setState(() => _bestType = v),
-                  ),
                   const SizedBox(height: AppSpacing.s24),
                   _AddButton(
                     loading: _saving,
@@ -148,6 +171,10 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
     );
   }
 
+  /// Trims and collapses internal spaces in a unit string.
+  String _normalizeUnit(String raw) =>
+      raw.trim().replaceAll(RegExp(r' +'), ' ');
+
   Future<void> _submit() async {
     final l10n = AppLocalizations.of(context)!;
     final name = _nameCtrl.text.trim();
@@ -156,12 +183,20 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
 
     try {
       if (_isEditMode) {
+        final ex = widget.initialExercise!;
+        final rawUnit = _etcUnitCtrl.text;
+        final effectiveUnit = (ex.recordType == RecordType.etc &&
+                rawUnit.trim().isNotEmpty)
+            ? _normalizeUnit(rawUnit)
+            : _baseUnit;
         await ref.read(exercisesProvider.notifier).updateExerciseSettings(
-              widget.initialExercise!.id,
+              ex.id,
               displayName: name,
               categoryId: _effectiveCategoryId,
               bestType: _bestType,
-              baseUnit: _baseUnit,
+              baseUnit: effectiveUnit,
+              pbHigherIsBetter:
+                  ex.recordType == RecordType.etc ? _pbHigherIsBetter : null,
             );
         if (mounted) Navigator.of(context).pop();
       } else {
@@ -537,6 +572,112 @@ class _UnitCard extends StatelessWidget {
           const SizedBox(height: 7),
           Text(
             l10n.defaultWeightUnit,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondaryAlt,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EtcUnitCard extends StatelessWidget {
+  final TextEditingController controller;
+  const _EtcUnitCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: Text(
+              l10n.etcDefaultUnitLabel,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondaryAlt,
+                letterSpacing: 0.64,
+              ),
+            ),
+          ),
+          TextField(
+            controller: controller,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimaryAlt,
+            ),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.fromLTRB(16, 2, 16, 11),
+              hintText: l10n.etcDefaultUnitHint,
+              hintStyle: const TextStyle(color: AppColors.label2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PbDirectionCard extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _PbDirectionCard({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                _Segment(
+                  label: l10n.pbDirectionHigher,
+                  selected: value,
+                  onTap: () => onChanged(true),
+                  isFirst: true,
+                ),
+                _Segment(
+                  label: l10n.pbDirectionLower,
+                  selected: !value,
+                  onTap: () => onChanged(false),
+                  isFirst: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            l10n.pbDirectionLabel,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 11,

@@ -629,5 +629,20 @@
   "@weekdayFri": { "description": "Single-letter weekday column header for Friday in the calendar grid" },
 
   "weekdaySat": "S",
-  "@weekdaySat": { "description": "Single-letter weekday column header for Saturday in the calendar grid" }
+  "@weekdaySat": { "description": "Single-letter weekday column header for Saturday in the calendar grid" },
+
+  "etcDefaultUnitLabel": "Default Unit",
+  "@etcDefaultUnitLabel": { "description": "Label above the default unit text field in the edit custom exercise screen" },
+
+  "etcDefaultUnitHint": "e.g. km, min/km",
+  "@etcDefaultUnitHint": { "description": "Placeholder hint inside the default unit text field for custom exercises" },
+
+  "pbDirectionLabel": "PB Direction",
+  "@pbDirectionLabel": { "description": "Section label for the PB direction setting on custom exercises" },
+
+  "pbDirectionHigher": "Higher ↑",
+  "@pbDirectionHigher": { "description": "Segment label: larger numeric value counts as the personal best" },
+
+  "pbDirectionLower": "Lower ↓",
+  "@pbDirectionLower": { "description": "Segment label: smaller numeric value counts as the personal best" }
 }

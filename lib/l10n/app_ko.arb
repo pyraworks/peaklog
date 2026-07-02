@@ -201,5 +201,12 @@
   "weekdayWed": "수",
   "weekdayThu": "목",
   "weekdayFri": "금",
-  "weekdaySat": "토"
+  "weekdaySat": "토",
+
+  "etcDefaultUnitLabel": "기본 단위",
+  "etcDefaultUnitHint": "예: km, min/km",
+
+  "pbDirectionLabel": "최고 기록 방향",
+  "pbDirectionHigher": "높음 ↑",
+  "pbDirectionLower": "낮음 ↓"
 }

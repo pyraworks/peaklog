@@ -1207,6 +1207,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'S'**
   String get weekdaySat;
+
+  /// Label above the default unit text field in the edit custom exercise screen
+  ///
+  /// In en, this message translates to:
+  /// **'Default Unit'**
+  String get etcDefaultUnitLabel;
+
+  /// Placeholder hint inside the default unit text field for custom exercises
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. km, min/km'**
+  String get etcDefaultUnitHint;
+
+  /// Section label for the PB direction setting on custom exercises
+  ///
+  /// In en, this message translates to:
+  /// **'PB Direction'**
+  String get pbDirectionLabel;
+
+  /// Segment label: larger numeric value counts as the personal best
+  ///
+  /// In en, this message translates to:
+  /// **'Higher ↑'**
+  String get pbDirectionHigher;
+
+  /// Segment label: smaller numeric value counts as the personal best
+  ///
+  /// In en, this message translates to:
+  /// **'Lower ↓'**
+  String get pbDirectionLower;
 }
 
 class _AppLocalizationsDelegate

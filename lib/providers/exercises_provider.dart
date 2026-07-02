@@ -38,6 +38,7 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
     BestType? bestType,
     String? baseUnit,
     int? timeCap,
+    bool? pbHigherIsBetter,
   }) async {
     final current = state.valueOrNull ?? [];
     final existing = current.firstWhere((e) => e.id == id);
@@ -53,6 +54,7 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
       categoryId: categoryId ?? existing.categoryId,
       bestType: bestType ?? existing.bestType,
       baseUnit: baseUnit ?? existing.baseUnit,
+      pbHigherIsBetter: pbHigherIsBetter ?? existing.pbHigherIsBetter,
       updatedAt: now,
     );
     if (timeCap != null) updated = updated.copyWith(timeCap: timeCap);
