@@ -42,7 +42,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileTitle => '프로필';
 
   @override
-  String get quickShareTitle => '빠른 공유';
+  String get shareTitle => '공유';
 
   @override
   String get saveChanges => '변경 저장';
@@ -240,10 +240,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noPublicExercises => '공개된 운동이 없습니다.';
 
   @override
-  String get quickShareTagline => '운동을 멋지게 공유하세요.';
+  String get shareTagline => '운동을 멋지게 공유하세요.';
 
   @override
-  String get quickShareBeta => '베타 이후 사용 가능합니다.';
+  String get shareBeta => '베타 이후 사용 가능합니다.';
 
   @override
   String get categoryNameHint => '카테고리 이름';
@@ -516,4 +516,72 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get oneRmCalculatorTitle => '1RM 계산기';
+
+  @override
+  String get calendarLabel => '달력';
+
+  @override
+  String calendarSummary(int workoutDays, int prCount) {
+    return '$workoutDays일 운동 · $prCount PR';
+  }
+
+  @override
+  String get calendarNoRecords => '이번 달 운동 기록이 없습니다';
+
+  @override
+  String get calendarRecordsLabel => '운동 기록';
+
+  @override
+  String get calendarNotesLabel => '메모';
+
+  @override
+  String get calendarAddNoteAffordance => '+ 메모 추가';
+
+  @override
+  String get calendarAddNoteTitle => '새 메모';
+
+  @override
+  String get calendarEditNoteTitle => '메모 편집';
+
+  @override
+  String get calendarNoteHintTitle => '제목 (선택)';
+
+  @override
+  String get calendarNoteHintBody => '이 날의 메모를 작성하세요…';
+
+  @override
+  String get calendarDeleteNote => '메모 삭제';
+
+  @override
+  String get calendarReturnToMonth => '월';
+
+  @override
+  String get calendarHintText => '날짜를 탭하면 기록과 메모를 확인할 수 있습니다.';
+
+  @override
+  String get calendarSwipeHint => '← 달력 보기';
+
+  @override
+  String get calendarLegendPersonalBest => '개인 기록';
+
+  @override
+  String get weekdaySun => '일';
+
+  @override
+  String get weekdayMon => '월';
+
+  @override
+  String get weekdayTue => '화';
+
+  @override
+  String get weekdayWed => '수';
+
+  @override
+  String get weekdayThu => '목';
+
+  @override
+  String get weekdayFri => '금';
+
+  @override
+  String get weekdaySat => '토';
 }

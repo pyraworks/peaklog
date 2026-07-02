@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'l10n/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/exercise_detail/exercise_detail_screen.dart';
-import 'features/share/quick_share_placeholder_screen.dart';
+import 'features/share/share_screen.dart';
 import 'features/home/add_exercise_sheet.dart';
-import 'features/home/home_share_page_view.dart';
+import 'features/home/home_page_view.dart';
 import 'features/one_rm_table/one_rm_table_screen.dart';
 import 'features/profile/profile_screen.dart';
 import 'features/record_input/edit_record_screen.dart';
@@ -23,7 +23,7 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const HomeSharePageView(),
+      builder: (context, state) => const HomePageView(),
     ),
     GoRoute(
       path: '/exercise/:id',
@@ -100,13 +100,13 @@ final _router = GoRouter(
       builder: (context, state) => const PlateCalculatorScreen(),
     ),
     GoRoute(
-      path: '/quick-share',
+      path: '/share',
       builder: (context, state) =>
-          QuickSharePlaceholderScreen(backLabel: AppLocalizations.of(context)!.homeLabel),
+          ShareScreen(backLabel: AppLocalizations.of(context)!.homeLabel),
     ),
     GoRoute(
       path: '/share/:recordId',
-      builder: (context, state) => const QuickSharePlaceholderScreen(),
+      builder: (context, state) => const ShareScreen(),
     ),
     GoRoute(
       path: '/categories',

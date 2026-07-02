@@ -164,11 +164,11 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profileTitle;
 
-  /// Screen title for quick share screen
+  /// Screen title for share screen
   ///
   /// In en, this message translates to:
-  /// **'Quick Share'**
-  String get quickShareTitle;
+  /// **'Share'**
+  String get shareTitle;
 
   /// Button label to save changes when editing
   ///
@@ -548,17 +548,17 @@ abstract class AppLocalizations {
   /// **'No public exercises selected.'**
   String get noPublicExercises;
 
-  /// Quick share placeholder main text
+  /// Share placeholder main text
   ///
   /// In en, this message translates to:
   /// **'Share your workout beautifully.'**
-  String get quickShareTagline;
+  String get shareTagline;
 
-  /// Quick share placeholder beta notice
+  /// Share placeholder beta notice
   ///
   /// In en, this message translates to:
   /// **'Available after the beta.'**
-  String get quickShareBeta;
+  String get shareBeta;
 
   /// Placeholder text for category name field
   ///
@@ -632,13 +632,13 @@ abstract class AppLocalizations {
   /// **'+{days} days'**
   String daysSince(int days);
 
-  /// AlertDialog title when Health permission is denied in quick_share_screen
+  /// AlertDialog title when Health permission is denied in share_export_screen
   ///
   /// In en, this message translates to:
   /// **'Apple Health Permission Required'**
   String get healthPermissionTitle;
 
-  /// AlertDialog body when Health permission is denied in quick_share_screen
+  /// AlertDialog body when Health permission is denied in share_export_screen
   ///
   /// In en, this message translates to:
   /// **'Please allow Health access in Settings.'**
@@ -650,7 +650,7 @@ abstract class AppLocalizations {
   /// **'Allow in Settings'**
   String get healthPermissionOpenSettings;
 
-  /// Empty state for the record picker sheet in quick_share_screen
+  /// Empty state for the record picker sheet in share_export_screen
   ///
   /// In en, this message translates to:
   /// **'No records'**
@@ -1075,6 +1075,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'1RM Calculator'**
   String get oneRmCalculatorTitle;
+
+  /// Bottom nav / page label for the calendar screen
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get calendarLabel;
+
+  /// Month summary line showing workout day count and PR count
+  ///
+  /// In en, this message translates to:
+  /// **'{workoutDays} workouts · {prCount} PR'**
+  String calendarSummary(int workoutDays, int prCount);
+
+  /// Empty-state label shown when the selected month has no workout records
+  ///
+  /// In en, this message translates to:
+  /// **'No workouts this month'**
+  String get calendarNoRecords;
+
+  /// Section header for the workout records list in the calendar day-detail panel
+  ///
+  /// In en, this message translates to:
+  /// **'RECORDS'**
+  String get calendarRecordsLabel;
+
+  /// Section header for the notes list in the calendar day-detail panel
+  ///
+  /// In en, this message translates to:
+  /// **'NOTES'**
+  String get calendarNotesLabel;
+
+  /// Tappable label to open the add-note bottom sheet on the calendar day-detail panel
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Note'**
+  String get calendarAddNoteAffordance;
+
+  /// Title of the bottom sheet when creating a new calendar note
+  ///
+  /// In en, this message translates to:
+  /// **'New Note'**
+  String get calendarAddNoteTitle;
+
+  /// Title of the bottom sheet when editing an existing calendar note
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Note'**
+  String get calendarEditNoteTitle;
+
+  /// Placeholder text for the title field in the note edit sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Title (optional)'**
+  String get calendarNoteHintTitle;
+
+  /// Placeholder text for the body field in the note edit sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Write a note for this day…'**
+  String get calendarNoteHintBody;
+
+  /// Destructive action label in the Cupertino confirmation dialog for deleting a note
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Note'**
+  String get calendarDeleteNote;
+
+  /// Label on the pill button that returns the calendar from week/day-detail view to full month view
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get calendarReturnToMonth;
+
+  /// Instructional hint shown below the month grid on first use
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a date to see records and notes.'**
+  String get calendarHintText;
+
+  /// One-time swipe hint shown on the home screen indicating the calendar is one swipe to the left
+  ///
+  /// In en, this message translates to:
+  /// **'← Swipe for Calendar'**
+  String get calendarSwipeHint;
+
+  /// Legend item label for the trophy icon indicating a personal best was set on that day
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Best'**
+  String get calendarLegendPersonalBest;
+
+  /// Single-letter weekday column header for Sunday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get weekdaySun;
+
+  /// Single-letter weekday column header for Monday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'M'**
+  String get weekdayMon;
+
+  /// Single-letter weekday column header for Tuesday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get weekdayTue;
+
+  /// Single-letter weekday column header for Wednesday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'W'**
+  String get weekdayWed;
+
+  /// Single-letter weekday column header for Thursday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'T'**
+  String get weekdayThu;
+
+  /// Single-letter weekday column header for Friday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'F'**
+  String get weekdayFri;
+
+  /// Single-letter weekday column header for Saturday in the calendar grid
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get weekdaySat;
 }
 
 class _AppLocalizationsDelegate

@@ -42,7 +42,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileTitle => 'Profile';
 
   @override
-  String get quickShareTitle => 'Quick Share';
+  String get shareTitle => 'Share';
 
   @override
   String get saveChanges => 'Save Changes';
@@ -241,10 +241,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPublicExercises => 'No public exercises selected.';
 
   @override
-  String get quickShareTagline => 'Share your workout beautifully.';
+  String get shareTagline => 'Share your workout beautifully.';
 
   @override
-  String get quickShareBeta => 'Available after the beta.';
+  String get shareBeta => 'Available after the beta.';
 
   @override
   String get categoryNameHint => 'Category name';
@@ -524,4 +524,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get oneRmCalculatorTitle => '1RM Calculator';
+
+  @override
+  String get calendarLabel => 'Calendar';
+
+  @override
+  String calendarSummary(int workoutDays, int prCount) {
+    return '$workoutDays workouts · $prCount PR';
+  }
+
+  @override
+  String get calendarNoRecords => 'No workouts this month';
+
+  @override
+  String get calendarRecordsLabel => 'RECORDS';
+
+  @override
+  String get calendarNotesLabel => 'NOTES';
+
+  @override
+  String get calendarAddNoteAffordance => '+ Add Note';
+
+  @override
+  String get calendarAddNoteTitle => 'New Note';
+
+  @override
+  String get calendarEditNoteTitle => 'Edit Note';
+
+  @override
+  String get calendarNoteHintTitle => 'Title (optional)';
+
+  @override
+  String get calendarNoteHintBody => 'Write a note for this day…';
+
+  @override
+  String get calendarDeleteNote => 'Delete Note';
+
+  @override
+  String get calendarReturnToMonth => 'Month';
+
+  @override
+  String get calendarHintText => 'Tap a date to see records and notes.';
+
+  @override
+  String get calendarSwipeHint => '← Swipe for Calendar';
+
+  @override
+  String get calendarLegendPersonalBest => 'Personal Best';
+
+  @override
+  String get weekdaySun => 'S';
+
+  @override
+  String get weekdayMon => 'M';
+
+  @override
+  String get weekdayTue => 'T';
+
+  @override
+  String get weekdayWed => 'W';
+
+  @override
+  String get weekdayThu => 'T';
+
+  @override
+  String get weekdayFri => 'F';
+
+  @override
+  String get weekdaySat => 'S';
 }

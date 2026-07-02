@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/design/app_colors.dart';
-import '../share/quick_share_placeholder_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../calendar/calendar_screen.dart';
 import 'home_screen.dart';
 
-class HomeSharePageView extends StatefulWidget {
-  const HomeSharePageView({super.key});
+class HomePageView extends StatefulWidget {
+  const HomePageView({super.key});
 
   @override
-  State<HomeSharePageView> createState() => _HomeSharePageViewState();
+  State<HomePageView> createState() => _HomePageViewState();
 }
 
-class _HomeSharePageViewState extends State<HomeSharePageView> {
+class _HomePageViewState extends State<HomePageView> {
   final _pageController = PageController();
   final _searchFocus = FocusNode();
   int _page = 0;
   bool _showHint = false;
 
-  static const _hintKey = 'share_swipe_hint_seen';
+  static const _hintKey = 'calendar_swipe_hint_seen';
 
   @override
   void initState() {
@@ -45,16 +46,16 @@ class _HomeSharePageViewState extends State<HomeSharePageView> {
     super.dispose();
   }
 
-  Widget _buildSwipeHint() {
+  Widget _buildSwipeHint(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.actionDark.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Text(
-        '← Swipe for Share',
-        style: TextStyle(
+      child: Text(
+        l10n.calendarSwipeHint,
+        style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: Colors.white,
@@ -67,6 +68,7 @@ class _HomeSharePageViewState extends State<HomeSharePageView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: _page == 0,
       onPopInvokedWithResult: (didPop, _) {
@@ -88,8 +90,11 @@ class _HomeSharePageViewState extends State<HomeSharePageView> {
           if (index == 1 && _showHint) _dismissHint();
         },
         children: [
-          HomeScreen(searchFocus: _searchFocus, swipeHint: _showHint ? _buildSwipeHint() : null),
-          const QuickSharePlaceholderScreen(embedded: true),
+          HomeScreen(
+            searchFocus: _searchFocus,
+            swipeHint: _showHint ? _buildSwipeHint(l10n) : null,
+          ),
+          const CalendarScreen(),
         ],
       ),
     );

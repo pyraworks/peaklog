@@ -12,7 +12,7 @@
   "recordDetailTitle": "기록 상세",
   "categoriesTitle": "카테고리",
   "profileTitle": "프로필",
-  "quickShareTitle": "빠른 공유",
+  "shareTitle": "공유",
   "saveChanges": "변경 저장",
   "addExerciseButton": "운동 추가",
   "saveRecord": "기록 저장",
@@ -75,8 +75,8 @@
   "swipeHint": "기록을 왼쪽으로 밀면 공유 및 삭제할 수 있습니다.",
   "profileUrlCopied": "프로필 URL이 복사되었습니다",
   "noPublicExercises": "공개된 운동이 없습니다.",
-  "quickShareTagline": "운동을 멋지게 공유하세요.",
-  "quickShareBeta": "베타 이후 사용 가능합니다.",
+  "shareTagline": "운동을 멋지게 공유하세요.",
+  "shareBeta": "베타 이후 사용 가능합니다.",
   "categoryNameHint": "카테고리 이름",
   "colorLabel": "색상",
   "searchExercises": "검색",
@@ -172,5 +172,34 @@
   "hideLabel": "접기",
   "aspectRatioOriginal": "원본",
 
-  "oneRmCalculatorTitle": "1RM 계산기"
+  "oneRmCalculatorTitle": "1RM 계산기",
+
+  "calendarLabel": "달력",
+  "calendarSummary": "{workoutDays}일 운동 · {prCount} PR",
+  "@calendarSummary": {
+    "placeholders": {
+      "workoutDays": { "type": "int" },
+      "prCount": { "type": "int" }
+    }
+  },
+  "calendarNoRecords": "이번 달 운동 기록이 없습니다",
+  "calendarRecordsLabel": "운동 기록",
+  "calendarNotesLabel": "메모",
+  "calendarAddNoteAffordance": "+ 메모 추가",
+  "calendarAddNoteTitle": "새 메모",
+  "calendarEditNoteTitle": "메모 편집",
+  "calendarNoteHintTitle": "제목 (선택)",
+  "calendarNoteHintBody": "이 날의 메모를 작성하세요…",
+  "calendarDeleteNote": "메모 삭제",
+  "calendarReturnToMonth": "월",
+  "calendarHintText": "날짜를 탭하면 기록과 메모를 확인할 수 있습니다.",
+  "calendarSwipeHint": "← 달력 보기",
+  "calendarLegendPersonalBest": "개인 기록",
+  "weekdaySun": "일",
+  "weekdayMon": "월",
+  "weekdayTue": "화",
+  "weekdayWed": "수",
+  "weekdayThu": "목",
+  "weekdayFri": "금",
+  "weekdaySat": "토"
 }

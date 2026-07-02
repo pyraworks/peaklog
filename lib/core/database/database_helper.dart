@@ -2,6 +2,7 @@ import 'package:path/path.dart' hide normalize;
 import 'package:sqflite/sqflite.dart';
 import '../models/exercise.dart';
 import '../models/health_import.dart';
+import '../models/note.dart';
 import '../models/record.dart';
 import '../utils/normalize.dart';
 import '../../domain/models/category.dart';
@@ -21,7 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 21,
+      version: 22,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -122,6 +123,18 @@ class DatabaseHelper {
         id          TEXT PRIMARY KEY,
         record_id   TEXT NOT NULL,
         imported_at INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE notes (
+        id           TEXT PRIMARY KEY,
+        performed_on INTEGER NOT NULL,
+        title        TEXT NOT NULL DEFAULT '',
+        body         TEXT NOT NULL DEFAULT '',
+        sort_order   INTEGER NOT NULL DEFAULT 0,
+        is_deleted   INTEGER NOT NULL DEFAULT 0,
+        created_at   INTEGER NOT NULL,
+        updated_at   INTEGER NOT NULL
       )
     ''');
     await _createIndexes(db);
@@ -452,6 +465,24 @@ class DatabaseHelper {
         "UPDATE categories SET color = 'gray' WHERE id = '${Category.uncategorizedId}' AND color = 'brown'",
       );
     }
+
+    if (oldVersion < 22) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS notes (
+          id           TEXT PRIMARY KEY,
+          performed_on INTEGER NOT NULL,
+          title        TEXT NOT NULL DEFAULT '',
+          body         TEXT NOT NULL DEFAULT '',
+          sort_order   INTEGER NOT NULL DEFAULT 0,
+          is_deleted   INTEGER NOT NULL DEFAULT 0,
+          created_at   INTEGER NOT NULL,
+          updated_at   INTEGER NOT NULL
+        )
+      ''');
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_notes_performed_on ON notes(performed_on)',
+      );
+    }
   }
 
   Future<void> _addColumnIfMissing(
@@ -476,6 +507,8 @@ class DatabaseHelper {
         'CREATE UNIQUE INDEX IF NOT EXISTS idx_exercises_normalized_name ON exercises(normalized_name) WHERE is_archived = 0');
     await db.execute(
         'CREATE INDEX IF NOT EXISTS idx_public_records_display_order ON public_records(display_order)');
+    await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_notes_performed_on ON notes(performed_on)');
   }
 
   Future<void> _seedCategories(Database db) async {
@@ -739,6 +772,52 @@ class DatabaseHelper {
     );
     if (rows.isEmpty) return null;
     return (rows.first['duration_seconds'] as num).toInt();
+  }
+
+  // ── NOTES ──────────────────────────────────────────────────────
+
+  Future<void> insertNote(Note note) async {
+    final db = await database;
+    await db.insert('notes', note.toMap());
+  }
+
+  Future<void> updateNote(Note note) async {
+    final db = await database;
+    await db.update('notes', note.toMap(),
+        where: 'id = ?', whereArgs: [note.id]);
+  }
+
+  Future<void> softDeleteNote(String id) async {
+    final db = await database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.update(
+      'notes',
+      {'is_deleted': 1, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Note>> getNotesByDate(int dayEpoch) async {
+    final db = await database;
+    final maps = await db.query(
+      'notes',
+      where: 'performed_on = ? AND is_deleted = 0',
+      whereArgs: [dayEpoch],
+      orderBy: 'sort_order ASC, created_at ASC',
+    );
+    return maps.map(Note.fromMap).toList();
+  }
+
+  Future<List<Record>> getRecordsByDateRange(int startMs, int endMs) async {
+    final db = await database;
+    final maps = await db.query(
+      'records',
+      where: 'performed_at >= ? AND performed_at < ? AND is_deleted = 0',
+      whereArgs: [startMs, endMs],
+      orderBy: 'performed_at ASC',
+    );
+    return maps.map(Record.fromMap).toList();
   }
 
   // ── MISC ───────────────────────────────────────────────────────

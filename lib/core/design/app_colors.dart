@@ -46,6 +46,7 @@ class AppColors {
 
   // PeakLog
   static const pbGold      = Color(0xFFF5C842);
+  static const todayAccent = Color(0xFFF0512E);  // calendar today-date highlight
   static const chevron     = Color(0xFFC7C7CC);
   static const disabled    = Color(0xFFC7C7CC);
 }

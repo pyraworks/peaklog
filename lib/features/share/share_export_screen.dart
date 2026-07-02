@@ -19,15 +19,15 @@ import '../../widgets/screen_header.dart';
 import '../export/export_screen.dart';
 import '../record_input/activity_picker_sheet.dart';
 
-class QuickShareScreen extends ConsumerStatefulWidget {
+class ShareExportScreen extends ConsumerStatefulWidget {
   final bool embedded;
-  const QuickShareScreen({super.key, this.embedded = false});
+  const ShareExportScreen({super.key, this.embedded = false});
 
   @override
-  ConsumerState<QuickShareScreen> createState() => _QuickShareScreenState();
+  ConsumerState<ShareExportScreen> createState() => _ShareExportScreenState();
 }
 
-class _QuickShareScreenState extends ConsumerState<QuickShareScreen>
+class _ShareExportScreenState extends ConsumerState<ShareExportScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;

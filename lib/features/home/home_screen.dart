@@ -15,6 +15,7 @@ import '../../providers/categories_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/records_provider.dart';
+import '../../widgets/exercise_record_row.dart';
 import '../../widgets/swipeable_row.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -281,11 +282,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             id: exercise.id,
                             onEdit: () => context.push('/exercise/${exercise.id}'),
                             onDelete: () => _confirmDelete(context, exercise),
-                            child: _ExerciseRow(
-                              exercise: exercise,
-                              bestValue: bestValue,
+                            child: ExerciseRecordRow(
+                              name: exercise.displayName,
+                              value: bestValue,
                               categoryColor: catColor,
-                              hasPb: pb != null,
+                              hasPr: pb != null,
                             ),
                           );
                         },
@@ -404,85 +405,3 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-/// Single exercise row. No date, no card border. Color dot on the left,
-/// PB value + chevron on the right.
-///
-/// Rendering rules (see plan "PB / PR Rendering Reference"):
-///   hasPb=true  + value != '—' → amber trophy + value
-///   hasPb=false + value != '—' → plain value in label2 color
-///   value == '—'               → nothing before chevron
-class _ExerciseRow extends StatelessWidget {
-  final Exercise exercise;
-  final String bestValue;
-  final Color categoryColor;
-  final bool hasPb;
-
-  const _ExerciseRow({
-    required this.exercise,
-    required this.bestValue,
-    required this.categoryColor,
-    required this.hasPb,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final showValue = bestValue != '—';
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          CategoryColorIndicator(color: categoryColor, size: 10),
-          const SizedBox(width: 10),
-          // Exercise name
-          Expanded(
-            child: Text(
-              exercise.displayName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.label1,
-              ),
-            ),
-          ),
-          // PB / best value
-          if (showValue && hasPb) ...[
-            Icon(AppIcons.trophy, size: 13, color: AppColors.pbGold),
-            const SizedBox(width: 4),
-            Text(
-              bestValue,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.label1,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ] else if (showValue) ...[
-            Text(
-              bestValue,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.label2,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ] else ...[
-            const Text(
-              '—',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.label2,
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-          // Chevron
-          Icon(AppIcons.forward, size: 18, color: AppColors.chevron),
-        ],
-      ),
-    );
-  }
-}

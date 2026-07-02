@@ -6,10 +6,10 @@ import '../../core/design/app_typography.dart';
 import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 
-class QuickSharePlaceholderScreen extends StatelessWidget {
+class ShareScreen extends StatelessWidget {
   final bool embedded;
   final String backLabel;
-  const QuickSharePlaceholderScreen({super.key, this.embedded = false, this.backLabel = 'Back'});
+  const ShareScreen({super.key, this.embedded = false, this.backLabel = 'Back'});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class QuickSharePlaceholderScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Text(
-                  l10n.quickShareTitle,
+                  l10n.shareTitle,
                   style: AppTypography.appTitle.copyWith(
                     color: AppColors.label1,
                   ),
@@ -42,7 +42,7 @@ class QuickSharePlaceholderScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          ScreenHeader(backLabel: backLabel, title: l10n.quickShareTitle),
+          ScreenHeader(backLabel: backLabel, title: l10n.shareTitle),
           const Expanded(child: _PlaceholderContent()),
         ],
       ),
@@ -69,7 +69,7 @@ class _PlaceholderContent extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s24),
             Text(
-              l10n.quickShareTagline,
+              l10n.shareTagline,
               style: AppTypography.body.copyWith(
                 color: AppColors.label2,
               ),
@@ -77,7 +77,7 @@ class _PlaceholderContent extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s12),
             Text(
-              l10n.quickShareBeta,
+              l10n.shareBeta,
               style: AppTypography.footnote.copyWith(
                 color: AppColors.label3,
               ),

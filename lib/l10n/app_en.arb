@@ -34,8 +34,8 @@
   "profileTitle": "Profile",
   "@profileTitle": { "description": "Screen title for profile screen" },
 
-  "quickShareTitle": "Quick Share",
-  "@quickShareTitle": { "description": "Screen title for quick share screen" },
+  "shareTitle": "Share",
+  "@shareTitle": { "description": "Screen title for share screen" },
 
   "saveChanges": "Save Changes",
   "@saveChanges": { "description": "Button label to save changes when editing" },
@@ -250,11 +250,11 @@
   "noPublicExercises": "No public exercises selected.",
   "@noPublicExercises": { "description": "Empty state for public records grid on profile screen" },
 
-  "quickShareTagline": "Share your workout beautifully.",
-  "@quickShareTagline": { "description": "Quick share placeholder main text" },
+  "shareTagline": "Share your workout beautifully.",
+  "@shareTagline": { "description": "Share placeholder main text" },
 
-  "quickShareBeta": "Available after the beta.",
-  "@quickShareBeta": { "description": "Quick share placeholder beta notice" },
+  "shareBeta": "Available after the beta.",
+  "@shareBeta": { "description": "Share placeholder beta notice" },
 
   "categoryNameHint": "Category name",
   "@categoryNameHint": { "description": "Placeholder text for category name field" },
@@ -317,16 +317,16 @@
   },
 
   "healthPermissionTitle": "Apple Health Permission Required",
-  "@healthPermissionTitle": { "description": "AlertDialog title when Health permission is denied in quick_share_screen" },
+  "@healthPermissionTitle": { "description": "AlertDialog title when Health permission is denied in share_export_screen" },
 
   "healthPermissionContent": "Please allow Health access in Settings.",
-  "@healthPermissionContent": { "description": "AlertDialog body when Health permission is denied in quick_share_screen" },
+  "@healthPermissionContent": { "description": "AlertDialog body when Health permission is denied in share_export_screen" },
 
   "healthPermissionOpenSettings": "Allow in Settings",
   "@healthPermissionOpenSettings": { "description": "Button to open system Settings when Health permission is denied" },
 
   "noRecords": "No records",
-  "@noRecords": { "description": "Empty state for the record picker sheet in quick_share_screen" },
+  "@noRecords": { "description": "Empty state for the record picker sheet in share_export_screen" },
 
   "categoryUncategorized": "Uncategorized",
   "@categoryUncategorized": { "description": "Label for the built-in uncategorized category" },
@@ -557,5 +557,77 @@
   "@aspectRatioOriginal": { "description": "Aspect ratio chip label for 'Original' ratio on export screen" },
 
   "oneRmCalculatorTitle": "1RM Calculator",
-  "@oneRmCalculatorTitle": { "description": "Hub card title and screen header title for the 1RM calculator" }
+  "@oneRmCalculatorTitle": { "description": "Hub card title and screen header title for the 1RM calculator" },
+
+  "calendarLabel": "Calendar",
+  "@calendarLabel": { "description": "Bottom nav / page label for the calendar screen" },
+
+  "calendarSummary": "{workoutDays} workouts · {prCount} PR",
+  "@calendarSummary": {
+    "description": "Month summary line showing workout day count and PR count",
+    "placeholders": {
+      "workoutDays": { "type": "int", "description": "Number of days with at least one workout record" },
+      "prCount": { "type": "int", "description": "Number of personal records set this month" }
+    }
+  },
+
+  "calendarNoRecords": "No workouts this month",
+  "@calendarNoRecords": { "description": "Empty-state label shown when the selected month has no workout records" },
+
+  "calendarRecordsLabel": "RECORDS",
+  "@calendarRecordsLabel": { "description": "Section header for the workout records list in the calendar day-detail panel" },
+
+  "calendarNotesLabel": "NOTES",
+  "@calendarNotesLabel": { "description": "Section header for the notes list in the calendar day-detail panel" },
+
+  "calendarAddNoteAffordance": "+ Add Note",
+  "@calendarAddNoteAffordance": { "description": "Tappable label to open the add-note bottom sheet on the calendar day-detail panel" },
+
+  "calendarAddNoteTitle": "New Note",
+  "@calendarAddNoteTitle": { "description": "Title of the bottom sheet when creating a new calendar note" },
+
+  "calendarEditNoteTitle": "Edit Note",
+  "@calendarEditNoteTitle": { "description": "Title of the bottom sheet when editing an existing calendar note" },
+
+  "calendarNoteHintTitle": "Title (optional)",
+  "@calendarNoteHintTitle": { "description": "Placeholder text for the title field in the note edit sheet" },
+
+  "calendarNoteHintBody": "Write a note for this day…",
+  "@calendarNoteHintBody": { "description": "Placeholder text for the body field in the note edit sheet" },
+
+  "calendarDeleteNote": "Delete Note",
+  "@calendarDeleteNote": { "description": "Destructive action label in the Cupertino confirmation dialog for deleting a note" },
+
+  "calendarReturnToMonth": "Month",
+  "@calendarReturnToMonth": { "description": "Label on the pill button that returns the calendar from week/day-detail view to full month view" },
+
+  "calendarHintText": "Tap a date to see records and notes.",
+  "@calendarHintText": { "description": "Instructional hint shown below the month grid on first use" },
+
+  "calendarSwipeHint": "← Swipe for Calendar",
+  "@calendarSwipeHint": { "description": "One-time swipe hint shown on the home screen indicating the calendar is one swipe to the left" },
+
+  "calendarLegendPersonalBest": "Personal Best",
+  "@calendarLegendPersonalBest": { "description": "Legend item label for the trophy icon indicating a personal best was set on that day" },
+
+  "weekdaySun": "S",
+  "@weekdaySun": { "description": "Single-letter weekday column header for Sunday in the calendar grid" },
+
+  "weekdayMon": "M",
+  "@weekdayMon": { "description": "Single-letter weekday column header for Monday in the calendar grid" },
+
+  "weekdayTue": "T",
+  "@weekdayTue": { "description": "Single-letter weekday column header for Tuesday in the calendar grid" },
+
+  "weekdayWed": "W",
+  "@weekdayWed": { "description": "Single-letter weekday column header for Wednesday in the calendar grid" },
+
+  "weekdayThu": "T",
+  "@weekdayThu": { "description": "Single-letter weekday column header for Thursday in the calendar grid" },
+
+  "weekdayFri": "F",
+  "@weekdayFri": { "description": "Single-letter weekday column header for Friday in the calendar grid" },
+
+  "weekdaySat": "S",
+  "@weekdaySat": { "description": "Single-letter weekday column header for Saturday in the calendar grid" }
 }
