@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../../widgets/screen_header.dart';
 import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
 import 'time_input_field.dart';
@@ -519,6 +521,9 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
             .setPrBaseline(widget.exercise.id);
       }
 
+      unawaited(ref.read(analyticsProvider).logRecordSaved(
+        exerciseType: widget.exercise.exerciseType,
+      ));
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {

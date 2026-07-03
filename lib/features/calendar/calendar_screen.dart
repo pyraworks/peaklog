@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../core/models/record.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../domain/models/category.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/calendar_month_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/notes_provider.dart';
@@ -122,13 +124,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 20, 0),
               child: Text(
-                l10n.calendarLabel,
+                'Calendar',
                 style: AppTypography.appTitle.copyWith(color: AppColors.label1),
               ),
             ),
             _buildHeader(l10n, dataAsync),
-            _buildWeekdayRow(l10n),
-            ClipRect(child: _buildGrid(dataAsync)),
+            if (_isWeekView)
+              Container(
+                margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  border: Border.all(color: AppColors.separator, width: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: _buildWeekdayRow(l10n),
+                    ),
+                    ClipRect(child: _buildGrid(dataAsync)),
+                  ],
+                ),
+              )
+            else ...[
+              _buildWeekdayRow(l10n),
+              ClipRect(child: _buildGrid(dataAsync)),
+            ],
             if (_isWeekView)
               Expanded(
                 child: _buildDayDetail(l10n, dataAsync.valueOrNull),
@@ -897,6 +920,7 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
         title: _titleCtrl.text.trim(),
         body: _bodyCtrl.text.trim(),
       );
+      unawaited(ref.read(analyticsProvider).logNoteCreated());
     } else {
       final now = DateTime.now().millisecondsSinceEpoch;
       await notifier.updateNote(

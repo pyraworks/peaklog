@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
@@ -9,15 +10,16 @@ import '../../core/models/exercise.dart';
 import '../../domain/models/category.dart';
 import '../../widgets/category_color_indicator.dart';
 import '../../providers/categories_provider.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../widgets/screen_header.dart';
 import '../../l10n/app_localizations.dart';
 
-Future<void> showAddExerciseSheet(
+Future<String?> showAddExerciseSheet(
   BuildContext context, {
   String? initialCategoryId,
 }) {
-  return Navigator.push<void>(
+  return Navigator.push<String?>(
     context,
     MaterialPageRoute(
       fullscreenDialog: true,
@@ -52,6 +54,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
   BestType _bestType = BestType.pb;
   String _baseUnit = 'kg';
   bool _pbHigherIsBetter = true;
+  ExerciseType _exerciseType = ExerciseType.record;
   bool _saving = false;
   bool _categoryOpen = false;
 
@@ -67,6 +70,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
       _bestType = ex.bestType ?? BestType.pb;
       _baseUnit = ex.baseUnit;
       _pbHigherIsBetter = ex.pbHigherIsBetter;
+      _exerciseType = ex.exerciseType;
       _etcUnitCtrl = TextEditingController(
         text: ex.recordType == RecordType.etc ? ex.baseUnit : '',
       );
@@ -120,6 +124,13 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                     onChanged: () => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.s12),
+                  if (!_isEditMode) ...[
+                    _ExerciseTypeCard(
+                      value: _exerciseType,
+                      onChanged: (v) => setState(() => _exerciseType = v),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                  ],
                   _CategoryDropdown(
                     selectedId: _selectedCategoryId,
                     categoryLabel: _selectedCategoryId != null
@@ -135,10 +146,11 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                     }),
                   ),
                   const SizedBox(height: AppSpacing.s12),
-                  _BestTypeCard(
-                    value: _bestType,
-                    onChanged: (v) => setState(() => _bestType = v),
-                  ),
+                  if (_exerciseType == ExerciseType.record)
+                    _BestTypeCard(
+                      value: _bestType,
+                      onChanged: (v) => setState(() => _bestType = v),
+                    ),
                   if (_isEditMode && widget.initialExercise!.recordType == RecordType.etc) ...[
                     const SizedBox(height: AppSpacing.s12),
                     _PbDirectionCard(
@@ -200,14 +212,22 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
             );
         if (mounted) Navigator.of(context).pop();
       } else {
+        final categoryId = _effectiveCategoryId;
         final exercise = await ref
             .read(exercisesProvider.notifier)
-            .addExercise(name, _effectiveCategoryId,
-                bestType: _bestType);
+            .addExercise(name, categoryId,
+                bestType: _exerciseType == ExerciseType.record ? _bestType : null,
+                pbHigherIsBetter: _pbHigherIsBetter,
+                exerciseType: _exerciseType);
 
         if (!mounted) return;
         final id = exercise?.id;
-        Navigator.of(context).pop();
+        if (exercise != null) {
+          unawaited(ref.read(analyticsProvider).logExerciseCreated(
+            exerciseType: exercise.exerciseType,
+          ));
+        }
+        Navigator.of(context).pop(categoryId);
         if (id != null) context.push('/exercise/$id');
       }
     } catch (e) {
@@ -420,6 +440,52 @@ class _CategoryDropdown extends StatelessWidget {
                 );
               }).toList(),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExerciseTypeCard extends StatelessWidget {
+  final ExerciseType value;
+  final ValueChanged<ExerciseType> onChanged;
+  const _ExerciseTypeCard({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                _Segment(
+                  label: 'Record',
+                  selected: value == ExerciseType.record,
+                  onTap: () => onChanged(ExerciseType.record),
+                  isFirst: true,
+                ),
+                _Segment(
+                  label: 'Complete',
+                  selected: value == ExerciseType.complete,
+                  onTap: () => onChanged(ExerciseType.complete),
+                  isFirst: false,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

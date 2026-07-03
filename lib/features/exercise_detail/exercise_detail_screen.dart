@@ -21,6 +21,7 @@ import '../../widgets/swipeable_row.dart';
 import '../home/add_exercise_sheet.dart';
 import '../record_input/add_record_sheet.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/analytics_provider.dart';
 
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -35,12 +36,32 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   bool _addRecordOpened = false;
 
   void _maybeOpenAddRecord(BuildContext context, Exercise exercise) {
+    if (exercise.exerciseType == ExerciseType.complete) return;
     if (exercise.recordType == null && !_addRecordOpened) {
       _addRecordOpened = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) showAddRecordSheet(context, ref, exercise);
       });
     }
+  }
+
+  bool _hasTodayRecord(List<Record> records) {
+    final now = DateTime.now();
+    return records.any((r) {
+      if (r.isDeleted) return false;
+      final dt = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
+      return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    });
+  }
+
+  Future<void> _markDoneToday() async {
+    await ref.read(recordsProvider(widget.exerciseId).notifier).addRecord(
+      performedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    // ignore: unawaited_futures
+    ref.read(analyticsProvider).logRecordSaved(
+      exerciseType: ExerciseType.complete,
+    );
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
@@ -177,24 +198,37 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   const SizedBox(height: AppSpacing.s24),
                 ],
 
-                // 3. Add Record button
-                _AddRecordButton(
-                  onTap: () => showAddRecordSheet(context, ref, exercise),
-                ),
+                // 3. Add Record / Done Today button
+                if (exercise.exerciseType == ExerciseType.complete)
+                  _DoneTodayButton(
+                    hasTodayRecord: _hasTodayRecord(records),
+                    onTap: _markDoneToday,
+                  )
+                else
+                  _AddRecordButton(
+                    onTap: () => showAddRecordSheet(context, ref, exercise),
+                  ),
                 const SizedBox(height: AppSpacing.s24),
 
                 // 4. History (only when there are records)
-                if (rt != null && records.isNotEmpty)
+                if ((rt != null || exercise.exerciseType == ExerciseType.complete) && records.isNotEmpty)
                   _HistorySection(
                     records: records,
-                    prRecordId: bestRecordId,
+                    prRecordId: exercise.exerciseType == ExerciseType.complete ? null : bestRecordId,
                     exercise: exercise,
                     weightUnit: weightUnit,
-                    formatValue: (r) =>
-                        _formatHistoryValue(r, rt, weightUnit),
-                    onTap: (r) => context.push(
-                        '/exercise/${widget.exerciseId}/record/${r.id}'),
-                    onShare: (r) => context.push('/share/${r.id}'),
+                    formatValue: exercise.exerciseType == ExerciseType.complete
+                        ? (r) {
+                            final dt = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
+                            return '✓ ${DateFormatter.short(dt)}';
+                          }
+                        : (r) => _formatHistoryValue(r, rt, weightUnit),
+                    onTap: exercise.exerciseType == ExerciseType.complete
+                        ? (_) {}
+                        : (r) => context.push('/exercise/${widget.exerciseId}/record/${r.id}'),
+                    onShare: exercise.exerciseType == ExerciseType.complete
+                        ? (_) {}
+                        : (r) => context.push('/share/${r.id}'),
                     onDelete: (r) => ref
                         .read(recordsProvider(widget.exerciseId).notifier)
                         .deleteRecord(r.id),
@@ -602,6 +636,46 @@ class _OneRMCalculatorState extends State<_OneRMCalculator> {
   }
 }
 
+// ── _DoneTodayButton ─────────────────────────────────────────────────────────
+
+class _DoneTodayButton extends StatelessWidget {
+  final bool hasTodayRecord;
+  final VoidCallback onTap;
+  const _DoneTodayButton({required this.hasTodayRecord, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: hasTodayRecord ? null : onTap,
+      child: AnimatedOpacity(
+        opacity: hasTodayRecord ? 0.5 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.actionDark,
+            border: Border.all(color: AppColors.actionDarkBorder),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16, vertical: 11),
+          child: Center(
+            child: Text(
+              hasTodayRecord ? '✓ Completed Today' : '✓ Done Today',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                letterSpacing: -0.14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── _AddRecordButton ─────────────────────────────────────────────────────────
 
 class _AddRecordButton extends StatelessWidget {
@@ -692,11 +766,14 @@ class _HistorySection extends StatelessWidget {
                   children: records.asMap().entries.map((entry) {
                     final i = entry.key;
                     final r = entry.value;
-                    final isPb = r.id == prRecordId;
+                    final isComplete = exercise.exerciseType == ExerciseType.complete;
+                    final isPb = isComplete ? false : r.id == prRecordId;
                     final valueStr = formatValue(r);
-                    final dateStr = DateFormatter.short(
-                      DateTime.fromMillisecondsSinceEpoch(r.performedAt),
-                    );
+                    final dateStr = isComplete
+                        ? ''
+                        : DateFormatter.short(
+                            DateTime.fromMillisecondsSinceEpoch(r.performedAt),
+                          );
                     return Column(
                       children: [
                         SwipeableRow(
@@ -708,11 +785,12 @@ class _HistorySection extends StatelessWidget {
                             onTap: () => onTap(r),
                             behavior: HitTestBehavior.opaque,
                             child: _HistoryRowContent(
-                            valueText: valueStr,
-                            dateText: dateStr,
-                            isPb: isPb,
-                            pbLabel: exercise.bestTypeLabel,
-                          ),
+                              valueText: valueStr,
+                              dateText: dateStr,
+                              isPb: isPb,
+                              pbLabel: exercise.bestTypeLabel,
+                              showChevron: !isComplete,
+                            ),
                           ),
                         ),
                         if (i < records.length - 1)
@@ -763,12 +841,14 @@ class _HistoryRowContent extends StatelessWidget {
   final String dateText;
   final bool isPb;
   final String pbLabel;
+  final bool showChevron;
 
   const _HistoryRowContent({
     required this.valueText,
     required this.dateText,
     required this.isPb,
     required this.pbLabel,
+    this.showChevron = true,
   });
 
   @override
@@ -797,18 +877,20 @@ class _HistoryRowContent extends StatelessWidget {
                   ],
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                dateText,
-                style: AppTypography.footnote.copyWith(
-                  color: AppColors.textTertiary,
+              if (dateText.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  dateText,
+                  style: AppTypography.footnote.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
           // Right — chevron
-          Icon(AppIcons.forward,
-              size: 16, color: AppColors.chevron),
+          if (showChevron)
+            Icon(AppIcons.forward, size: 16, color: AppColors.chevron),
         ],
       ),
     );

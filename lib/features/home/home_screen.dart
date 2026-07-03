@@ -382,7 +382,6 @@ class _CalendarEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -393,25 +392,14 @@ class _CalendarEntryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.separator, width: 0.5),
         ),
-        child: Row(
-          children: [
-            Icon(AppIcons.calendar, size: 17, color: AppColors.label2),
-            const SizedBox(width: 9),
-            Text(
-              l10n.calendarLabel,
-              style: AppTypography.body.copyWith(
-                fontWeight: FontWeight.w500,
-                color: AppColors.label1,
-              ),
+        child: Center(
+          child: Text(
+            '← Swipe to Calendar →',
+            style: AppTypography.body.copyWith(
+              fontWeight: FontWeight.w500,
+              color: AppColors.label2,
             ),
-            const Spacer(),
-            Text(
-              l10n.calendarCardSwipeHint,
-              style: AppTypography.footnote.copyWith(color: AppColors.label5),
-            ),
-            const SizedBox(width: 2),
-            Icon(AppIcons.forward, size: 18, color: AppColors.chevron),
-          ],
+          ),
         ),
       ),
     );

@@ -1,22 +1,27 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/design/app_colors.dart';
+import '../../core/services/analytics_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/analytics_provider.dart';
 import '../calendar/calendar_screen.dart';
 import 'home_screen.dart';
 
-class HomePageView extends StatefulWidget {
+class HomePageView extends ConsumerStatefulWidget {
   const HomePageView({super.key});
 
   @override
-  State<HomePageView> createState() => _HomePageViewState();
+  ConsumerState<HomePageView> createState() => _HomePageViewState();
 }
 
-class _HomePageViewState extends State<HomePageView> {
+class _HomePageViewState extends ConsumerState<HomePageView> {
   final _pageController = PageController();
   final _searchFocus = FocusNode();
   int _page = 0;
   bool _showHint = false;
+  CalendarEntryMethod? _pendingCalendarEntry;
 
   static const _hintKey = 'calendar_swipe_hint_seen';
 
@@ -87,17 +92,25 @@ class _HomePageViewState extends State<HomePageView> {
             : const PageScrollPhysics(parent: ClampingScrollPhysics()),
         onPageChanged: (index) {
           setState(() => _page = index);
-          if (index == 1 && _showHint) _dismissHint();
+          if (index == 1) {
+            final entry = _pendingCalendarEntry ?? CalendarEntryMethod.swipe;
+            _pendingCalendarEntry = null;
+            unawaited(ref.read(analyticsProvider).logCalendarOpened(entry: entry));
+            if (_showHint) _dismissHint();
+          }
         },
         children: [
           HomeScreen(
             searchFocus: _searchFocus,
             swipeHint: _showHint ? _buildSwipeHint(l10n) : null,
-            onCalendarTap: () => _pageController.animateToPage(
-              1,
-              duration: const Duration(milliseconds: 235),
-              curve: Curves.easeOutCubic,
-            ),
+            onCalendarTap: () {
+              _pendingCalendarEntry = CalendarEntryMethod.button;
+              _pageController.animateToPage(
+                1,
+                duration: const Duration(milliseconds: 235),
+                curve: Curves.easeOutCubic,
+              );
+            },
           ),
           const CalendarScreen(),
         ],

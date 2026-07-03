@@ -14,6 +14,8 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
     String displayName, String? categoryId, {
     BestType? bestType,
     String baseUnit = 'kg',
+    bool pbHigherIsBetter = true,
+    ExerciseType exerciseType = ExerciseType.record,
   }) async {
     final current = state.valueOrNull ?? [];
     final exercise = await AddExerciseUseCase.execute(
@@ -21,6 +23,8 @@ class ExercisesNotifier extends AsyncNotifier<List<Exercise>> {
       categoryId: categoryId,
       bestType: bestType,
       baseUnit: baseUnit,
+      pbHigherIsBetter: pbHigherIsBetter,
+      exerciseType: exerciseType,
       currentCount: current.length,
     );
     if (exercise == null) return null;

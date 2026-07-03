@@ -19,6 +19,7 @@ import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/analytics_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../providers/unit_settings_provider.dart';
 import '../../widgets/screen_header.dart';
@@ -410,12 +411,16 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final subject = _isActivityMode
           ? l10n.shareSubjectActivity(exerciseName)
           : l10n.shareSubjectRecord(exerciseName, shareExercise.bestTypeLabel);
-      await Share.shareXFiles(
-        [XFile(path, mimeType: 'image/png')],
-        subject: subject,
-        sharePositionOrigin:
-            box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(path, mimeType: 'image/png')],
+          subject: subject,
+          sharePositionOrigin:
+              box != null ? box.localToGlobal(Offset.zero) & box.size : null,
+        ),
       );
+      // ignore: unawaited_futures
+      ref.read(analyticsProvider).logShareUsed();
     } catch (e) {
       if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {

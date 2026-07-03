@@ -1,11 +1,13 @@
 import 'package:uuid/uuid.dart';
 import '../enums/best_type.dart';
+import '../enums/exercise_type.dart';
 import '../enums/record_type.dart';
 import '../enums/sync_status.dart';
 import '../utils/normalize.dart';
 import '../../domain/models/category.dart';
 
 export '../enums/best_type.dart';
+export '../enums/exercise_type.dart';
 export '../enums/record_type.dart';
 export '../enums/sync_status.dart';
 
@@ -29,6 +31,7 @@ class Exercise {
   final bool hasPrBaseline; // true once user explicitly marks a first PR
   final int? timeCap; // AMRAP time cap in minutes
   final bool pbHigherIsBetter; // Custom (etc) exercises: true = higher value wins PB
+  final ExerciseType exerciseType; // immutable after creation
 
   /// null → PR fallback (기존 데이터 호환)
   String get bestTypeLabel => (bestType ?? BestType.pr).label;
@@ -51,6 +54,7 @@ class Exercise {
     this.hasPrBaseline = false,
     this.timeCap,
     this.pbHigherIsBetter = true,
+    this.exerciseType = ExerciseType.record,
   });
 
   factory Exercise.create({
@@ -61,6 +65,8 @@ class Exercise {
     bool isSystemPreset = false,
     int orderIndex = 0,
     String baseUnit = 'kg',
+    bool pbHigherIsBetter = true,
+    ExerciseType exerciseType = ExerciseType.record,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return Exercise(
@@ -73,6 +79,8 @@ class Exercise {
       isSystemPreset: isSystemPreset,
       orderIndex: orderIndex,
       baseUnit: baseUnit,
+      pbHigherIsBetter: pbHigherIsBetter,
+      exerciseType: exerciseType,
       createdAt: now,
       updatedAt: now,
     );
@@ -98,6 +106,7 @@ class Exercise {
     'has_pr_baseline': hasPrBaseline ? 1 : 0,
     'time_cap': timeCap,
     'pb_higher_is_better': pbHigherIsBetter ? 1 : 0,
+    'exercise_type': exerciseType.name,
   };
 
   factory Exercise.fromMap(Map<String, dynamic> map) {
@@ -129,6 +138,7 @@ class Exercise {
       hasPrBaseline: ((map['has_pr_baseline'] as num?)?.toInt() ?? 0) == 1,
       timeCap: map['time_cap'] != null ? (map['time_cap'] as num).toInt() : null,
       pbHigherIsBetter: ((map['pb_higher_is_better'] as num?)?.toInt() ?? 1) == 1,
+      exerciseType: ExerciseType.fromJson(map['exercise_type'] as String?),
     );
   }
 
@@ -152,6 +162,7 @@ class Exercise {
     bool? hasPrBaseline,
     Object? timeCap = _unset,
     bool? pbHigherIsBetter,
+    ExerciseType? exerciseType,
   }) => Exercise(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
@@ -170,6 +181,7 @@ class Exercise {
     hasPrBaseline: hasPrBaseline ?? this.hasPrBaseline,
     timeCap: identical(timeCap, _unset) ? this.timeCap : timeCap as int?,
     pbHigherIsBetter: pbHigherIsBetter ?? this.pbHigherIsBetter,
+    exerciseType: exerciseType ?? this.exerciseType,
   );
 
   // Legacy category name for the DB column

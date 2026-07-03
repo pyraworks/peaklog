@@ -22,7 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 23,
+      version: 24,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -33,6 +33,8 @@ class DatabaseHelper {
         await _addColumnIfMissing(db, 'records', 'time_cap', 'INTEGER');
         await _addColumnIfMissing(db, 'exercises', 'pb_higher_is_better',
             'INTEGER NOT NULL DEFAULT 1');
+        await _addColumnIfMissing(db, 'exercises', 'exercise_type',
+            "TEXT NOT NULL DEFAULT 'record'");
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -78,6 +80,7 @@ class DatabaseHelper {
         best_type        TEXT,
         base_unit              TEXT NOT NULL DEFAULT 'kg',
         pb_higher_is_better   INTEGER NOT NULL DEFAULT 1,
+        exercise_type          TEXT NOT NULL DEFAULT 'record',
         time_cap               INTEGER,
         is_system_preset       INTEGER NOT NULL DEFAULT 0,
         visibility       TEXT NOT NULL DEFAULT 'private',
@@ -490,6 +493,11 @@ class DatabaseHelper {
     if (oldVersion < 23) {
       await _addColumnIfMissing(db, 'exercises', 'pb_higher_is_better',
           'INTEGER NOT NULL DEFAULT 1');
+    }
+
+    if (oldVersion < 24) {
+      await _addColumnIfMissing(db, 'exercises', 'exercise_type',
+          "TEXT NOT NULL DEFAULT 'record'");
     }
   }
 

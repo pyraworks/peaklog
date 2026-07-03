@@ -9,6 +9,8 @@ class AddExerciseUseCase {
     String? categoryId,
     BestType? bestType,
     String baseUnit = 'kg',
+    bool pbHigherIsBetter = true,
+    ExerciseType exerciseType = ExerciseType.record,
     int currentCount = 0,
   }) async {
     final trimmed = displayName.trim();
@@ -31,6 +33,8 @@ class AddExerciseUseCase {
       categoryId: categoryId,
       bestType: bestType,
       baseUnit: baseUnit,
+      pbHigherIsBetter: pbHigherIsBetter,
+      exerciseType: exerciseType,
       orderIndex: currentCount,
     );
     return ExerciseRepositoryImpl.instance.insert(exercise);
