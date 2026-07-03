@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/design/app_colors.dart';
 import '../../l10n/app_localizations.dart';
 
 class TimeInputField extends StatefulWidget {
@@ -51,8 +51,8 @@ class _TimeInputFieldState extends State<TimeInputField> {
     widget.onChanged(h * 3600 + m * 60 + s);
   }
 
-  static const _valueStyle = TextStyle(
-    color: AppTheme.textPrimary,
+  static const _separatorStyle = TextStyle(
+    color: AppColors.textPrimaryAlt,
     fontSize: 24,
     fontWeight: FontWeight.w700,
   );
@@ -65,12 +65,12 @@ class _TimeInputFieldState extends State<TimeInputField> {
         _Field(controller: _h, label: l10n.timeHourLabel,   maxLength: 2, zeroText: '0',  onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text(':', style: _valueStyle),
+          child: Text(':', style: _separatorStyle),
         ),
         _Field(controller: _m, label: l10n.timeMinuteLabel, maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text(':', style: _valueStyle),
+          child: Text(':', style: _separatorStyle),
         ),
         _Field(controller: _s, label: l10n.timeSecondLabel, maxLength: 2, zeroText: '00', onChanged: (_) => _notify()),
       ],
@@ -84,12 +84,6 @@ class _Field extends StatefulWidget {
   final int maxLength;
   final String zeroText;
   final ValueChanged<String> onChanged;
-
-  static const _valueStyle = TextStyle(
-    color: AppTheme.textPrimary,
-    fontSize: 24,
-    fontWeight: FontWeight.w700,
-  );
 
   const _Field({
     required this.controller,
@@ -111,14 +105,18 @@ class _FieldState extends State<_Field> {
     super.initState();
     _focus = FocusNode();
     _focus.addListener(_onFocusChange);
+    widget.controller.addListener(_onTextChange);
   }
 
   @override
   void dispose() {
+    widget.controller.removeListener(_onTextChange);
     _focus.removeListener(_onFocusChange);
     _focus.dispose();
     super.dispose();
   }
+
+  void _onTextChange() => setState(() {});
 
   void _onFocusChange() {
     if (_focus.hasFocus) {
@@ -134,8 +132,18 @@ class _FieldState extends State<_Field> {
     }
   }
 
+  bool get _isPlaceholder {
+    final t = widget.controller.text;
+    return t.isEmpty || t == widget.zeroText;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final style = TextStyle(
+      color: _isPlaceholder ? AppColors.textSecondaryAlt : AppColors.textPrimaryAlt,
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+    );
     return Expanded(
       child: Column(
         children: [
@@ -144,21 +152,19 @@ class _FieldState extends State<_Field> {
             focusNode: _focus,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,
-            style: _Field._valueStyle,
+            style: style,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(widget.maxLength),
             ],
-            decoration: const InputDecoration(
-              hintStyle: _Field._valueStyle,
-            ),
+            decoration: InputDecoration(hintStyle: style),
             onChanged: widget.onChanged,
           ),
           const SizedBox(height: 4),
           Text(
             widget.label,
             style: const TextStyle(
-              color: AppTheme.textSecondary,
+              color: AppColors.textSecondaryAlt,
               fontSize: 11,
             ),
           ),

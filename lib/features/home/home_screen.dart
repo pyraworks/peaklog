@@ -394,10 +394,11 @@ class _CalendarEntryCard extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            '← Swipe to Calendar →',
+            '→ Swipe to Calendar',
             style: AppTypography.body.copyWith(
-              fontWeight: FontWeight.w500,
-              color: AppColors.label2,
+              fontWeight: FontWeight.w600,
+              fontStyle: FontStyle.italic,
+              color: AppColors.label1,
             ),
           ),
         ),

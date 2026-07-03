@@ -124,13 +124,6 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                     onChanged: () => setState(() {}),
                   ),
                   const SizedBox(height: AppSpacing.s12),
-                  if (!_isEditMode) ...[
-                    _ExerciseTypeCard(
-                      value: _exerciseType,
-                      onChanged: (v) => setState(() => _exerciseType = v),
-                    ),
-                    const SizedBox(height: AppSpacing.s12),
-                  ],
                   _CategoryDropdown(
                     selectedId: _selectedCategoryId,
                     categoryLabel: _selectedCategoryId != null
@@ -146,6 +139,13 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                     }),
                   ),
                   const SizedBox(height: AppSpacing.s12),
+                  if (!_isEditMode) ...[
+                    _ExerciseTypeCard(
+                      value: _exerciseType,
+                      onChanged: (v) => setState(() => _exerciseType = v),
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                  ],
                   if (_exerciseType == ExerciseType.record)
                     _BestTypeCard(
                       value: _bestType,
@@ -453,16 +453,24 @@ class _ExerciseTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final description = value == ExerciseType.record
+        ? 'Track measurable results like weight, reps, time or distance.'
+        : 'Simply mark the exercise as completed each day.';
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
         border: Border.all(color: AppColors.separator, width: 0.5),
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'How do you want to track this exercise?',
+            style: AppTypography.footnote.copyWith(color: AppColors.label2),
+          ),
+          const SizedBox(height: 8),
           Container(
             height: 34,
             decoration: BoxDecoration(
@@ -472,19 +480,24 @@ class _ExerciseTypeCard extends StatelessWidget {
             child: Row(
               children: [
                 _Segment(
-                  label: 'Record',
+                  label: 'Performance',
                   selected: value == ExerciseType.record,
                   onTap: () => onChanged(ExerciseType.record),
                   isFirst: true,
                 ),
                 _Segment(
-                  label: 'Complete',
+                  label: 'Checklist',
                   selected: value == ExerciseType.complete,
                   onTap: () => onChanged(ExerciseType.complete),
                   isFirst: false,
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: AppTypography.footnote.copyWith(color: AppColors.label3),
           ),
         ],
       ),

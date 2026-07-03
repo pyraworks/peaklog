@@ -124,7 +124,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 20, 0),
               child: Text(
-                'Calendar',
+                l10n.calendarLabel,
                 style: AppTypography.appTitle.copyWith(color: AppColors.label1),
               ),
             ),
@@ -141,17 +141,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       child: _buildWeekdayRow(l10n),
                     ),
                     ClipRect(child: _buildGrid(dataAsync)),
+                    const SizedBox(height: 6),
                   ],
                 ),
               )
-            else ...[
-              _buildWeekdayRow(l10n),
-              ClipRect(child: _buildGrid(dataAsync)),
-            ],
+            else
+              Container(
+                margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  border: Border.all(color: AppColors.separator, width: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: _buildWeekdayRow(l10n),
+                    ),
+                    ClipRect(child: _buildGrid(dataAsync)),
+                    const SizedBox(height: 6),
+                  ],
+                ),
+              ),
             if (_isWeekView)
               Expanded(
                 child: _buildDayDetail(l10n, dataAsync.valueOrNull),

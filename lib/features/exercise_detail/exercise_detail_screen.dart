@@ -18,6 +18,7 @@ import '../../providers/records_provider.dart';
 import '../../widgets/pb_badge.dart';
 import '../../widgets/screen_header.dart';
 import '../../widgets/swipeable_row.dart';
+import '../export/export_screen.dart';
 import '../home/add_exercise_sheet.dart';
 import '../record_input/add_record_sheet.dart';
 import '../../l10n/app_localizations.dart';
@@ -226,9 +227,23 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     onTap: exercise.exerciseType == ExerciseType.complete
                         ? (_) {}
                         : (r) => context.push('/exercise/${widget.exerciseId}/record/${r.id}'),
-                    onShare: exercise.exerciseType == ExerciseType.complete
-                        ? (_) {}
-                        : (r) => context.push('/share/${r.id}'),
+                    onShare: (r) {
+                      final dt = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
+                      if (exercise.exerciseType == ExerciseType.complete) {
+                        Navigator.push<void>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ExportScreen(
+                              exercise: exercise,
+                              newValue: 0.0,
+                              date: dt,
+                            ),
+                          ),
+                        );
+                      } else {
+                        context.push('/share/${r.id}');
+                      }
+                    },
                     onDelete: (r) => ref
                         .read(recordsProvider(widget.exerciseId).notifier)
                         .deleteRecord(r.id),

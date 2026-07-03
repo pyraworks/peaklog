@@ -108,11 +108,11 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         : ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
 
     final prValueStr = _formatValue(
-        widget.newValue, exercise.recordType!, weightUnit, distanceUnit);
+        widget.newValue, exercise.recordType, weightUnit, distanceUnit);
     final dateStr = _dateStr(widget.date);
     final daysSinceStr = _isActivityMode
         ? ''
-        : _calcDaysSince(records, exercise.recordType!, widget.newValue, widget.date);
+        : _calcDaysSince(records, exercise.recordType, widget.newValue, widget.date);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -176,7 +176,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                                           date: widget.date,
                                           daysSinceStr: daysSinceStr,
                                           options: _overlay,
-                                          showPrBadge: !_isActivityMode,
+                                          showPrBadge: !_isActivityMode && exercise.recordType != null,
                                         )
                                       : RoughFrame(
                                           exercise: exercise,
@@ -186,7 +186,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                                           date: widget.date,
                                           daysSinceStr: daysSinceStr,
                                           options: _overlay,
-                                          showPrBadge: !_isActivityMode,
+                                          showPrBadge: !_isActivityMode && exercise.recordType != null,
                                         ),
                                 ),
                               ],
@@ -431,7 +431,8 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   // ── Helpers ───────────────────────────────────────────────────
 
   String _formatValue(
-      double v, RecordType recordType, String weightUnit, String distanceUnit) {
+      double v, RecordType? recordType, String weightUnit, String distanceUnit) {
+    if (recordType == null) return '✓';
     switch (recordType) {
       case RecordType.weight:
         return UnitConverter.formatWeight(v, weightUnit);
@@ -446,8 +447,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   String _dateStr(DateTime d) =>
       '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
 
-  String _calcDaysSince(List<Record> records, RecordType recordType,
+  String _calcDaysSince(List<Record> records, RecordType? recordType,
       double newValue, DateTime date) {
+    if (recordType == null) return '';
     final beforeMs = date.millisecondsSinceEpoch;
     final previous = records.where((r) => r.performedAt < beforeMs).toList();
     if (previous.isEmpty) return '';
