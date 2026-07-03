@@ -6,7 +6,7 @@ class CategoryColor {
   CategoryColor._();
 
   static const palette = [
-    'amber', 'red', 'blue', 'green', 'purple', 'pink', 'gray', 'brown',
+    'amber', 'red', 'blue', 'green', 'purple', 'pink', 'brown',
   ];
 
   static Color toColor(String? key) => switch (key) {
