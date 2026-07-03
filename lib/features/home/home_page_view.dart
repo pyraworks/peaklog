@@ -2,9 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/design/app_colors.dart';
 import '../../core/services/analytics_service.dart';
-import '../../l10n/app_localizations.dart';
 import '../../providers/analytics_provider.dart';
 import '../calendar/calendar_screen.dart';
 import 'home_screen.dart';
@@ -20,28 +18,30 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
   final _pageController = PageController();
   final _searchFocus = FocusNode();
   int _page = 0;
-  bool _showHint = false;
-  CalendarEntryMethod? _pendingCalendarEntry;
+  bool _showSwipeHint = false;
 
-  static const _hintKey = 'calendar_swipe_hint_seen';
+  static const _hintKey = 'home_swipe_hint_dismissed';
 
   @override
   void initState() {
     super.initState();
-    _loadHint();
     _searchFocus.addListener(() => setState(() {}));
+    _loadHintState();
   }
 
-  Future<void> _loadHint() async {
+  Future<void> _loadHintState() async {
     final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool(_hintKey) ?? false;
-    if (!seen && mounted) setState(() => _showHint = true);
+    if (!mounted) return;
+    setState(() {
+      _showSwipeHint = !(prefs.getBool(_hintKey) ?? false);
+    });
   }
 
   Future<void> _dismissHint() async {
+    if (!_showSwipeHint) return;
+    setState(() => _showSwipeHint = false);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_hintKey, true);
-    if (mounted) setState(() => _showHint = false);
   }
 
   @override
@@ -51,29 +51,8 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
     super.dispose();
   }
 
-  Widget _buildSwipeHint(AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.actionDark.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        l10n.calendarSwipeHint,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
-          letterSpacing: -0.2,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     return PopScope(
       canPop: _page == 0,
       onPopInvokedWithResult: (didPop, _) {
@@ -93,25 +72,14 @@ class _HomePageViewState extends ConsumerState<HomePageView> {
         onPageChanged: (index) {
           setState(() => _page = index);
           if (index == 1) {
-            final entry = _pendingCalendarEntry ?? CalendarEntryMethod.swipe;
-            _pendingCalendarEntry = null;
-            unawaited(ref.read(analyticsProvider).logCalendarOpened(entry: entry));
-            if (_showHint) _dismissHint();
+            _dismissHint();
+            unawaited(ref.read(analyticsProvider).logCalendarOpened(
+              entry: CalendarEntryMethod.swipe,
+            ));
           }
         },
         children: [
-          HomeScreen(
-            searchFocus: _searchFocus,
-            swipeHint: _showHint ? _buildSwipeHint(l10n) : null,
-            onCalendarTap: () {
-              _pendingCalendarEntry = CalendarEntryMethod.button;
-              _pageController.animateToPage(
-                1,
-                duration: const Duration(milliseconds: 235),
-                curve: Curves.easeOutCubic,
-              );
-            },
-          ),
+          HomeScreen(searchFocus: _searchFocus, showSwipeHint: _showSwipeHint),
           const CalendarScreen(),
         ],
       ),

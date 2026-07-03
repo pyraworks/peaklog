@@ -36,6 +36,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recordDetailTitle => 'Record Detail';
 
   @override
+  String get completionDetailTitle => 'Completion Detail';
+
+  @override
+  String get completeExerciseButton => 'Complete Exercise';
+
+  @override
+  String get completedTodayButton => 'Completed Today ✓';
+
+  @override
+  String get completionSheetSubtitle =>
+      'Choose when you completed this exercise.';
+
+  @override
+  String get completionActionToday => 'Today';
+
+  @override
+  String get completionActionAnotherDate => 'Another Date...';
+
+  @override
   String get categoriesTitle => 'Categories';
 
   @override
@@ -126,7 +145,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dateLabel => 'Date';
 
   @override
-  String get howToTrackQuestion => 'How do you track this exercise?';
+  String get howToTrackQuestion => 'Choose a tracking format';
+
+  @override
+  String get exerciseTypeHint => 'Tracking Type';
+
+  @override
+  String get exerciseTypePerformance => 'Performance';
+
+  @override
+  String get exerciseTypeChecklist => 'Checklist';
+
+  @override
+  String get exerciseTypePerformanceDesc =>
+      'Track weight, reps, time, distance, and other measurable results.';
+
+  @override
+  String get exerciseTypeChecklistDesc =>
+      'Simply mark the exercise as completed.';
 
   @override
   String get recordTypeWeight => 'Weight';
@@ -195,9 +231,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteExerciseTitle => 'Delete Exercise';
 
   @override
-  String deleteExerciseContent(String name) {
-    return '\"$name\" and all its records will be deleted.';
-  }
+  String get deleteExerciseDialogTitle => 'Delete Exercise?';
+
+  @override
+  String get deleteExerciseContent =>
+      'This will permanently delete this exercise and all associated records.\nThis action cannot be undone.';
 
   @override
   String get deleteCategoryTitle => 'Delete Category?';
@@ -529,7 +567,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarLabel => 'Calendar';
 
   @override
-  String get calendarCardSwipeHint => 'Swipe →';
+  String get calendarCardSwipeHint => 'Swipe to Calendar';
 
   @override
   String calendarSummary(int workoutDays, int prCount) {
@@ -570,7 +608,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarHintText => 'Tap a date to see records and notes.';
 
   @override
-  String get calendarSwipeHint => '← Swipe for Calendar';
+  String get calendarSwipeHint => '← Swipe to Calendar';
 
   @override
   String get calendarLegendPersonalBest => 'Personal Best';

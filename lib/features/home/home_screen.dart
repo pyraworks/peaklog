@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,15 +15,13 @@ import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../providers/records_provider.dart';
 import '../../widgets/exercise_record_row.dart';
-import '../../widgets/swipeable_row.dart';
 import '../../l10n/app_localizations.dart';
 import 'add_exercise_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final FocusNode? searchFocus;
-  final Widget? swipeHint;
-  final VoidCallback? onCalendarTap;
-  const HomeScreen({super.key, this.searchFocus, this.swipeHint, this.onCalendarTap});
+  final bool showSwipeHint;
+  const HomeScreen({super.key, this.searchFocus, this.showSwipeHint = false});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -63,6 +60,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   // See plan's "PB / PR Rendering Reference" for full type-by-type rules.
   String _bestValue(PersonalBest? pb, List<Record> records, Exercise exercise) {
+    if (exercise.exerciseType == ExerciseType.complete) {
+      final done = records.where((r) => !r.isDeleted).isNotEmpty;
+      return done ? '✓' : '—';
+    }
     if (pb != null) {
       switch (exercise.recordType) {
         case RecordType.weight:
@@ -108,31 +109,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, Exercise exercise) async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showCupertinoDialog<bool>(
-      context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text(l10n.deleteExerciseTitle),
-        content: Text(l10n.deleteExerciseContent(exercise.displayName)),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await ref.read(exercisesProvider.notifier).deleteExercise(exercise.id);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -168,9 +144,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     style: AppTypography.appTitle.copyWith(color: AppColors.label1),
                   ),
                   Expanded(
-                    child: Center(
-                      child: widget.swipeHint ?? const SizedBox.shrink(),
-                    ),
+                    child: widget.showSwipeHint
+                        ? Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.label1,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                l10n.calendarSwipeHint,
+                                style: AppTypography.footnote.copyWith(
+                                  color: Colors.white,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                   GestureDetector(
                     onTap: () => context.push('/calculators'),
@@ -281,10 +273,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               ? CategoryColor.toColor(colorMap[exercise.categoryId])
                               : AppColors.label2;
 
-                          return SwipeableRow(
-                            id: exercise.id,
-                            onEdit: () => context.push('/exercise/${exercise.id}'),
-                            onDelete: () => _confirmDelete(context, exercise),
+                          return GestureDetector(
+                            onTap: () => context.push('/exercise/${exercise.id}'),
                             child: ExerciseRecordRow(
                               name: exercise.displayName,
                               value: bestValue,
@@ -296,53 +286,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
             ),
-            // ── Calendar entry card + Add Exercise button ────────────
+            // ── Add Exercise button ──────────────────────────────────
             Container(
               color: AppColors.background,
               child: SafeArea(
                 top: false,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _CalendarEntryCard(onTap: widget.onCalendarTap),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () async {
-                          final selectedCategoryId = await showAddExerciseSheet(
-                            context,
-                            initialCategoryId: _filterCategoryId,
-                          );
-                          if (selectedCategoryId != null && mounted) {
-                            setState(() => _filterCategoryId = selectedCategoryId);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppColors.actionDark,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.actionDarkBorder),
-                          ),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('+',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w300)),
-                                const SizedBox(width: 6),
-                                Text(l10n.addExerciseButton,
-                                    style: AppTypography.button.copyWith(color: Colors.white)),
-                              ],
-                            ),
-                          ),
+                  child: GestureDetector(
+                    onTap: () async {
+                      final selectedCategoryId = await showAddExerciseSheet(
+                        context,
+                        initialCategoryId: _filterCategoryId,
+                      );
+                      if (selectedCategoryId != null && mounted) {
+                        setState(() => _filterCategoryId = selectedCategoryId);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.actionDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.actionDarkBorder),
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('+',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w300)),
+                            const SizedBox(width: 6),
+                            Text(l10n.addExerciseButton,
+                                style: AppTypography.button.copyWith(color: Colors.white)),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -371,38 +354,6 @@ class _IconButton extends StatelessWidget {
         border: Border.all(color: AppColors.separator),
       ),
       child: Center(child: Icon(icon, size: 17, color: AppColors.textPrimaryAlt)),
-    );
-  }
-}
-
-/// Compact card that taps (or swipes) to the Calendar page.
-class _CalendarEntryCard extends StatelessWidget {
-  final VoidCallback? onTap;
-  const _CalendarEntryCard({this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.separator, width: 0.5),
-        ),
-        child: Center(
-          child: Text(
-            '→ Swipe to Calendar',
-            style: AppTypography.body.copyWith(
-              fontWeight: FontWeight.w600,
-              fontStyle: FontStyle.italic,
-              color: AppColors.label1,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
@@ -12,6 +13,7 @@ import '../../widgets/category_color_indicator.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/exercises_provider.dart';
+import '../../widgets/destructive_action_button.dart';
 import '../../widgets/screen_header.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -88,6 +90,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
   }
 
   String _categoryLabel(String id, List<Category> categories, String uncategorizedLabel) {
+    if (id == Category.uncategorizedId) return uncategorizedLabel;
     return categories.firstWhere(
       (c) => c.id == id,
       orElse: () => categories.isNotEmpty ? categories.first : Category(id: Category.uncategorizedId, name: uncategorizedLabel, color: 'gray', sortOrder: 0, createdAt: 0, updatedAt: 0),
@@ -174,6 +177,13 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
                     isEdit: _isEditMode,
                     onPressed: nameEmpty || _saving ? null : _submit,
                   ),
+                  if (_isEditMode) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    DestructiveActionButton(
+                      label: l10n.deleteExerciseTitle,
+                      onPressed: _confirmDeleteExercise,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -181,6 +191,33 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteExercise() async {
+    final l10n = AppLocalizations.of(context)!;
+    final exercise = widget.initialExercise!;
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text(l10n.deleteExerciseDialogTitle),
+        content: Text(l10n.deleteExerciseContent),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await ref.read(exercisesProvider.notifier).deleteExercise(exercise.id);
+      if (mounted) Navigator.of(context).pop();
+    }
   }
 
   /// Trims and collapses internal spaces in a unit string.
@@ -419,7 +456,9 @@ class _CategoryDropdown extends StatelessWidget {
                         ),
                         Expanded(
                           child: Text(
-                            c.name,
+                            c.id == Category.uncategorizedId
+                                ? l10n.categoryUncategorized
+                                : c.name,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: isSelected
@@ -453,9 +492,10 @@ class _ExerciseTypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final description = value == ExerciseType.record
-        ? 'Track measurable results like weight, reps, time or distance.'
-        : 'Simply mark the exercise as completed each day.';
+        ? l10n.exerciseTypePerformanceDesc
+        : l10n.exerciseTypeChecklistDesc;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -467,7 +507,7 @@ class _ExerciseTypeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'How do you want to track this exercise?',
+            l10n.exerciseTypeHint,
             style: AppTypography.footnote.copyWith(color: AppColors.label2),
           ),
           const SizedBox(height: 8),
@@ -480,13 +520,13 @@ class _ExerciseTypeCard extends StatelessWidget {
             child: Row(
               children: [
                 _Segment(
-                  label: 'Performance',
+                  label: l10n.exerciseTypePerformance,
                   selected: value == ExerciseType.record,
                   onTap: () => onChanged(ExerciseType.record),
                   isFirst: true,
                 ),
                 _Segment(
-                  label: 'Checklist',
+                  label: l10n.exerciseTypeChecklist,
                   selected: value == ExerciseType.complete,
                   onTap: () => onChanged(ExerciseType.complete),
                   isFirst: false,

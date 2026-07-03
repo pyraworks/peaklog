@@ -13,6 +13,7 @@ import '../../core/models/record.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
+import '../../widgets/destructive_action_button.dart';
 import '../../widgets/screen_header.dart';
 import 'time_input_field.dart';
 import '../../l10n/app_localizations.dart';
@@ -184,7 +185,10 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
                               },
                       ),
                       const SizedBox(height: AppSpacing.s12),
-                      _DeleteButton(onPressed: () => _confirmDelete(context)),
+                      DestructiveActionButton(
+                        label: l10n.deleteRecord,
+                        onPressed: () => _confirmDelete(context),
+                      ),
                     ],
                   ),
                 ),
@@ -667,28 +671,3 @@ class _SaveButton extends StatelessWidget {
   }
 }
 
-class _DeleteButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _DeleteButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return GestureDetector(
-      onTap: onPressed,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            l10n.deleteRecord,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.destructive,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

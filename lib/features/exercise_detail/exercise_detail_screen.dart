@@ -23,6 +23,7 @@ import '../home/add_exercise_sheet.dart';
 import '../record_input/add_record_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/analytics_provider.dart';
+import '../../providers/calendar_month_provider.dart';
 
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -55,14 +56,96 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     });
   }
 
-  Future<void> _markDoneToday() async {
+  Future<void> _markDoneForDate(DateTime date, List<Record> records) async {
+    final exists = records.any((r) {
+      if (r.isDeleted) return false;
+      final dt = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
+      return dt.year == date.year &&
+          dt.month == date.month &&
+          dt.day == date.day;
+    });
+    if (exists) return;
+    final now = DateTime.now();
+    final isToday = date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+    final performedAt = isToday
+        ? now
+        : DateTime(date.year, date.month, date.day, 12);
     await ref.read(recordsProvider(widget.exerciseId).notifier).addRecord(
-      performedAt: DateTime.now().millisecondsSinceEpoch,
+      performedAt: performedAt.millisecondsSinceEpoch,
     );
+    ref.invalidate(
+        calendarMonthProvider((year: date.year, month: date.month)));
     // ignore: unawaited_futures
     ref.read(analyticsProvider).logRecordSaved(
       exerciseType: ExerciseType.complete,
     );
+  }
+
+  Future<void> _markDoneToday() async {
+    final records =
+        ref.read(recordsProvider(widget.exerciseId)).valueOrNull ?? [];
+    await _markDoneForDate(DateTime.now(), records);
+  }
+
+  Future<void> _showCompletionActionSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _CompletionSheet(
+        onToday: () {
+          Navigator.pop(ctx);
+          _markDoneToday();
+        },
+        onAnotherDate: () {
+          Navigator.pop(ctx);
+          _pickCompletionDate(context);
+        },
+        onCancel: () => Navigator.pop(ctx),
+      ),
+    );
+  }
+
+  Future<void> _pickCompletionDate(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+    DateTime picked = DateTime.now();
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => Container(
+        height: 280,
+        color: AppColors.card,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.done,
+                      style: const TextStyle(
+                          color: AppColors.textPrimaryAlt)),
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: DateTime.now(),
+                maximumDate: DateTime.now(),
+                onDateTimeChanged: (d) => picked = d,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (mounted) {
+      final fresh =
+          ref.read(recordsProvider(widget.exerciseId)).valueOrNull ?? [];
+      await _markDoneForDate(picked, fresh);
+    }
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
@@ -203,7 +286,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                 if (exercise.exerciseType == ExerciseType.complete)
                   _DoneTodayButton(
                     hasTodayRecord: _hasTodayRecord(records),
-                    onTap: _markDoneToday,
+                    onTap: () => _showCompletionActionSheet(context),
                   )
                 else
                   _AddRecordButton(
@@ -219,10 +302,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     exercise: exercise,
                     weightUnit: weightUnit,
                     formatValue: exercise.exerciseType == ExerciseType.complete
-                        ? (r) {
-                            final dt = DateTime.fromMillisecondsSinceEpoch(r.performedAt);
-                            return '✓ ${DateFormatter.short(dt)}';
-                          }
+                        ? (r) => DateFormatter.short(
+                            DateTime.fromMillisecondsSinceEpoch(r.performedAt))
                         : (r) => _formatHistoryValue(r, rt, weightUnit),
                     onTap: exercise.exerciseType == ExerciseType.complete
                         ? (_) {}
@@ -244,9 +325,17 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                         context.push('/share/${r.id}');
                       }
                     },
-                    onDelete: (r) => ref
-                        .read(recordsProvider(widget.exerciseId).notifier)
-                        .deleteRecord(r.id),
+                    onDelete: (r) {
+                      ref
+                          .read(recordsProvider(widget.exerciseId).notifier)
+                          .deleteRecord(r.id);
+                      if (exercise.exerciseType == ExerciseType.complete) {
+                        final dt = DateTime.fromMillisecondsSinceEpoch(
+                            r.performedAt);
+                        ref.invalidate(calendarMonthProvider(
+                            (year: dt.year, month: dt.month)));
+                      }
+                    },
                   ),
 
                 const SizedBox(height: AppSpacing.s32),
@@ -270,9 +359,12 @@ class _ExerciseHeader extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
     final match = categories.where((c) => c.id == exercise.categoryId).firstOrNull;
-    final categoryName = match?.name ??
-        Category.nameForId(exercise.categoryId,
-            uncategorizedLabel: l10n.categoryUncategorized);
+    final categoryName = match == null
+        ? Category.nameForId(exercise.categoryId,
+            uncategorizedLabel: l10n.categoryUncategorized)
+        : (match.id == Category.uncategorizedId
+            ? l10n.categoryUncategorized
+            : match.name);
     return ScreenHeader(
       backLabel: l10n.back,
       titleWidget: Row(
@@ -660,29 +752,31 @@ class _DoneTodayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return GestureDetector(
-      onTap: hasTodayRecord ? null : onTap,
-      child: AnimatedOpacity(
-        opacity: hasTodayRecord ? 0.5 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.actionDark,
-            border: Border.all(color: AppColors.actionDarkBorder),
-            borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: hasTodayRecord ? AppColors.card : AppColors.actionDark,
+          border: Border.all(
+            color: hasTodayRecord
+                ? AppColors.separator
+                : AppColors.actionDarkBorder,
+            width: 0.5,
           ),
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16, vertical: 11),
-          child: Center(
-            child: Text(
-              hasTodayRecord ? '✓ Completed Today' : '✓ Done Today',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                letterSpacing: -0.14,
-              ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s16, vertical: 11),
+        child: Center(
+          child: Text(
+            l10n.completeExerciseButton,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: hasTodayRecord ? AppColors.label1 : Colors.white,
+              letterSpacing: -0.14,
             ),
           ),
         ),
@@ -906,6 +1000,126 @@ class _HistoryRowContent extends StatelessWidget {
           // Right — chevron
           if (showChevron)
             Icon(AppIcons.forward, size: 16, color: AppColors.chevron),
+        ],
+      ),
+    );
+  }
+}
+
+// ── _CompletionSheet ─────────────────────────────────────────────────────────
+
+class _CompletionSheet extends StatelessWidget {
+  final VoidCallback onToday;
+  final VoidCallback onAnotherDate;
+  final VoidCallback onCancel;
+
+  const _CompletionSheet({
+    required this.onToday,
+    required this.onAnotherDate,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Header ──────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.completeExerciseButton,
+                  style: AppTypography.headline.copyWith(
+                    color: AppColors.textPrimaryAlt,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.completionSheetSubtitle,
+                  style: AppTypography.footnote.copyWith(
+                    color: AppColors.textSecondaryAlt,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 0.5, thickness: 0.5, color: AppColors.separator),
+          // ── Today ───────────────────────────────────────────────────────
+          GestureDetector(
+            onTap: onToday,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(AppIcons.check, size: 18, color: AppColors.textPrimaryAlt),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.completionActionToday,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimaryAlt,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(
+            height: 0.5,
+            thickness: 0.5,
+            indent: 50,
+            color: AppColors.separator,
+          ),
+          // ── Another Date ─────────────────────────────────────────────────
+          GestureDetector(
+            onTap: onAnotherDate,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(AppIcons.calendar, size: 18, color: AppColors.textPrimaryAlt),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.completionActionAnotherDate,
+                    style: AppTypography.body.copyWith(
+                      color: AppColors.textPrimaryAlt,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 0.5, thickness: 0.5, color: AppColors.separator),
+          // ── Cancel ──────────────────────────────────────────────────────
+          GestureDetector(
+            onTap: onCancel,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Center(
+                child: Text(
+                  l10n.cancel,
+                  style: AppTypography.button.copyWith(
+                    color: AppColors.label2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: bottomInset > 0 ? bottomInset : AppSpacing.s8),
         ],
       ),
     );

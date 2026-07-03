@@ -152,6 +152,42 @@ abstract class AppLocalizations {
   /// **'Record Detail'**
   String get recordDetailTitle;
 
+  /// Screen title for checklist record detail view
+  ///
+  /// In en, this message translates to:
+  /// **'Completion Detail'**
+  String get completionDetailTitle;
+
+  /// Completion button label when no record exists for today
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Exercise'**
+  String get completeExerciseButton;
+
+  /// Completion button label when today's record already exists
+  ///
+  /// In en, this message translates to:
+  /// **'Completed Today ✓'**
+  String get completedTodayButton;
+
+  /// Subtitle shown inside the completion bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose when you completed this exercise.'**
+  String get completionSheetSubtitle;
+
+  /// Action row label to mark today as complete
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get completionActionToday;
+
+  /// Action row label to pick another date for completion
+  ///
+  /// In en, this message translates to:
+  /// **'Another Date...'**
+  String get completionActionAnotherDate;
+
   /// Screen title for categories management
   ///
   /// In en, this message translates to:
@@ -335,8 +371,38 @@ abstract class AppLocalizations {
   /// Prompt for record type picker on first record
   ///
   /// In en, this message translates to:
-  /// **'How do you track this exercise?'**
+  /// **'Choose a tracking format'**
   String get howToTrackQuestion;
+
+  /// Section title on the exercise type segmented control
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking Type'**
+  String get exerciseTypeHint;
+
+  /// Exercise type: measurable performance tracking
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get exerciseTypePerformance;
+
+  /// Exercise type: simple completion check
+  ///
+  /// In en, this message translates to:
+  /// **'Checklist'**
+  String get exerciseTypeChecklist;
+
+  /// Helper description for Performance exercise type
+  ///
+  /// In en, this message translates to:
+  /// **'Track weight, reps, time, distance, and other measurable results.'**
+  String get exerciseTypePerformanceDesc;
+
+  /// Helper description for Checklist exercise type
+  ///
+  /// In en, this message translates to:
+  /// **'Simply mark the exercise as completed.'**
+  String get exerciseTypeChecklistDesc;
 
   /// Record type chip: weight lifting
   ///
@@ -464,17 +530,23 @@ abstract class AppLocalizations {
   /// **'This record will be permanently deleted.'**
   String get deleteRecordContent;
 
-  /// Confirmation dialog title for exercise deletion
+  /// Destructive button label for exercise deletion
   ///
   /// In en, this message translates to:
   /// **'Delete Exercise'**
   String get deleteExerciseTitle;
 
+  /// Confirmation dialog title for exercise deletion
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Exercise?'**
+  String get deleteExerciseDialogTitle;
+
   /// Confirmation dialog body for exercise deletion
   ///
   /// In en, this message translates to:
-  /// **'\"{name}\" and all its records will be deleted.'**
-  String deleteExerciseContent(String name);
+  /// **'This will permanently delete this exercise and all associated records.\nThis action cannot be undone.'**
+  String get deleteExerciseContent;
 
   /// Confirmation dialog title for category deletion
   ///
@@ -1085,7 +1157,7 @@ abstract class AppLocalizations {
   /// Subtle swipe-direction hint on the calendar entry card at the bottom of the home screen
   ///
   /// In en, this message translates to:
-  /// **'Swipe →'**
+  /// **'Swipe to Calendar'**
   String get calendarCardSwipeHint;
 
   /// Month summary line showing workout day count and PR count
@@ -1160,10 +1232,10 @@ abstract class AppLocalizations {
   /// **'Tap a date to see records and notes.'**
   String get calendarHintText;
 
-  /// One-time swipe hint shown on the home screen indicating the calendar is one swipe to the left
+  /// Swipe hint shown in the home screen header, indicating Calendar is one swipe to the left
   ///
   /// In en, this message translates to:
-  /// **'← Swipe for Calendar'**
+  /// **'← Swipe to Calendar'**
   String get calendarSwipeHint;
 
   /// Legend item label for the trophy icon indicating a personal best was set on that day

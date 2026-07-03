@@ -28,6 +28,24 @@
   "recordDetailTitle": "Record Detail",
   "@recordDetailTitle": { "description": "Screen title for record detail view" },
 
+  "completionDetailTitle": "Completion Detail",
+  "@completionDetailTitle": { "description": "Screen title for checklist record detail view" },
+
+  "completeExerciseButton": "Complete Exercise",
+  "@completeExerciseButton": { "description": "Completion button label when no record exists for today" },
+
+  "completedTodayButton": "Completed Today ✓",
+  "@completedTodayButton": { "description": "Completion button label when today's record already exists" },
+
+  "completionSheetSubtitle": "Choose when you completed this exercise.",
+  "@completionSheetSubtitle": { "description": "Subtitle shown inside the completion bottom sheet" },
+
+  "completionActionToday": "Today",
+  "@completionActionToday": { "description": "Action row label to mark today as complete" },
+
+  "completionActionAnotherDate": "Another Date...",
+  "@completionActionAnotherDate": { "description": "Action row label to pick another date for completion" },
+
   "categoriesTitle": "Categories",
   "@categoriesTitle": { "description": "Screen title for categories management" },
 
@@ -118,8 +136,23 @@
   "dateLabel": "Date",
   "@dateLabel": { "description": "Date selector label on record form" },
 
-  "howToTrackQuestion": "How do you track this exercise?",
+  "howToTrackQuestion": "Choose a tracking format",
   "@howToTrackQuestion": { "description": "Prompt for record type picker on first record" },
+
+  "exerciseTypeHint": "Tracking Type",
+  "@exerciseTypeHint": { "description": "Section title on the exercise type segmented control" },
+
+  "exerciseTypePerformance": "Performance",
+  "@exerciseTypePerformance": { "description": "Exercise type: measurable performance tracking" },
+
+  "exerciseTypeChecklist": "Checklist",
+  "@exerciseTypeChecklist": { "description": "Exercise type: simple completion check" },
+
+  "exerciseTypePerformanceDesc": "Track weight, reps, time, distance, and other measurable results.",
+  "@exerciseTypePerformanceDesc": { "description": "Helper description for Performance exercise type" },
+
+  "exerciseTypeChecklistDesc": "Simply mark the exercise as completed.",
+  "@exerciseTypeChecklistDesc": { "description": "Helper description for Checklist exercise type" },
 
   "recordTypeWeight": "Weight",
   "@recordTypeWeight": { "description": "Record type chip: weight lifting" },
@@ -185,18 +218,13 @@
   "@deleteRecordContent": { "description": "Confirmation dialog body for record deletion" },
 
   "deleteExerciseTitle": "Delete Exercise",
-  "@deleteExerciseTitle": { "description": "Confirmation dialog title for exercise deletion" },
+  "@deleteExerciseTitle": { "description": "Destructive button label for exercise deletion" },
 
-  "deleteExerciseContent": "\"{name}\" and all its records will be deleted.",
-  "@deleteExerciseContent": {
-    "description": "Confirmation dialog body for exercise deletion",
-    "placeholders": {
-      "name": {
-        "type": "String",
-        "description": "Exercise display name"
-      }
-    }
-  },
+  "deleteExerciseDialogTitle": "Delete Exercise?",
+  "@deleteExerciseDialogTitle": { "description": "Confirmation dialog title for exercise deletion" },
+
+  "deleteExerciseContent": "This will permanently delete this exercise and all associated records.\nThis action cannot be undone.",
+  "@deleteExerciseContent": { "description": "Confirmation dialog body for exercise deletion" },
 
   "deleteCategoryTitle": "Delete Category?",
   "@deleteCategoryTitle": { "description": "Confirmation dialog title for category deletion" },
@@ -562,7 +590,7 @@
   "calendarLabel": "Calendar",
   "@calendarLabel": { "description": "Bottom nav / page label for the calendar screen" },
 
-  "calendarCardSwipeHint": "Swipe →",
+  "calendarCardSwipeHint": "Swipe to Calendar",
   "@calendarCardSwipeHint": { "description": "Subtle swipe-direction hint on the calendar entry card at the bottom of the home screen" },
 
   "calendarSummary": "{workoutDays} workouts · {prCount} PR",
@@ -607,8 +635,8 @@
   "calendarHintText": "Tap a date to see records and notes.",
   "@calendarHintText": { "description": "Instructional hint shown below the month grid on first use" },
 
-  "calendarSwipeHint": "← Swipe for Calendar",
-  "@calendarSwipeHint": { "description": "One-time swipe hint shown on the home screen indicating the calendar is one swipe to the left" },
+  "calendarSwipeHint": "← Swipe to Calendar",
+  "@calendarSwipeHint": { "description": "Swipe hint shown in the home screen header, indicating Calendar is one swipe to the left" },
 
   "calendarLegendPersonalBest": "Personal Best",
   "@calendarLegendPersonalBest": { "description": "Legend item label for the trophy icon indicating a personal best was set on that day" },

@@ -421,31 +421,30 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwipeableRow(
-      id: category.id,
-      onEdit: onEdit,
-      onSwipeEdit: onEdit,
-      onDelete: onDelete,
-      child: ColoredBox(
-        color: Colors.white,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-              leading: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ReorderableDragStartListener(
-                    index: index,
-                    child: Icon(AppIcons.dragHandle,
+    return ReorderableDelayedDragStartListener(
+      index: index,
+      child: SwipeableRow(
+        id: category.id,
+        onEdit: onEdit,
+        onSwipeEdit: onEdit,
+        onDelete: onDelete,
+        child: ColoredBox(
+          color: Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(AppIcons.dragHandle,
                         color: AppColors.label5, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  _colorIndicator(),
-                ],
-              ),
+                    const SizedBox(width: 10),
+                    _colorIndicator(),
+                  ],
+                ),
               title: Text(
                 category.id == Category.uncategorizedId
                     ? AppLocalizations.of(context)!.categoryUncategorized
@@ -467,6 +466,7 @@ class _CategoryTile extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

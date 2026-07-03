@@ -18,6 +18,7 @@ import '../../providers/calendar_month_provider.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/notes_provider.dart';
 import '../../providers/personal_best_provider.dart';
+import '../../widgets/destructive_action_button.dart';
 import '../../widgets/exercise_record_row.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -141,11 +142,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.only(top: 20, bottom: 14),
                       child: _buildWeekdayRow(l10n),
                     ),
                     ClipRect(child: _buildGrid(dataAsync)),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 14),
                   ],
                 ),
               )
@@ -161,11 +162,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.only(top: 20, bottom: 14),
                       child: _buildWeekdayRow(l10n),
                     ),
                     ClipRect(child: _buildGrid(dataAsync)),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 14),
                   ],
                 ),
               ),
@@ -444,7 +445,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 final exercise = data.exerciseMap[record.exerciseId];
                 if (exercise == null) return const SizedBox.shrink();
                 final pb = ref.watch(personalBestProvider(exercise.id));
-                final isThisPr = pb?.sourceRecordId == record.id;
+                final isThisPr = exercise.exerciseType == ExerciseType.complete
+                    ? false
+                    : pb?.sourceRecordId == record.id;
                 final colorKey =
                     data.exerciseColorKeys[exercise.id] ?? 'gray';
                 final color = CategoryColor.toColor(colorKey);
@@ -459,7 +462,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                       ),
                     GestureDetector(
                       onTap: () => context.push(
-                          '/exercise/${exercise.id}/record/${record.id}'),
+                        exercise.exerciseType == ExerciseType.complete
+                            ? '/exercise/${exercise.id}'
+                            : '/exercise/${exercise.id}/record/${record.id}',
+                      ),
                       child: ExerciseRecordRow(
                         name: exercise.displayName,
                         value: value,
@@ -566,6 +572,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   }
 
   String _formatRecordValue(Record r, Exercise exercise) {
+    if (exercise.exerciseType == ExerciseType.complete) return '✓';
     final rt = exercise.recordType;
     if (rt == null) return '—';
     switch (rt) {
@@ -1077,14 +1084,9 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
               ),
             ),
             if (isEditing) ...[
-              const SizedBox(height: 8),
-              TextButton(
+              DestructiveActionButton(
+                label: l10n.calendarDeleteNote,
                 onPressed: _delete,
-                child: Text(
-                  l10n.calendarDeleteNote,
-                  style: AppTypography.button
-                      .copyWith(color: AppColors.destructive),
-                ),
               ),
             ],
             SizedBox(

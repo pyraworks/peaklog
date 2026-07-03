@@ -36,6 +36,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recordDetailTitle => '기록 상세';
 
   @override
+  String get completionDetailTitle => '완료 상세';
+
+  @override
+  String get completeExerciseButton => '운동 완료';
+
+  @override
+  String get completedTodayButton => '오늘 완료 ✓';
+
+  @override
+  String get completionSheetSubtitle => '운동 완료 날짜를 선택하세요.';
+
+  @override
+  String get completionActionToday => '오늘';
+
+  @override
+  String get completionActionAnotherDate => '다른 날짜...';
+
+  @override
   String get categoriesTitle => '카테고리';
 
   @override
@@ -126,7 +144,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dateLabel => '날짜';
 
   @override
-  String get howToTrackQuestion => '이 운동을 어떻게 기록하나요?';
+  String get howToTrackQuestion => '이 운동은 어떤 형식으로 기록할까요?';
+
+  @override
+  String get exerciseTypeHint => '입력 유형';
+
+  @override
+  String get exerciseTypePerformance => '기록';
+
+  @override
+  String get exerciseTypeChecklist => '체크';
+
+  @override
+  String get exerciseTypePerformanceDesc => '무게, 횟수, 시간 등을 입력합니다.';
+
+  @override
+  String get exerciseTypeChecklistDesc => '운동을 완료했는지만 간단하게 체크합니다.';
 
   @override
   String get recordTypeWeight => 'Weight';
@@ -195,9 +228,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteExerciseTitle => '운동 삭제';
 
   @override
-  String deleteExerciseContent(String name) {
-    return '\"$name\" 운동과 모든 기록이 삭제됩니다.';
-  }
+  String get deleteExerciseDialogTitle => '운동을 삭제할까요?';
+
+  @override
+  String get deleteExerciseContent =>
+      '이 운동과 관련된 모든 기록이 함께 삭제됩니다.\n삭제된 데이터는 복구할 수 없습니다.';
 
   @override
   String get deleteCategoryTitle => '카테고리 삭제';
@@ -518,10 +553,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get oneRmCalculatorTitle => '1RM 계산기';
 
   @override
-  String get calendarLabel => '달력';
+  String get calendarLabel => '캘린더';
 
   @override
-  String get calendarCardSwipeHint => '스와이프 →';
+  String get calendarCardSwipeHint => '밀어서 캘린더 보기';
 
   @override
   String calendarSummary(int workoutDays, int prCount) {
@@ -562,7 +597,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendarHintText => '날짜를 탭하면 기록과 메모를 확인할 수 있습니다.';
 
   @override
-  String get calendarSwipeHint => '← 달력 보기';
+  String get calendarSwipeHint => '← 밀어서 캘린더 보기';
 
   @override
   String get calendarLegendPersonalBest => '개인 기록';
