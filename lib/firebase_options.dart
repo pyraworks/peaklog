@@ -25,19 +25,18 @@ class DefaultFirebaseOptions {
   // ── Replace these placeholder values by running `flutterfire configure` ──
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'PLACEHOLDER',
-    appId: 'PLACEHOLDER',
-    messagingSenderId: 'PLACEHOLDER',
-    projectId: 'PLACEHOLDER',
-    storageBucket: 'PLACEHOLDER',
+    apiKey: 'AIzaSyDfbhavfcCR8eCAVVda3rGx8L9n_xKLguo',
+    appId: '1:801409654516:android:c49fc163b4dc15193008a1',
+    messagingSenderId: '801409654516',
+    projectId: 'peaklog-79450',
+    storageBucket: 'peaklog-79450.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'PLACEHOLDER',
-    appId: 'PLACEHOLDER',
-    messagingSenderId: 'PLACEHOLDER',
-    projectId: 'PLACEHOLDER',
-    storageBucket: 'PLACEHOLDER',
-    iosBundleId: 'PLACEHOLDER',
+    apiKey: 'AIzaSyDUjAxFqeqZgmBTSp6RmAGWYq8Yi_TUQfs',
+    appId: '1:801409654516:ios:11a5c004e42dee4a3008a1',
+    messagingSenderId: '801409654516',
+    projectId: 'peaklog-79450',
+    storageBucket: 'peaklog-79450.firebasestorage.app',
+    iosBundleId: 'com.idaeun.peaklog',
   );
 }

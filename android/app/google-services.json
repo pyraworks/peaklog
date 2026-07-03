@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "801409654516",
+    "project_id": "peaklog-79450",
+    "storage_bucket": "peaklog-79450.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801409654516:android:c49fc163b4dc15193008a1",
+        "android_client_info": {
+          "package_name": "com.idaeun.peaklog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfbhavfcCR8eCAVVda3rGx8L9n_xKLguo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

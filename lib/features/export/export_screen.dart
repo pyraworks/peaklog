@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
@@ -411,6 +412,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       final subject = _isActivityMode
           ? l10n.shareSubjectActivity(exerciseName)
           : l10n.shareSubjectRecord(exerciseName, shareExercise.bestTypeLabel);
+      unawaited(ref.read(analyticsProvider).logShareUsed());
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(path, mimeType: 'image/png')],
@@ -419,8 +421,6 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
               box != null ? box.localToGlobal(Offset.zero) & box.size : null,
         ),
       );
-      // ignore: unawaited_futures
-      ref.read(analyticsProvider).logShareUsed();
     } catch (e) {
       if (mounted) _showSnack(l10n.saveFailed(e));
     } finally {
