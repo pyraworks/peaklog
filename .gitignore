@@ -54,3 +54,4 @@ app.*.map.json
 /android/app/release
 ios/FFmpegXCFrameworks/
 upload-keystore.jks
+android/key.properties
