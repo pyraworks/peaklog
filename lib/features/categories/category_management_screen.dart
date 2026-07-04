@@ -148,7 +148,7 @@ class _CategoryManagementScreenState
       context,
       title: l10n.addCategoryButton,
       initialName: '',
-      initialColor: 'blue',
+      initialColor: CategoryColor.palette.first,
     );
     if (result == null) return;
 

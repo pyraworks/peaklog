@@ -6,19 +6,21 @@ class CategoryColor {
   CategoryColor._();
 
   static const palette = [
-    'amber', 'red', 'blue', 'green', 'purple', 'pink', 'brown',
+    'crimson', 'rust', 'gold', 'teal', 'ocean', 'olive', 'forest',
   ];
 
   static Color toColor(String? key) => switch (key) {
-    'amber'  => const Color(0xFF6DBEFF),
-    'red'    => const Color(0xFFA3D900),
-    'blue'   => const Color(0xFFFFA000),
-    'green'  => const Color(0xFFE64A19),
-    'purple' => const Color(0xFF6A1B9A),
-    'pink'   => const Color(0xFF00796B),
-    'gray'   => const Color(0xFF8E8E93),
-    'brown'  => const Color(0xFFC4A484),
-    _        => const Color(0xFF8E8E93),
+    // Current palette
+    'crimson' => const Color(0xFF9B2226),
+    'rust'    => const Color(0xFFD55A21),
+    'gold'    => const Color(0xFFF1B42F),
+    'teal'    => const Color(0xFF0A9396),
+    'ocean'   => const Color(0xFF005F73),
+    'olive'   => const Color(0xFF556E40),
+    'forest'  => const Color(0xFF213521),
+    // Reserved for Uncategorized
+    'gray'    => const Color(0xFF8E8E93),
+    _         => const Color(0xFF8E8E93),
   };
 }
 

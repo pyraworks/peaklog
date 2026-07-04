@@ -7,37 +7,12 @@ import '../../l10n/app_localizations.dart';
 import '../../widgets/screen_header.dart';
 
 class ShareScreen extends StatelessWidget {
-  final bool embedded;
   final String backLabel;
-  const ShareScreen({super.key, this.embedded = false, this.backLabel = 'Back'});
+  const ShareScreen({super.key, this.backLabel = 'Back'});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    if (embedded) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Text(
-                  l10n.shareTitle,
-                  style: AppTypography.appTitle.copyWith(
-                    color: AppColors.label1,
-                  ),
-                ),
-              ),
-              const Expanded(child: _PlaceholderContent()),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(

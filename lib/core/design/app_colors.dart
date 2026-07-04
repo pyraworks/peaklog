@@ -20,7 +20,6 @@ class AppColors {
 
   // Text — iOS system palette
   static const label1      = Color(0xFF1C1C1E);   // primary text
-  static const label1alt   = Color(0xFF1C1C1E);   // alt primary
   static const label2      = Color(0xFF8E8E93);   // secondary text
   static const label3      = Color(0xFF8E8E93);   // muted text
   static const label4      = Color(0xFF8E8E93);   // table/subtle text

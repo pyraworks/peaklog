@@ -23,29 +23,6 @@ class UnitSettingsNotifier extends AsyncNotifier<UnitSettings> {
     );
   }
 
-  Future<void> toggleWeightUnit() async {
-    final current = state.valueOrNull ?? const UnitSettings();
-    final next = current.weightUnit == 'kg' ? 'lbs' : 'kg';
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('weightUnit', next);
-    state = AsyncData(current.copyWith(weightUnit: next));
-  }
-
-  Future<void> setWeightUnit(String unit) async {
-    final current = state.valueOrNull ?? const UnitSettings();
-    if (current.weightUnit == unit) return;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('weightUnit', unit);
-    state = AsyncData(current.copyWith(weightUnit: unit));
-  }
-
-  Future<void> toggleDistanceUnit() async {
-    final current = state.valueOrNull ?? const UnitSettings();
-    final next = current.distanceUnit == 'km' ? 'mi' : 'km';
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('distanceUnit', next);
-    state = AsyncData(current.copyWith(distanceUnit: next));
-  }
 }
 
 final unitSettingsProvider =

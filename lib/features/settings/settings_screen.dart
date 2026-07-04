@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
+import '../../core/design/app_typography.dart';
 import '../../providers/app_info_provider.dart';
 import '../../providers/nickname_provider.dart';
 import '../../widgets/screen_header.dart';
@@ -69,6 +70,15 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.separatorAlt),
                       const _VersionRow(),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.betaNote,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.footnote.copyWith(
+                    color: AppColors.label2,
+                    height: 1.6,
                   ),
                 ),
               ],

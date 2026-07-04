@@ -675,5 +675,8 @@
   "@pbDirectionHigher": { "description": "Segment label: larger numeric value counts as the personal best" },
 
   "pbDirectionLower": "Lower ↓",
-  "@pbDirectionLower": { "description": "Segment label: smaller numeric value counts as the personal best" }
+  "@pbDirectionLower": { "description": "Segment label: smaller numeric value counts as the personal best" },
+
+  "betaNote": "Thank you for helping test PeakLog.\nAs a thank you, we plan to provide a lifetime license when the official version launches.\nYour feedback will help us make PeakLog even better.",
+  "@betaNote": { "description": "Informational message shown below the Copy Beta Info row in Settings" }
 }

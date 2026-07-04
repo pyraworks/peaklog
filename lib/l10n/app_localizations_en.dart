@@ -648,4 +648,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pbDirectionLower => 'Lower ↓';
+
+  @override
+  String get betaNote => 'Thank you for helping test PeakLog.\nAs a thank you, we plan to provide a lifetime license when the official version launches.\nYour feedback will help us make PeakLog even better.';
 }

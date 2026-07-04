@@ -10,7 +10,6 @@ abstract class AppIcons {
   // Actions
   static IconData get close    => Icons.close;
   static IconData get check    => Icons.check;
-  static IconData get add      => Icons.add;
   static IconData get edit     => Icons.edit;
   static IconData get delete   => Icons.delete_outline;
   static IconData get share    => Icons.ios_share;
@@ -19,32 +18,23 @@ abstract class AppIcons {
   // Content
   static IconData get search     => Icons.search;
   static IconData get settings   => Icons.settings;
-  static IconData get person     => Icons.person;
   static IconData get folder     => Icons.folder_outlined;
   static IconData get infoCircle => Icons.info_outline;
   static IconData get calculator => Icons.calculate_outlined;
   static IconData get trophy     => Icons.emoji_events;
   static IconData get chart      => Icons.bar_chart;
   static IconData get calendar   => Icons.calendar_today;
-  static IconData get qrCode     => Icons.qr_code;
   static IconData get dragHandle => Icons.drag_handle;
   static IconData get medal      => Icons.workspace_premium;
   static IconData get image      => Icons.image;
   static IconData get video      => Icons.videocam;
-  static IconData get feedback => Icons.chat_bubble_outline;
+  static IconData get feedback   => Icons.chat_bubble_outline;
   // Status
-  static IconData get heart       => Icons.favorite;
-  static IconData get checkCircle => Icons.check_circle;
-  static IconData get warning     => Icons.warning;
-  static IconData get xCircle     => Icons.cancel;
+  static IconData get heart   => Icons.favorite;
+  static IconData get xCircle => Icons.cancel;
   // Activity / sport
   static IconData get dumbbell => Icons.fitness_center;
   static IconData get run      => Icons.directions_run;
   static IconData get bike     => Icons.directions_bike;
   static IconData get swim     => Icons.pool;
-  static IconData get ruler    => Icons.straighten;
-  // Record types
-  static IconData get loop  => Icons.loop;
-  static IconData get timer => Icons.timer;
-  static IconData get tag   => Icons.tag;
 }

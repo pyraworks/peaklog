@@ -22,7 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 24,
+      version: 25,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -498,6 +498,18 @@ class DatabaseHelper {
     if (oldVersion < 24) {
       await _addColumnIfMissing(db, 'exercises', 'exercise_type',
           "TEXT NOT NULL DEFAULT 'record'");
+    }
+
+    if (oldVersion < 25) {
+      // Migrate legacy category color keys to the new palette.
+      // Uncategorized (color = 'gray') is intentionally excluded.
+      await db.execute("UPDATE categories SET color = 'crimson' WHERE color = 'red'");
+      await db.execute("UPDATE categories SET color = 'rust'    WHERE color = 'pink'");
+      await db.execute("UPDATE categories SET color = 'gold'    WHERE color = 'amber'");
+      await db.execute("UPDATE categories SET color = 'teal'    WHERE color = 'purple'");
+      await db.execute("UPDATE categories SET color = 'ocean'   WHERE color = 'blue'");
+      await db.execute("UPDATE categories SET color = 'olive'   WHERE color = 'green'");
+      await db.execute("UPDATE categories SET color = 'forest'  WHERE color = 'brown'");
     }
   }
 

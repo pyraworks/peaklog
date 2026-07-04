@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
@@ -33,9 +35,47 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   @override
   bool get wantKeepAlive => true;
 
+  // Static cache: future is resolved once per process; int? lets initState
+  // read the settled value synchronously on all subsequent state creations.
+  static Future<int?>? _nativeWeekStartFuture;
+  static int? _cachedNativeWeekStart;
+
+  static Future<int?> _fetchNativeWeekStart() {
+    return _nativeWeekStartFuture ??= () async {
+      try {
+        final native = await const MethodChannel('peaklog/calendar')
+            .invokeMethod<int>('getFirstDayOfWeek');
+        if (native == null) return null;
+        // Native: 1=Sun, 2=Mon, ..., 7=Sat → Dart: 1=Mon, ..., 7=Sun
+        final dartWeekday = native == 1 ? DateTime.sunday : native - 1;
+        _cachedNativeWeekStart = dartWeekday;
+        return dartWeekday;
+      } catch (_) {
+        return null;
+      }
+    }();
+  }
+
+  // Locale-based fallback — no context needed (uses PlatformDispatcher).
+  static int _localeWeekStart() {
+    final locale = PlatformDispatcher.instance.locale;
+    for (final candidate in [locale.toString(), locale.languageCode]) {
+      try {
+        final fow = intl.DateFormat('', candidate).dateSymbols.FIRSTDAYOFWEEK;
+        // intl FIRSTDAYOFWEEK: 0=Mon..6=Sun → Dart: 1=Mon..7=Sun
+        return fow + 1;
+      } catch (_) {
+        continue;
+      }
+    }
+    return DateTime.monday;
+  }
+
   late int _year;
   late int _month;
   int? _selectedDay; // null = month view, non-null = day-detail (week) view
+  int _weekStart = DateTime.monday; // Dart weekday: 1=Mon..7=Sun
+  bool _weekStartReady = false;
 
   @override
   void initState() {
@@ -43,13 +83,34 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     final now = DateTime.now();
     _year = now.year;
     _month = now.month;
+
+    if (_cachedNativeWeekStart != null) {
+      // Fast path: value already known — no async work needed.
+      _weekStart = _cachedNativeWeekStart!;
+      _weekStartReady = true;
+    } else {
+      // Slow path: ask the platform. A 200 ms timeout guards against a
+      // non-responsive channel; locale-based value is used as fallback.
+      _fetchNativeWeekStart()
+          .timeout(
+            const Duration(milliseconds: 200),
+            onTimeout: () => null,
+          )
+          .then((native) {
+        if (!mounted) return;
+        setState(() {
+          _weekStart = native ?? _localeWeekStart();
+          _weekStartReady = true;
+        });
+      });
+    }
   }
 
   bool get _isWeekView => _selectedDay != null;
 
   int get _firstWeekdayOffset {
-    final wd = DateTime(_year, _month, 1).weekday;
-    return wd == 7 ? 0 : wd; // Sun=0, Mon=1..Sat=6
+    final wd = DateTime(_year, _month, 1).weekday; // 1=Mon..7=Sun
+    return (wd - _weekStart + 7) % 7;
   }
 
   int get _daysInMonth => DateTime(_year, _month + 1, 0).day;
@@ -107,6 +168,41 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     return '$monthStr $day ($wdName)';
   }
 
+  // Intrinsic height of the weekday-row padding (top:20 + bottom:14) plus
+  // the minimum four-row grid (4 × 66 px). Used to reserve card space while
+  // the native first-weekday call is in flight.
+  static const _calendarCardMinHeight = 34.0 + 4 * 66.0;
+
+  Widget _buildCalendarCard(AppLocalizations l10n,
+      AsyncValue<CalendarMonthData> dataAsync) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border.all(color: AppColors.separator, width: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        children: [
+          if (_weekStartReady) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 14),
+              child: _buildWeekdayRow(l10n),
+            ),
+            ClipRect(child: _buildGrid(dataAsync)),
+          ] else
+            // Reserve space while waiting for the native first-weekday value.
+            // The card chrome (border, background, rounded corners) is already
+            // visible; only the grid interior is deferred. The placeholder
+            // height matches the minimum 4-row calendar so nothing shifts.
+            const SizedBox(height: _calendarCardMinHeight),
+          const SizedBox(height: 14),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -130,46 +226,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               ),
             ),
             _buildHeader(l10n, dataAsync),
-            if (_isWeekView)
-              Container(
-                margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  border: Border.all(color: AppColors.separator, width: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.hardEdge,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20, bottom: 14),
-                      child: _buildWeekdayRow(l10n),
-                    ),
-                    ClipRect(child: _buildGrid(dataAsync)),
-                    const SizedBox(height: 14),
-                  ],
-                ),
-              )
-            else
-              Container(
-                margin: const EdgeInsets.fromLTRB(8, 4, 8, 0),
-                decoration: BoxDecoration(
-                  color: AppColors.card,
-                  border: Border.all(color: AppColors.separator, width: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.hardEdge,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 20, bottom: 14),
-                      child: _buildWeekdayRow(l10n),
-                    ),
-                    ClipRect(child: _buildGrid(dataAsync)),
-                    const SizedBox(height: 14),
-                  ],
-                ),
-              ),
+            _buildCalendarCard(l10n, dataAsync),
             if (_isWeekView)
               Expanded(
                 child: _buildDayDetail(l10n, dataAsync.valueOrNull),
@@ -271,15 +328,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   // ── Weekday labels ──────────────────────────────────────────────────────────
 
   Widget _buildWeekdayRow(AppLocalizations l10n) {
-    final labels = [
-      l10n.weekdaySun,
-      l10n.weekdayMon,
-      l10n.weekdayTue,
-      l10n.weekdayWed,
-      l10n.weekdayThu,
-      l10n.weekdayFri,
-      l10n.weekdaySat,
+    // All 7 labels indexed 0..6 where index = _weekStart's Sunday-anchored position.
+    // _weekStart % 7 maps Dart weekday 7 (Sun) → 0, 1 (Mon) → 1, ..., 6 (Sat) → 6.
+    final allLabels = <String Function(AppLocalizations)>[
+      (l) => l.weekdaySun, // index 0
+      (l) => l.weekdayMon, // index 1
+      (l) => l.weekdayTue, // index 2
+      (l) => l.weekdayWed, // index 3
+      (l) => l.weekdayThu, // index 4
+      (l) => l.weekdayFri, // index 5
+      (l) => l.weekdaySat, // index 6
     ];
+    final startIndex = _weekStart % 7;
+    final labels = List.generate(7, (i) => allLabels[(startIndex + i) % 7](l10n));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(

@@ -35,33 +35,6 @@ extension ExportAspectRatioX on ExportAspectRatio {
 
 enum FrameStyle { clean, rough }
 
-/// Ephemeral share creation state — never persisted to DB.
-class ShareCreationState {
-  final String recordId;
-  final String exerciseId;
-  final FrameStyle mode;
-  final ExportAspectRatio ratio;
-  final String? mediaPath;
-  final bool isVideo;
-  final bool showExerciseName;
-  final bool showValue;
-  final bool showDate;
-  final bool showDaysSincePB;
-
-  const ShareCreationState({
-    required this.recordId,
-    required this.exerciseId,
-    this.mode = FrameStyle.clean,
-    this.ratio = ExportAspectRatio.story,
-    this.mediaPath,
-    this.isVideo = false,
-    this.showExerciseName = true,
-    this.showValue = true,
-    this.showDate = true,
-    this.showDaysSincePB = true,
-  });
-}
-
 class OverlayOptions {
   final bool showName;
   final bool showValue;
