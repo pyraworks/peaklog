@@ -17,7 +17,8 @@
       "Bash(echo \"PID: $!\")",
       "Bash(xcrun simctl *)",
       "Bash(mkdir -p /Users/ida-eun/projects/pbpr/docs/superpowers/plans)",
-      "Bash(mkdir -p /Users/ida-eun/projects/pbpr/docs/superpowers/specs)"
+      "Bash(mkdir -p /Users/ida-eun/projects/pbpr/docs/superpowers/specs)",
+      "Skill(run)"
     ]
   }
 }
