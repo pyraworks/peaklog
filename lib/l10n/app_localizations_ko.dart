@@ -639,5 +639,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pbDirectionLower => '낮음 ↓';
 
   @override
-  String get betaNote => '베타 테스트에 참여해주셔서 감사합니다.\n감사의 의미로 정식 버전 출시 시 평생 이용 라이선스를 제공할 예정입니다.\n더 나은 PeakLog를 만들기 위해 많은 피드백 부탁드립니다.';
+  String get betaNote =>
+      '베타 테스트에 참여해주셔서 감사합니다.\n감사의 의미로 정식 버전 출시 시 평생 이용 라이선스를 제공할 예정입니다.\n더 나은 PeakLog를 만들기 위해 많은 피드백 부탁드립니다.';
 }

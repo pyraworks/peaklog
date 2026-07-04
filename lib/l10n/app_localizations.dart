@@ -1316,7 +1316,7 @@ abstract class AppLocalizations {
   /// **'Lower ↓'**
   String get pbDirectionLower;
 
-  /// Informational message shown below the Copy Beta Info row in Settings.
+  /// Informational message shown below the Copy Beta Info row in Settings
   ///
   /// In en, this message translates to:
   /// **'Thank you for helping test PeakLog.\nAs a thank you, we plan to provide a lifetime license when the official version launches.\nYour feedback will help us make PeakLog even better.'**
