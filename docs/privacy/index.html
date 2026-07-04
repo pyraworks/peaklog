@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PeakLog — Privacy Policy</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --bg: #f2f2f7;
+    --bg-elevated: #ffffff;
+    --label: #1c1c1e;
+    --label-secondary: #6c6c70;
+    --separator: rgba(60, 60, 67, 0.16);
+    --accent: #3478f6;
+    --accent-soft: rgba(52, 120, 246, 0.1);
+    --radius: 18px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --bg-elevated: #1c1c1e;
+      --label: #f5f5f7;
+      --label-secondary: #98989d;
+      --separator: rgba(84, 84, 88, 0.48);
+      --accent: #5e9dff;
+      --accent-soft: rgba(94, 157, 255, 0.16);
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--label);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(32px, 8vw, 72px) clamp(20px, 6vw, 32px) 96px;
+  }
+
+  header.hero {
+    text-align: center;
+    margin-bottom: clamp(28px, 6vw, 44px);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: linear-gradient(160deg, var(--accent), #5e9dff);
+    color: #fff;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+
+  h1.title {
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    color: var(--label-secondary);
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .updated {
+    text-align: center;
+    color: var(--label-secondary);
+    font-size: 13px;
+    margin: 22px 0 0;
+  }
+
+  .lang-heading {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 40px 0 16px;
+  }
+
+  .divider {
+    border: 0;
+    height: 1px;
+    background: var(--separator);
+    margin: 40px 0 0;
+  }
+
+  section.card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--separator);
+    border-radius: var(--radius);
+    padding: clamp(20px, 5vw, 32px);
+    margin-top: 20px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2 .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+
+  article + article {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--separator);
+  }
+
+  p {
+    margin: 0 0 10px;
+    color: var(--label);
+    font-size: 15.5px;
+  }
+
+  p.muted {
+    color: var(--label-secondary);
+  }
+
+  ul {
+    margin: 0 0 10px;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 6px;
+    font-size: 15.5px;
+  }
+
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 4px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 980px;
+  }
+
+  a.contact {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  a.contact:hover {
+    text-decoration: underline;
+  }
+
+  .contact-card {
+    text-align: center;
+    margin-top: 24px;
+  }
+
+  .contact-card .email {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--label-secondary);
+    font-size: 12.5px;
+    margin-top: 36px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header class="hero">
+      <div class="badge">PL</div>
+      <h1 class="title">PeakLog Privacy Policy</h1>
+      <p class="subtitle">Your workout data belongs to you.</p>
+    </header>
+
+    <p class="updated">Last updated · July 4, 2026</p>
+
+    <!-- ================= ENGLISH ================= -->
+    <h2 class="lang-heading">English Privacy Policy</h2>
+    <section class="card">
+
+      <article>
+        <h2><span class="dot"></span>Overview</h2>
+        <p>PeakLog ("the app") is a workout tracking app. This policy explains what data the app works with, where it is stored, and how it is used. PeakLog is designed to require as little of your data as possible.</p>
+        <div class="pill-row">
+          <span class="pill">No account required</span>
+          <span class="pill">Data stays on your device</span>
+        </div>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Workout Records</h2>
+        <p>Workouts, sets, reps, weights, notes, and any other training data you enter are created and stored by you within the app. PeakLog does not require you to create an account, sign in, or provide any personal identity information to use these features.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Local Storage</h2>
+        <p>Your workout data is stored locally on your device in the app's private storage area. It is not uploaded to any server operated by PeakLog, and we do not have access to it. Deleting the app or its data removes this information from your device.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Apple Health</h2>
+        <p>On iOS, PeakLog may read from and write to Apple Health (HealthKit) if you explicitly grant permission — for example, to log workouts or read related health metrics. This exchange happens directly between the app and HealthKit on your device, governed by Apple's own privacy protections. You can review or revoke this access at any time in the Health app or iOS Settings.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Health Connect</h2>
+        <p>On Android, PeakLog may integrate with Health Connect to read or write workout and health-related data, only with your explicit permission. Health Connect acts as an on-device broker between apps, following Android's platform privacy model. You can review or revoke PeakLog's access at any time in the Health Connect app or Android Settings.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Firebase Analytics</h2>
+        <p>PeakLog uses Firebase Analytics to understand general, aggregated usage patterns — such as which features are used — so we can improve the app. This data is anonymized/aggregated and is not used to personally identify you. Firebase Analytics is provided by Google; see Google's privacy policy for details on how they process this data.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Firebase Crashlytics</h2>
+        <p>PeakLog uses Firebase Crashlytics to receive crash and error reports when something goes wrong, so we can fix bugs. Crash reports may include technical details such as device model, OS version, and a stack trace of the error. This information is used solely for diagnosing and fixing issues.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>No Account Required</h2>
+        <p>PeakLog does not require sign-up, login, or any form of account creation. There is no PeakLog-operated backend that stores your personal profile or workout history tied to your identity.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Data Sharing</h2>
+        <p>We do not sell your data. Aside from Apple Health, Health Connect, and the Firebase services described above — which operate under their own respective privacy terms — PeakLog does not share your data with third parties.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Changes to This Policy</h2>
+        <p>We may update this policy from time to time as the app evolves. Changes will be reflected on this page with an updated "Last updated" date.</p>
+      </article>
+
+    </section>
+
+    <hr class="divider">
+
+    <!-- ================= KOREAN ================= -->
+    <h2 class="lang-heading">한국어 개인정보처리방침</h2>
+    <section class="card">
+
+      <article>
+        <h2><span class="dot"></span>개요</h2>
+        <p>PeakLog(이하 "앱")는 운동 기록 앱입니다. 본 개인정보 처리방침은 앱이 다루는 데이터의 종류, 저장 위치, 사용 방식을 설명합니다. PeakLog는 최소한의 데이터만으로 동작하도록 설계되었습니다.</p>
+        <div class="pill-row">
+          <span class="pill">계정 불필요</span>
+          <span class="pill">데이터는 기기에 저장</span>
+        </div>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>운동 기록</h2>
+        <p>운동 종목, 세트, 반복 횟수, 중량, 메모 등 사용자가 입력하는 모든 트레이닝 데이터는 앱 내에서 직접 생성되고 저장됩니다. PeakLog는 이러한 기능을 사용하기 위해 계정 생성, 로그인, 개인 식별 정보 제공을 요구하지 않습니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>로컬 저장</h2>
+        <p>운동 데이터는 기기 내 앱 전용 저장 공간에 로컬로 저장됩니다. PeakLog가 운영하는 서버로 업로드되지 않으며, 저희는 해당 데이터에 접근할 수 없습니다. 앱이나 앱 데이터를 삭제하면 기기에서 해당 정보가 제거됩니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Apple Health</h2>
+        <p>iOS에서는 사용자가 명시적으로 권한을 부여한 경우, PeakLog가 Apple Health(HealthKit)에서 데이터를 읽거나 기록할 수 있습니다. 예를 들어 운동을 기록하거나 관련 건강 지표를 조회하는 데 사용됩니다. 이 데이터 교환은 기기 내에서 앱과 HealthKit 간에 직접 이루어지며, Apple의 자체 개인정보 보호 정책의 적용을 받습니다. 언제든지 Health 앱 또는 iOS 설정에서 이 권한을 확인하거나 철회할 수 있습니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Health Connect</h2>
+        <p>Android에서는 사용자가 명시적으로 권한을 부여한 경우에만, PeakLog가 Health Connect를 통해 운동 및 건강 관련 데이터를 읽거나 기록할 수 있습니다. Health Connect는 Android 플랫폼의 개인정보 보호 모델에 따라 앱 간 데이터를 중개하는 기기 내 브로커 역할을 합니다. 언제든지 Health Connect 앱 또는 Android 설정에서 PeakLog의 접근 권한을 확인하거나 철회할 수 있습니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Firebase Analytics</h2>
+        <p>PeakLog는 어떤 기능이 사용되는지와 같은 일반적이고 집계된 사용 패턴을 파악하기 위해 Firebase Analytics를 사용합니다. 이는 앱 개선을 위한 것입니다. 이 데이터는 익명화·집계되어 있으며 사용자를 개인적으로 식별하는 데 사용되지 않습니다. Firebase Analytics는 Google이 제공하며, 데이터 처리 방식에 대한 자세한 내용은 Google의 개인정보 처리방침을 참고하시기 바랍니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>Firebase Crashlytics</h2>
+        <p>PeakLog는 오류 발생 시 이를 수집하여 버그를 수정할 수 있도록 Firebase Crashlytics를 사용합니다. 크래시 리포트에는 기기 모델, OS 버전, 오류 스택 트레이스와 같은 기술적 정보가 포함될 수 있습니다. 이 정보는 오직 문제 진단 및 수정 목적으로만 사용됩니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>계정 불필요</h2>
+        <p>PeakLog는 회원가입, 로그인, 어떠한 형태의 계정 생성도 요구하지 않습니다. 사용자의 신원과 연결된 개인 프로필이나 운동 기록을 저장하는 PeakLog 운영 서버는 존재하지 않습니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>데이터 공유</h2>
+        <p>저희는 사용자의 데이터를 판매하지 않습니다. 위에서 설명한 Apple Health, Health Connect, Firebase 서비스(각각 자체 개인정보 보호 정책의 적용을 받음)를 제외하고, PeakLog는 제3자와 데이터를 공유하지 않습니다.</p>
+      </article>
+
+      <article>
+        <h2><span class="dot"></span>정책 변경</h2>
+        <p>앱이 발전함에 따라 본 정책은 수시로 업데이트될 수 있습니다. 변경 사항은 이 페이지에 반영되며, 상단의 "최종 업데이트" 날짜가 함께 갱신됩니다.</p>
+      </article>
+
+    </section>
+
+    <div class="contact-card">
+      <p class="muted">Questions about this policy?</p>
+      <p class="muted">본 정책에 대해 문의하실 사항이 있으신가요?</p>
+      <a class="contact email" href="mailto:pyraworkshq@gmail.com">pyraworkshq@gmail.com</a>
+    </div>
+
+    <footer>
+      &copy; 2026 PeakLog. All rights reserved.
+    </footer>
+  </div>
+
+</body>
+</html>
