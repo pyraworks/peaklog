@@ -1,4 +1,4 @@
-package com.idaeun.peaklog
+package com.pyraworks.peaklog
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
