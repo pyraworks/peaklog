@@ -28,6 +28,15 @@ class Category {
   // ── Fallback category — cannot be deleted ────────────────────────
   static const uncategorizedId = 'uncategorized';
 
+  // Sentinel sort_order reserved for Uncategorized while no manual reorder
+  // has happened yet. As long as Uncategorized sits at this value, category
+  // creation keeps it pinned last. A manual reorder (category_management_screen's
+  // _reorder) rewrites every sort_order to a dense 0..n-1 sequence, which moves
+  // Uncategorized off this sentinel — that's the (flag-free) signal that a
+  // custom order has been established, after which new categories are simply
+  // appended and nothing is auto-repositioned again.
+  static const uncategorizedDefaultSortOrder = 999;
+
   // ── Legacy preset IDs — kept for backward compat only ───────────
   // Existing users may still have exercises referencing these IDs.
   static const weightliftingId = 'preset-category-weightlifting';
@@ -115,7 +124,7 @@ class Category {
   static List<Category> get presets {
     final now = DateTime(2026, 1, 1).millisecondsSinceEpoch;
     return [
-      Category(id: uncategorizedId, name: 'Uncategorized', color: 'gray', sortOrder: 0, createdAt: now, updatedAt: now),
+      Category(id: uncategorizedId, name: 'Uncategorized', color: 'gray', sortOrder: uncategorizedDefaultSortOrder, createdAt: now, updatedAt: now),
     ];
   }
 }

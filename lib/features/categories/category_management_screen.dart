@@ -154,11 +154,23 @@ class _CategoryManagementScreenState
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final cats = ref.read(categoriesProvider).valueOrNull ?? [];
+
+    // Still in default order (Uncategorized untouched since seeding) → insert
+    // immediately above it, keeping Uncategorized pinned last. Otherwise the
+    // user has established a custom order, which is the source of truth from
+    // then on — just append after everything, including Uncategorized.
+    final uncategorized = cats.where((c) => c.id == Category.uncategorizedId);
+    final isDefaultOrder = uncategorized.isNotEmpty &&
+        uncategorized.first.sortOrder == Category.uncategorizedDefaultSortOrder;
+    final newSortOrder = isDefaultOrder
+        ? cats.where((c) => c.id != Category.uncategorizedId).length
+        : cats.fold(-1, (max, c) => c.sortOrder > max ? c.sortOrder : max) + 1;
+
     final cat = Category(
       id: const Uuid().v4(),
       name: result.$1,
       color: result.$2,
-      sortOrder: cats.length,
+      sortOrder: newSortOrder,
       createdAt: now,
       updatedAt: now,
     );

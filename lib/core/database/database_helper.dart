@@ -442,7 +442,7 @@ class DatabaseHelper {
         INSERT OR IGNORE INTO categories
           (id, name, color, sort_order, created_at, updated_at, sync_status)
         VALUES
-          ('${Category.uncategorizedId}', 'Uncategorized', 'gray', 999, $now, $now, 'pending')
+          ('${Category.uncategorizedId}', 'Uncategorized', 'gray', ${Category.uncategorizedDefaultSortOrder}, $now, $now, 'pending')
       ''');
       // Move exercises with null or orphaned category_id to Uncategorized.
       await db.execute('''
