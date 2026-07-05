@@ -323,18 +323,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get healthPermissionTitle => 'Apple Health 접근 권한 필요';
-
-  @override
-  String get healthPermissionContent => '설정에서 건강 앱 접근을 허용해 주세요.';
-
-  @override
-  String get healthPermissionOpenSettings => '설정에서 허용하기';
-
-  @override
-  String get noRecords => '기록이 없습니다.';
-
-  @override
   String get categoryUncategorized => '미지정';
 
   @override
@@ -413,18 +401,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get feedbackNotAvailable => '피드백 양식을 아직 사용할 수 없습니다.';
-
-  @override
-  String get shareOptionRecordTitle => 'PeakLog 기록';
-
-  @override
-  String get shareOptionRecordSubtitle => '기록한 운동을 공유하세요';
-
-  @override
-  String get shareOptionActivityTitle => '건강 활동';
-
-  @override
-  String get shareOptionActivitySubtitle => 'Apple Health 운동 기록을 공유하세요';
 
   @override
   String get exportLabelRatio => '비율';

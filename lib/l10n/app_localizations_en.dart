@@ -329,19 +329,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get healthPermissionTitle => 'Apple Health Permission Required';
-
-  @override
-  String get healthPermissionContent =>
-      'Please allow Health access in Settings.';
-
-  @override
-  String get healthPermissionOpenSettings => 'Allow in Settings';
-
-  @override
-  String get noRecords => 'No records';
-
-  @override
   String get categoryUncategorized => 'Uncategorized';
 
   @override
@@ -421,18 +408,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedbackNotAvailable => 'Feedback form is not available yet.';
-
-  @override
-  String get shareOptionRecordTitle => 'PeakLog Record';
-
-  @override
-  String get shareOptionRecordSubtitle => 'Share your tracked records';
-
-  @override
-  String get shareOptionActivityTitle => 'Health Activity';
-
-  @override
-  String get shareOptionActivitySubtitle => 'Share a workout from Apple Health';
 
   @override
   String get exportLabelRatio => 'Ratio';

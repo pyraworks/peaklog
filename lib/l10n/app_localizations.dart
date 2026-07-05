@@ -704,30 +704,6 @@ abstract class AppLocalizations {
   /// **'+{days} days'**
   String daysSince(int days);
 
-  /// AlertDialog title when Health permission is denied in share_export_screen
-  ///
-  /// In en, this message translates to:
-  /// **'Apple Health Permission Required'**
-  String get healthPermissionTitle;
-
-  /// AlertDialog body when Health permission is denied in share_export_screen
-  ///
-  /// In en, this message translates to:
-  /// **'Please allow Health access in Settings.'**
-  String get healthPermissionContent;
-
-  /// Button to open system Settings when Health permission is denied
-  ///
-  /// In en, this message translates to:
-  /// **'Allow in Settings'**
-  String get healthPermissionOpenSettings;
-
-  /// Empty state for the record picker sheet in share_export_screen
-  ///
-  /// In en, this message translates to:
-  /// **'No records'**
-  String get noRecords;
-
   /// Label for the built-in uncategorized category
   ///
   /// In en, this message translates to:
@@ -883,30 +859,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feedback form is not available yet.'**
   String get feedbackNotAvailable;
-
-  /// Share option card title for PeakLog records
-  ///
-  /// In en, this message translates to:
-  /// **'PeakLog Record'**
-  String get shareOptionRecordTitle;
-
-  /// Share option card subtitle for PeakLog records
-  ///
-  /// In en, this message translates to:
-  /// **'Share your tracked records'**
-  String get shareOptionRecordSubtitle;
-
-  /// Share option card title for Apple Health activities
-  ///
-  /// In en, this message translates to:
-  /// **'Health Activity'**
-  String get shareOptionActivityTitle;
-
-  /// Share option card subtitle for Apple Health activities
-  ///
-  /// In en, this message translates to:
-  /// **'Share a workout from Apple Health'**
-  String get shareOptionActivitySubtitle;
 
   /// Control label for aspect ratio selector on export screen
   ///

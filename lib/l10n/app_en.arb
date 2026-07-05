@@ -344,18 +344,6 @@
     }
   },
 
-  "healthPermissionTitle": "Apple Health Permission Required",
-  "@healthPermissionTitle": { "description": "AlertDialog title when Health permission is denied in share_export_screen" },
-
-  "healthPermissionContent": "Please allow Health access in Settings.",
-  "@healthPermissionContent": { "description": "AlertDialog body when Health permission is denied in share_export_screen" },
-
-  "healthPermissionOpenSettings": "Allow in Settings",
-  "@healthPermissionOpenSettings": { "description": "Button to open system Settings when Health permission is denied" },
-
-  "noRecords": "No records",
-  "@noRecords": { "description": "Empty state for the record picker sheet in share_export_screen" },
-
   "categoryUncategorized": "Uncategorized",
   "@categoryUncategorized": { "description": "Label for the built-in uncategorized category" },
 
@@ -438,18 +426,6 @@
 
   "feedbackNotAvailable": "Feedback form is not available yet.",
   "@feedbackNotAvailable": { "description": "Snackbar shown when the feedback URL placeholder has not been replaced" },
-
-  "shareOptionRecordTitle": "PeakLog Record",
-  "@shareOptionRecordTitle": { "description": "Share option card title for PeakLog records" },
-
-  "shareOptionRecordSubtitle": "Share your tracked records",
-  "@shareOptionRecordSubtitle": { "description": "Share option card subtitle for PeakLog records" },
-
-  "shareOptionActivityTitle": "Health Activity",
-  "@shareOptionActivityTitle": { "description": "Share option card title for Apple Health activities" },
-
-  "shareOptionActivitySubtitle": "Share a workout from Apple Health",
-  "@shareOptionActivitySubtitle": { "description": "Share option card subtitle for Apple Health activities" },
 
   "exportLabelRatio": "Ratio",
   "@exportLabelRatio": { "description": "Control label for aspect ratio selector on export screen" },
