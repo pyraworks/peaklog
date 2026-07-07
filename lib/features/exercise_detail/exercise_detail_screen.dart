@@ -149,12 +149,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
-  String _formatHistoryValue(Record r, RecordType? rt, String unit) {
+  String _formatHistoryValue(
+      Record r, RecordType? rt, String unit, AppLocalizations l10n) {
     if (rt == null) return '—';
     switch (rt) {
       case RecordType.weight:
         final w = UnitConverter.formatWeight(r.weight!, unit);
-        return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
+        final value = (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
+        return (r.sets != null && r.sets! > 1)
+            ? '$value · ${l10n.setsDisplay(r.sets!)}'
+            : value;
       case RecordType.etc:
         if (r.distance != null) {
           return UnitConverter.formatEtc(r.distance!, r.distanceUnit);
@@ -199,6 +203,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     // Auto-open Add Record when recordType not yet set
     _maybeOpenAddRecord(context, exercise);
 
+    final l10n = AppLocalizations.of(context)!;
     final rt = exercise.recordType;
     final pb = ref.watch(personalBestProvider(widget.exerciseId));
     final bestRecordId = pb?.sourceRecordId;
@@ -206,7 +211,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         ? records.where((r) => r.id == bestRecordId).firstOrNull
         : null;
     final bestValue = bestRecord != null && rt != null
-        ? _formatHistoryValue(bestRecord, rt, weightUnit)
+        ? _formatHistoryValue(bestRecord, rt, weightUnit, l10n)
         : '—';
     final bestDate = bestRecord != null
         ? DateFormatter.relative(
@@ -217,7 +222,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
             ? bestRecord!.weight!
             : null;
 
-    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
@@ -303,7 +307,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     formatValue: exercise.exerciseType == ExerciseType.complete
                         ? (r) => DateFormatter.short(
                             DateTime.fromMillisecondsSinceEpoch(r.performedAt))
-                        : (r) => _formatHistoryValue(r, rt, weightUnit),
+                        : (r) => _formatHistoryValue(r, rt, weightUnit, l10n),
                     onTap: exercise.exerciseType == ExerciseType.complete
                         ? (_) {}
                         : (r) => context.push('/exercise/${widget.exerciseId}/record/${r.id}'),

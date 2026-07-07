@@ -44,6 +44,7 @@ class AddRecordSheet extends ConsumerStatefulWidget {
 class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   final _weightCtrl    = TextEditingController();
   final _repsCtrl      = TextEditingController(text: '1');
+  final _setsCtrl      = TextEditingController();
   final _distCtrl      = TextEditingController();
   final _roundsCtrl    = TextEditingController();
   final _amrapRepsCtrl = TextEditingController();
@@ -85,6 +86,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         _repsCtrl.text      = r.reps.toString();
         _amrapRepsCtrl.text = r.reps.toString();
       }
+      if (r.sets != null) _setsCtrl.text = r.sets.toString();
       if (r.rounds != null) _roundsCtrl.text = r.rounds.toString();
       if (r.distance != null) {
         _distCtrl.text = r.distance!
@@ -112,6 +114,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
   void dispose() {
     _weightCtrl.dispose();
     _repsCtrl.dispose();
+    _setsCtrl.dispose();
     _distCtrl.dispose();
     _roundsCtrl.dispose();
     _amrapRepsCtrl.dispose();
@@ -273,6 +276,17 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                 ),
               ),
             ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _InputCard(
+                label: l10n.setsLabel,
+                child: _NumTextField(
+                  controller: _setsCtrl,
+                  decimal: false,
+                  hintText: l10n.setsHint,
+                ),
+              ),
+            ),
           ],
         );
 
@@ -382,6 +396,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
 
     double? weight;
     int?    reps;
+    int?    sets;
     int?    rounds;
     int?    durationSeconds;
     int?    durationMinutes;
@@ -398,6 +413,17 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         }
         weight = weightUnit == 'lbs' ? UnitConverter.lbsToKg(raw) : raw;
         reps   = max(1, int.tryParse(_repsCtrl.text.trim()) ?? 1);
+        final setsText = _setsCtrl.text.trim();
+        if (setsText.isNotEmpty) {
+          final rawSets = int.tryParse(setsText);
+          if (rawSets == null || rawSets < 1) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(l10n.validationEnterSets)),
+            );
+            return;
+          }
+          sets = rawSets > 1 ? rawSets : null;
+        }
 
       case RecordType.etc:
         final rawEtc = double.tryParse(_distCtrl.text.trim());
@@ -502,6 +528,7 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
         weight: weight,
         weightUnit: _effectiveType == RecordType.weight ? weightUnit : 'kg',
         reps: reps,
+        sets: sets,
         rounds: rounds,
         durationSeconds: durationSeconds,
         distance: distance,
@@ -761,6 +788,8 @@ class _InputCard extends StatelessWidget {
                 top: 10, left: 16, right: 16, bottom: 3),
             child: Text(
               label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -784,7 +813,12 @@ class _InputCard extends StatelessWidget {
 class _NumTextField extends StatelessWidget {
   final TextEditingController controller;
   final bool decimal;
-  const _NumTextField({required this.controller, required this.decimal});
+  final String? hintText;
+  const _NumTextField({
+    required this.controller,
+    required this.decimal,
+    this.hintText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -803,13 +837,18 @@ class _NumTextField extends StatelessWidget {
         color: AppColors.textPrimaryAlt,
         letterSpacing: -0.44,
       ),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         filled: false,
         contentPadding: EdgeInsets.zero,
         isDense: true,
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          fontSize: 16,
+          color: AppColors.label2,
+        ),
       ),
     );
   }

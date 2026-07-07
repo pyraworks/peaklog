@@ -22,7 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     return openDatabase(
       join(dbPath, 'peaklog.db'),
-      version: 25,
+      version: 26,
       onCreate: _onCreate,
       onOpen: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -35,6 +35,7 @@ class DatabaseHelper {
             'INTEGER NOT NULL DEFAULT 1');
         await _addColumnIfMissing(db, 'exercises', 'exercise_type',
             "TEXT NOT NULL DEFAULT 'record'");
+        await _addColumnIfMissing(db, 'records', 'sets', 'INTEGER');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         await db.execute('PRAGMA foreign_keys = ON');
@@ -111,6 +112,7 @@ class DatabaseHelper {
         is_deleted       INTEGER NOT NULL DEFAULT 0,
         is_pr_candidate  INTEGER NOT NULL DEFAULT 1,
         time_cap         INTEGER,
+        sets             INTEGER,
         created_at       INTEGER NOT NULL,
         updated_at       INTEGER NOT NULL,
         sync_status      TEXT NOT NULL DEFAULT 'pending'
@@ -510,6 +512,10 @@ class DatabaseHelper {
       await db.execute("UPDATE categories SET color = 'ocean'   WHERE color = 'blue'");
       await db.execute("UPDATE categories SET color = 'olive'   WHERE color = 'green'");
       await db.execute("UPDATE categories SET color = 'forest'  WHERE color = 'brown'");
+    }
+
+    if (oldVersion < 26) {
+      await _addColumnIfMissing(db, 'records', 'sets', 'INTEGER');
     }
   }
 

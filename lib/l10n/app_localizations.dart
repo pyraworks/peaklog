@@ -326,6 +326,24 @@ abstract class AppLocalizations {
   /// **'REPS'**
   String get repsLabel;
 
+  /// Sets input field label for Weight records (optional)
+  ///
+  /// In en, this message translates to:
+  /// **'Sets'**
+  String get setsLabel;
+
+  /// Placeholder text communicating the Sets field is optional
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get setsHint;
+
+  /// Secondary sets line shown beneath a Weight record's value (e.g. '3 sets')
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sets'**
+  String setsDisplay(int count);
+
   /// Value input field label (ETC record type)
   ///
   /// In en, this message translates to:
@@ -589,6 +607,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter rounds completed.'**
   String get validationEnterRounds;
+
+  /// Validation snackbar: Sets value is 0 (positive integers only)
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid number of sets, or leave the field empty.'**
+  String get validationEnterSets;
 
   /// Snackbar when a save operation throws an exception
   ///

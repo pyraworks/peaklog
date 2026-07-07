@@ -42,6 +42,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   // Weight
   final _weightCtrl = TextEditingController();
   final _repsCtrl   = TextEditingController(text: '1');
+  final _setsCtrl   = TextEditingController();
   String _weightUnit = 'kg';
 
   // For Time
@@ -95,6 +96,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
           .replaceAll(RegExp(r'\.?0+$'), '');
     }
     if (rec.reps != null) _repsCtrl.text = rec.reps.toString();
+    if (rec.sets != null) _setsCtrl.text = rec.sets.toString();
 
     // For Time
     _durationSec = rec.durationSeconds ?? 0;
@@ -118,6 +120,7 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
   void dispose() {
     _weightCtrl.dispose();
     _repsCtrl.dispose();
+    _setsCtrl.dispose();
     _roundsCtrl.dispose();
     _amrapRepsCtrl.dispose();
     _distCtrl.dispose();
@@ -210,7 +213,6 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 3,
               child: _InputCard(
                 label: l10n.weightWithUnit(unitLabel),
                 child: _NumTextField(controller: _weightCtrl, decimal: true),
@@ -221,6 +223,17 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
               child: _InputCard(
                 label: l10n.repsLabel,
                 child: _NumTextField(controller: _repsCtrl, decimal: false),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _InputCard(
+                label: l10n.setsLabel,
+                child: _NumTextField(
+                  controller: _setsCtrl,
+                  decimal: false,
+                  hintText: l10n.setsHint,
+                ),
               ),
             ),
           ],
@@ -360,9 +373,20 @@ class _EditRecordScreenState extends ConsumerState<EditRecordScreen> {
         final weightKg =
             _weightUnit == 'lbs' ? UnitConverter.lbsToKg(raw) : raw;
         final reps = max(1, int.tryParse(_repsCtrl.text.trim()) ?? 1);
+        final setsText = _setsCtrl.text.trim();
+        int? sets;
+        if (setsText.isNotEmpty) {
+          final rawSets = int.tryParse(setsText);
+          if (rawSets == null || rawSets < 1) {
+            _showSnack(l10n.validationEnterSets);
+            return;
+          }
+          sets = rawSets > 1 ? rawSets : null;
+        }
         updated = record.copyWith(
           weight: weightKg,
           reps: reps,
+          sets: sets,
           performedAt: performedAt,
           updatedAt: now,
         );
@@ -480,6 +504,8 @@ class _InputCard extends StatelessWidget {
                 const EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 3),
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -545,7 +571,12 @@ class _ReadOnlyCard extends StatelessWidget {
 class _NumTextField extends StatelessWidget {
   final TextEditingController controller;
   final bool decimal;
-  const _NumTextField({required this.controller, required this.decimal});
+  final String? hintText;
+  const _NumTextField({
+    required this.controller,
+    required this.decimal,
+    this.hintText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -564,12 +595,17 @@ class _NumTextField extends StatelessWidget {
         color: AppColors.textPrimaryAlt,
         letterSpacing: -0.44,
       ),
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         filled: false,
         contentPadding: EdgeInsets.zero,
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          fontSize: 16,
+          color: AppColors.label2,
+        ),
         isDense: true,
       ),
     );

@@ -86,6 +86,55 @@ void main() {
     expect(records.first.distanceUnit, 'km');
   });
 
+  test('insert and retrieve Weight record with sets', () async {
+    final ex = Exercise.create(
+        displayName: 'ZZZ_Bench', recordType: RecordType.weight, orderIndex: 0);
+    await helper.insertExercise(ex);
+    final record = Record.create(
+        exerciseId: ex.id,
+        performedAt: 1000000,
+        weight: 100.0,
+        reps: 5,
+        sets: 3);
+    await helper.insertRecord(record);
+
+    final records = await helper.getRecordsForExercise(ex.id);
+    expect(records.length, 1);
+    expect(records.first.weight, 100.0);
+    expect(records.first.reps, 5);
+    expect(records.first.sets, 3);
+  });
+
+  test('existing records remain compatible with sets = null', () async {
+    final ex = Exercise.create(
+        displayName: 'ZZZ_Squat', recordType: RecordType.weight, orderIndex: 0);
+    await helper.insertExercise(ex);
+    // Simulates a pre-migration record: no sets value supplied at all.
+    final record = Record.create(
+        exerciseId: ex.id, performedAt: 1000000, weight: 80.0, reps: 5);
+    await helper.insertRecord(record);
+
+    final records = await helper.getRecordsForExercise(ex.id);
+    expect(records.first.sets, isNull);
+  });
+
+  test('PersonalBest for Weight ignores sets entirely', () async {
+    final ex = Exercise.create(
+        displayName: 'ZZZ_OHP', recordType: RecordType.weight, orderIndex: 0);
+    await helper.insertExercise(ex);
+
+    // Lower weight but many sets should NOT outrank a higher weight with 1 set.
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id, performedAt: 1000000, weight: 60.0, reps: 5, sets: 10));
+    await helper.insertRecord(Record.create(
+        exerciseId: ex.id, performedAt: 2000000, weight: 70.0, reps: 5, sets: 1));
+
+    final records = await helper.getRecordsForExercise(ex.id);
+    final pb = PersonalBest.fromRecords(ex.id, RecordType.weight, records);
+    expect(pb, isNotNull);
+    expect(pb!.weight, 70.0);
+  });
+
   test('records ordered newest first', () async {
     final ex = Exercise.create(
         displayName: 'Run', recordType: RecordType.etc, orderIndex: 0);

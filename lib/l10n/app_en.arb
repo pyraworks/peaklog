@@ -115,6 +115,23 @@
   "repsLabel": "REPS",
   "@repsLabel": { "description": "Reps input field label" },
 
+  "setsLabel": "Sets",
+  "@setsLabel": { "description": "Sets input field label for Weight records (optional)" },
+
+  "setsHint": "Optional",
+  "@setsHint": { "description": "Placeholder text communicating the Sets field is optional" },
+
+  "setsDisplay": "{count} sets",
+  "@setsDisplay": {
+    "description": "Secondary sets line shown beneath a Weight record's value (e.g. '3 sets')",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "description": "Number of sets performed"
+      }
+    }
+  },
+
   "valueLabel": "VALUE",
   "@valueLabel": { "description": "Value input field label (ETC record type)" },
 
@@ -246,6 +263,9 @@
 
   "validationEnterRounds": "Enter rounds completed.",
   "@validationEnterRounds": { "description": "Validation snackbar: missing AMRAP rounds" },
+
+  "validationEnterSets": "Enter a valid number of sets, or leave the field empty.",
+  "@validationEnterSets": { "description": "Validation snackbar: Sets value is 0 (positive integers only)" },
 
   "saveFailed": "Save failed: {error}",
   "@saveFailed": {

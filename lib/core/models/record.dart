@@ -23,6 +23,7 @@ class Record {
   final int updatedAt;
   final SyncStatus syncStatus;
   final int? timeCap;
+  final int? sets;
 
   const Record({
     required this.id,
@@ -44,6 +45,7 @@ class Record {
     required this.updatedAt,
     this.syncStatus = SyncStatus.pending,
     this.timeCap,
+    this.sets,
   });
 
   factory Record.create({
@@ -60,6 +62,7 @@ class Record {
     String? note,
     String? metadataJson,
     int? timeCap,
+    int? sets,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return Record(
@@ -79,6 +82,7 @@ class Record {
       createdAt: now,
       updatedAt: now,
       timeCap: timeCap,
+      sets: sets,
     );
   }
 
@@ -102,6 +106,7 @@ class Record {
     'updated_at': updatedAt,
     'sync_status': syncStatus.name,
     'time_cap': timeCap,
+    'sets': sets,
   };
 
   factory Record.fromMap(Map<String, dynamic> map) => Record(
@@ -129,6 +134,7 @@ class Record {
     updatedAt: (map['updated_at'] as num).toInt(),
     syncStatus: SyncStatus.values.byName(map['sync_status'] as String),
     timeCap: map['time_cap'] != null ? (map['time_cap'] as num).toInt() : null,
+    sets: map['sets'] != null ? (map['sets'] as num).toInt() : null,
   );
 
   static const _unset = Object();
@@ -153,6 +159,7 @@ class Record {
     int? updatedAt,
     SyncStatus? syncStatus,
     Object? timeCap = _unset,
+    Object? sets = _unset,
   }) => Record(
     id: id ?? this.id,
     ownerId: identical(ownerId, _unset) ? this.ownerId : ownerId as String?,
@@ -179,5 +186,6 @@ class Record {
     updatedAt: updatedAt ?? this.updatedAt,
     syncStatus: syncStatus ?? this.syncStatus,
     timeCap: identical(timeCap, _unset) ? this.timeCap : timeCap as int?,
+    sets: identical(sets, _unset) ? this.sets : sets as int?,
   );
 }

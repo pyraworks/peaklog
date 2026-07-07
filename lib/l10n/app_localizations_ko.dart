@@ -123,6 +123,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repsLabel => '횟수';
 
   @override
+  String get setsLabel => '세트';
+
+  @override
+  String get setsHint => '선택 사항';
+
+  @override
+  String setsDisplay(int count) {
+    return '$count세트';
+  }
+
+  @override
   String get valueLabel => '값';
 
   @override
@@ -254,6 +265,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get validationEnterRounds => '완료한 라운드 수를 입력해 주세요.';
+
+  @override
+  String get validationEnterSets => '세트 수를 올바르게 입력하거나 비워 두세요.';
 
   @override
   String saveFailed(Object error) {

@@ -21,6 +21,7 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
     String? note,
     String? metadataJson,
     int? timeCap,
+    int? sets,
   }) async {
     final record = Record.create(
       exerciseId: arg,
@@ -36,6 +37,7 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
       note: note,
       metadataJson: metadataJson,
       timeCap: timeCap,
+      sets: sets,
     );
     await RecordRepositoryImpl.instance.insert(record);
     final current = state.valueOrNull ?? [];

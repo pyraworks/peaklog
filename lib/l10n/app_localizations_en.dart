@@ -124,6 +124,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repsLabel => 'REPS';
 
   @override
+  String get setsLabel => 'Sets';
+
+  @override
+  String get setsHint => 'Optional';
+
+  @override
+  String setsDisplay(int count) {
+    return '$count sets';
+  }
+
+  @override
   String get valueLabel => 'VALUE';
 
   @override
@@ -258,6 +269,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get validationEnterRounds => 'Enter rounds completed.';
+
+  @override
+  String get validationEnterSets =>
+      'Enter a valid number of sets, or leave the field empty.';
 
   @override
   String saveFailed(Object error) {

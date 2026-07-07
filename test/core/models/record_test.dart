@@ -55,6 +55,72 @@ void main() {
     expect(updated.weight, 100.0);
   });
 
+  // ── sets field (Weight records only) ──────────────────────────────────────
+
+  test('Record.create defaults sets to null', () {
+    final r = Record.create(exerciseId: 'ex-1', performedAt: 1000000, weight: 100.0, reps: 5);
+    expect(r.sets, isNull);
+  });
+
+  test('Record.create accepts an explicit sets value', () {
+    final r = Record.create(
+      exerciseId: 'ex-1',
+      performedAt: 1000000,
+      weight: 100.0,
+      reps: 5,
+      sets: 3,
+    );
+    expect(r.sets, 3);
+  });
+
+  test('toMap/fromMap round-trips sets', () {
+    final r = Record.create(
+      exerciseId: 'ex-1',
+      performedAt: 1000000,
+      weight: 100.0,
+      reps: 5,
+      sets: 4,
+    );
+    final restored = Record.fromMap(r.toMap());
+    expect(restored.sets, 4);
+  });
+
+  test('fromMap defaults sets to null when absent (old DB rows)', () {
+    final r = Record.create(
+      exerciseId: 'ex-1',
+      performedAt: 1000000,
+      weight: 100.0,
+      reps: 5,
+    );
+    final map = r.toMap()..remove('sets');
+    final restored = Record.fromMap(map);
+    expect(restored.sets, isNull);
+  });
+
+  test('copyWith updates sets', () {
+    final r = Record.create(
+      exerciseId: 'ex-1',
+      performedAt: 1000000,
+      weight: 100.0,
+      reps: 5,
+    );
+    final updated = r.copyWith(sets: 3);
+    expect(updated.sets, 3);
+    expect(updated.weight, 100.0);
+    expect(updated.reps, 5);
+  });
+
+  test('copyWith clears sets back to null', () {
+    final r = Record.create(
+      exerciseId: 'ex-1',
+      performedAt: 1000000,
+      weight: 100.0,
+      sets: 3,
+    );
+    final updated = r.copyWith(sets: null);
+    expect(updated.sets, isNull);
+  });
+
   // ── PR designation validation (higher-record guard) ───────────────────────
   //
   // Logic extracted from add_record_sheet._save():

@@ -86,7 +86,8 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
       String weightUnit) {
     final l10n = AppLocalizations.of(context)!;
     final rt = exercise.recordType;
-    final valueStr = rt != null ? _formatValue(record, rt, weightUnit) : '—';
+    final valueStr =
+        rt != null ? _formatValue(record, rt, weightUnit, l10n) : '—';
     final dateStr = _dateStr(record.performedAt);
     final pb = ref.watch(personalBestProvider(widget.exerciseId));
     final isPr = pb?.sourceRecordId == record.id;
@@ -207,11 +208,15 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  String _formatValue(Record r, RecordType rt, String weightUnit) {
+  String _formatValue(
+      Record r, RecordType rt, String weightUnit, AppLocalizations l10n) {
     switch (rt) {
       case RecordType.weight:
         final w = UnitConverter.formatWeight(r.weight ?? 0, weightUnit);
-        return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
+        final value = (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
+        return (r.sets != null && r.sets! > 1)
+            ? '$value · ${l10n.setsDisplay(r.sets!)}'
+            : value;
       case RecordType.etc:
         if (r.distance != null) {
           return UnitConverter.formatEtc(r.distance!, r.distanceUnit);
