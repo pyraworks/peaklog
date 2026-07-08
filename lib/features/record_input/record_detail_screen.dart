@@ -86,8 +86,12 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
       String weightUnit) {
     final l10n = AppLocalizations.of(context)!;
     final rt = exercise.recordType;
-    final valueStr =
-        rt != null ? _formatValue(record, rt, weightUnit, l10n) : '—';
+    final valueStr = rt != null ? _formatValue(record, rt, weightUnit) : '—';
+    final setsBadgeLabel = (rt == RecordType.weight &&
+            record.sets != null &&
+            record.sets! > 1)
+        ? l10n.setsDisplay(record.sets!)
+        : null;
     final dateStr = _dateStr(record.performedAt);
     final pb = ref.watch(personalBestProvider(widget.exerciseId));
     final isPr = pb?.sourceRecordId == record.id;
@@ -125,11 +129,24 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
               ],
               _buildPbValue(valueStr),
               const SizedBox(height: 2),
-              Text(
-                dateStr,
-                style: AppTypography.footnote.copyWith(
-                  color: AppColors.label2,
-                ),
+              Row(
+                children: [
+                  Text(
+                    dateStr,
+                    style: AppTypography.footnote.copyWith(
+                      color: AppColors.label2,
+                    ),
+                  ),
+                  if (setsBadgeLabel != null) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      setsBadgeLabel,
+                      style: AppTypography.footnote.copyWith(
+                        color: AppColors.label2,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (rt == RecordType.amrap) ...[
                 Builder(builder: (context) {
@@ -208,15 +225,11 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  String _formatValue(
-      Record r, RecordType rt, String weightUnit, AppLocalizations l10n) {
+  String _formatValue(Record r, RecordType rt, String weightUnit) {
     switch (rt) {
       case RecordType.weight:
         final w = UnitConverter.formatWeight(r.weight ?? 0, weightUnit);
-        final value = (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
-        return (r.sets != null && r.sets! > 1)
-            ? '$value · ${l10n.setsDisplay(r.sets!)}'
-            : value;
+        return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
       case RecordType.etc:
         if (r.distance != null) {
           return UnitConverter.formatEtc(r.distance!, r.distanceUnit);

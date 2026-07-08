@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
@@ -6,22 +7,34 @@ import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../core/utils/unit_converter.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/unit_settings_provider.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 
-class OneRmCalculatorScreen extends StatefulWidget {
+class OneRmCalculatorScreen extends ConsumerStatefulWidget {
   const OneRmCalculatorScreen({super.key});
 
   @override
-  State<OneRmCalculatorScreen> createState() => _OneRmCalculatorScreenState();
+  ConsumerState<OneRmCalculatorScreen> createState() =>
+      _OneRmCalculatorScreenState();
 }
 
-class _OneRmCalculatorScreenState extends State<OneRmCalculatorScreen> {
+class _OneRmCalculatorScreenState
+    extends ConsumerState<OneRmCalculatorScreen> {
   static const _quickPcts = [70, 75, 80, 85, 90, 95];
 
   final _weightCtrl = TextEditingController();
   final _pctCtrl = TextEditingController();
   String _unit = 'kg';
+
+  @override
+  void initState() {
+    super.initState();
+    // Each new session starts from the Preferred Weight Unit, not whatever
+    // unit was left selected the last time this calculator was opened.
+    final prefUnit = ref.read(unitSettingsProvider).valueOrNull?.weightUnit;
+    if (prefUnit == 'lbs') _unit = 'lbs';
+  }
 
   @override
   void dispose() {

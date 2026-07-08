@@ -23,6 +23,15 @@ class UnitSettingsNotifier extends AsyncNotifier<UnitSettings> {
     );
   }
 
+  /// Updates the Preferred Weight Unit. This only changes the default that
+  /// future weight-input flows start from — it never touches existing
+  /// records or screens that are already open.
+  Future<void> setWeightUnit(String unit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('weightUnit', unit);
+    final current = state.valueOrNull ?? const UnitSettings();
+    state = AsyncData(current.copyWith(weightUnit: unit));
+  }
 }
 
 final unitSettingsProvider =

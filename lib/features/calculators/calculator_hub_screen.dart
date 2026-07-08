@@ -10,7 +10,14 @@ import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 
 class CalculatorHubScreen extends StatelessWidget {
-  const CalculatorHubScreen({super.key});
+  /// True only when this screen is the app's Launch Screen entry point
+  /// (see HomePageView._openCalculatorHubOnLaunch). In that case there is no
+  /// "back to Home" to offer — Calculator Hub *is* the starting screen — so
+  /// it uses the same root-level title treatment as Home/Calendar instead of
+  /// a sub-screen header with a back button.
+  final bool isLaunchScreen;
+
+  const CalculatorHubScreen({this.isLaunchScreen = false, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,8 +25,21 @@ class CalculatorHubScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ScreenHeader(backLabel: l10n.homeLabel, title: l10n.calculatorsTitle),
+          if (isLaunchScreen)
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 20, 0),
+                child: Text(
+                  l10n.calculatorsTitle,
+                  style: AppTypography.appTitle.copyWith(color: AppColors.label1),
+                ),
+              ),
+            )
+          else
+            ScreenHeader(backLabel: l10n.homeLabel, title: l10n.calculatorsTitle),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(

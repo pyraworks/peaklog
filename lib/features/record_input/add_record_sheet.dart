@@ -14,6 +14,7 @@ import '../../core/utils/unit_converter.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/records_provider.dart';
+import '../../providers/unit_settings_provider.dart';
 import 'time_input_field.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -193,7 +194,11 @@ class _AddRecordSheetState extends ConsumerState<AddRecordSheet> {
                         onSelect: (rt) => setState(() {
                           _localRecordType = rt;
                           if (rt == RecordType.weight) {
-                            _localWeightUnit ??= widget.exercise.baseUnit;
+                            _localWeightUnit ??= ref
+                                    .read(unitSettingsProvider)
+                                    .valueOrNull
+                                    ?.weightUnit ??
+                                widget.exercise.baseUnit;
                           }
                         }),
                       ),

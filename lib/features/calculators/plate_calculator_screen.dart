@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_spacing.dart';
 import '../../core/design/app_typography.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/unit_settings_provider.dart';
 import '../../widgets/screen_header.dart';
 import 'calculator_prefs.dart';
 import 'plate_calculator_logic.dart';
 
-class PlateCalculatorScreen extends StatefulWidget {
+class PlateCalculatorScreen extends ConsumerStatefulWidget {
   const PlateCalculatorScreen({super.key});
 
   @override
-  State<PlateCalculatorScreen> createState() => _PlateCalculatorScreenState();
+  ConsumerState<PlateCalculatorScreen> createState() =>
+      _PlateCalculatorScreenState();
 }
 
-class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
+class _PlateCalculatorScreenState
+    extends ConsumerState<PlateCalculatorScreen> {
   final _totalCtrl = TextEditingController();
 
   String _unit = 'kg';
@@ -32,7 +36,14 @@ class _PlateCalculatorScreenState extends State<PlateCalculatorScreen> {
   @override
   void initState() {
     super.initState();
-    _counts = {for (final s in PlateCalculatorLogic.kgPlates) s: 0};
+    // Each new session starts from the Preferred Weight Unit, not whatever
+    // unit was left selected the last time this calculator was opened.
+    final prefUnit = ref.read(unitSettingsProvider).valueOrNull?.weightUnit;
+    if (prefUnit == 'lbs') {
+      _unit = 'lb';
+      _barWeight = 45.0;
+    }
+    _counts = {for (final s in _plateSizes) s: 0};
   }
 
   @override

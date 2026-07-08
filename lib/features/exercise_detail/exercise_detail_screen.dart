@@ -35,6 +35,7 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
 
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
   bool _addRecordOpened = false;
+  bool _handledMissingExercise = false;
 
   void _maybeOpenAddRecord(BuildContext context, Exercise exercise) {
     if (exercise.exerciseType == ExerciseType.complete) return;
@@ -149,16 +150,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
-  String _formatHistoryValue(
-      Record r, RecordType? rt, String unit, AppLocalizations l10n) {
+  String _formatHistoryValue(Record r, RecordType? rt, String unit) {
     if (rt == null) return '—';
     switch (rt) {
       case RecordType.weight:
         final w = UnitConverter.formatWeight(r.weight!, unit);
-        final value = (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
-        return (r.sets != null && r.sets! > 1)
-            ? '$value · ${l10n.setsDisplay(r.sets!)}'
-            : value;
+        return (r.reps != null && r.reps! > 1) ? '$w × ${r.reps}' : w;
       case RecordType.etc:
         if (r.distance != null) {
           return UnitConverter.formatEtc(r.distance!, r.distanceUnit);
@@ -182,20 +179,39 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final exercise = ref.watch(
+    final (exercisesLoaded, exercise) = ref.watch(
       exercisesProvider.select(
-        (s) => s.valueOrNull
-            ?.where((e) => e.id == widget.exerciseId)
-            .firstOrNull,
+        (s) => (
+          s.hasValue,
+          s.valueOrNull?.where((e) => e.id == widget.exerciseId).firstOrNull,
+        ),
       ),
     );
     final records =
         ref.watch(recordsProvider(widget.exerciseId)).valueOrNull ?? [];
 
     if (exercise == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      if (!exercisesLoaded) {
+        // Exercises list hasn't finished its first fetch yet — this is
+        // genuine loading, so show the normal placeholder.
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      // Exercises have finished loading and this exercise is confirmed gone
+      // (e.g. deleted while this screen was open underneath the edit sheet).
+      // Leave automatically instead of looping — scheduled exactly once per
+      // screen instance.
+      if (!_handledMissingExercise) {
+        _handledMissingExercise = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.pop();
+        });
+      }
+      // Nothing is loading anymore and the screen is about to navigate away,
+      // so an empty frame avoids flashing a misleading spinner.
+      return const SizedBox.shrink();
     }
 
     final weightUnit = exercise.baseUnit;
@@ -211,11 +227,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
         ? records.where((r) => r.id == bestRecordId).firstOrNull
         : null;
     final bestValue = bestRecord != null && rt != null
-        ? _formatHistoryValue(bestRecord, rt, weightUnit, l10n)
+        ? _formatHistoryValue(bestRecord, rt, weightUnit)
         : '—';
     final bestDate = bestRecord != null
         ? DateFormatter.relative(
             DateTime.fromMillisecondsSinceEpoch(bestRecord.performedAt))
+        : null;
+    final bestSetsBadgeLabel = (rt == RecordType.weight &&
+            bestRecord?.sets != null &&
+            bestRecord!.sets! > 1)
+        ? l10n.setsDisplay(bestRecord.sets!)
         : null;
     final bestKg =
         (rt == RecordType.weight && bestRecord?.weight != null)
@@ -237,6 +258,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                   _PbCard(
                     valueText: bestValue,
                     dateText: bestDate ?? '',
+                    setsBadgeLabel: bestSetsBadgeLabel,
                     pbLabel: exercise.bestTypeLabel,
                     onTap: () => context.push(
                         '/exercise/${widget.exerciseId}/record/${bestRecord.id}'),
@@ -307,7 +329,7 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                     formatValue: exercise.exerciseType == ExerciseType.complete
                         ? (r) => DateFormatter.short(
                             DateTime.fromMillisecondsSinceEpoch(r.performedAt))
-                        : (r) => _formatHistoryValue(r, rt, weightUnit, l10n),
+                        : (r) => _formatHistoryValue(r, rt, weightUnit),
                     onTap: exercise.exerciseType == ExerciseType.complete
                         ? (_) {}
                         : (r) => context.push('/exercise/${widget.exerciseId}/record/${r.id}'),
@@ -398,12 +420,14 @@ class _ExerciseHeader extends ConsumerWidget {
 class _PbCard extends StatelessWidget {
   final String valueText;
   final String dateText;
+  final String? setsBadgeLabel;
   final String pbLabel;
   final VoidCallback onTap;
 
   const _PbCard({
     required this.valueText,
     required this.dateText,
+    this.setsBadgeLabel,
     required this.pbLabel,
     required this.onTap,
   });
@@ -464,11 +488,24 @@ class _PbCard extends StatelessWidget {
             const SizedBox(height: 2),
             _buildValue(),
             const SizedBox(height: 2),
-            Text(
-              dateText,
-              style: AppTypography.footnote.copyWith(
-                color: AppColors.label2,
-              ),
+            Row(
+              children: [
+                Text(
+                  dateText,
+                  style: AppTypography.footnote.copyWith(
+                    color: AppColors.label2,
+                  ),
+                ),
+                if (setsBadgeLabel != null) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    setsBadgeLabel!,
+                    style: AppTypography.footnote.copyWith(
+                      color: AppColors.label2,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -870,6 +907,12 @@ class _HistorySection extends StatelessWidget {
                         : DateFormatter.short(
                             DateTime.fromMillisecondsSinceEpoch(r.performedAt),
                           );
+                    final setsBadgeLabel = (exercise.recordType ==
+                                RecordType.weight &&
+                            r.sets != null &&
+                            r.sets! > 1)
+                        ? l10n.setsDisplay(r.sets!)
+                        : null;
                     return Column(
                       children: [
                         SwipeableRow(
@@ -883,6 +926,7 @@ class _HistorySection extends StatelessWidget {
                             child: _HistoryRowContent(
                               valueText: valueStr,
                               dateText: dateStr,
+                              setsBadgeLabel: setsBadgeLabel,
                               isPb: isPb,
                               pbLabel: exercise.bestTypeLabel,
                               showChevron: !isComplete,
@@ -935,6 +979,7 @@ class _HistorySection extends StatelessWidget {
 class _HistoryRowContent extends StatelessWidget {
   final String valueText;
   final String dateText;
+  final String? setsBadgeLabel;
   final bool isPb;
   final String pbLabel;
   final bool showChevron;
@@ -942,6 +987,7 @@ class _HistoryRowContent extends StatelessWidget {
   const _HistoryRowContent({
     required this.valueText,
     required this.dateText,
+    this.setsBadgeLabel,
     required this.isPb,
     required this.pbLabel,
     this.showChevron = true,
@@ -968,18 +1014,32 @@ class _HistoryRowContent extends StatelessWidget {
                     ),
                   ),
                   if (isPb) ...[
-                    const SizedBox(width: AppSpacing.s8),
+                    const SizedBox(width: AppSpacing.s12),
                     PbBadge(label: pbLabel),
                   ],
                 ],
               ),
-              if (dateText.isNotEmpty) ...[
+              if (dateText.isNotEmpty || setsBadgeLabel != null) ...[
                 const SizedBox(height: 6),
-                Text(
-                  dateText,
-                  style: AppTypography.footnote.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
+                Row(
+                  children: [
+                    if (dateText.isNotEmpty) ...[
+                      Text(
+                        dateText,
+                        style: AppTypography.footnote.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      if (setsBadgeLabel != null) const SizedBox(width: 6),
+                    ],
+                    if (setsBadgeLabel != null)
+                      Text(
+                        setsBadgeLabel!,
+                        style: AppTypography.footnote.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ],

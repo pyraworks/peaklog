@@ -378,10 +378,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         children: List.generate(_rowCount, (row) {
           final visible = !_isWeekView || row == _selectedRow;
           return ClipRect(
-            child: AnimatedContainer(
+            // AnimatedAlign's heightFactor shrinks/grows the *visible* box
+            // while always laying the row out at its natural (full) height —
+            // unlike AnimatedContainer's height, which forces the row's
+            // actual constraint down as it collapses. That's what let cell
+            // content (day number + category dots) get squeezed below the
+            // height it needs mid-transition and overflow. Here, the row is
+            // always given the room it needs; ClipRect only hides the part
+            // of it that falls outside the currently-animated box, so the
+            // content itself never shrinks or scales.
+            child: AnimatedAlign(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              height: visible ? 66.0 : 0.0,
+              alignment: Alignment.topCenter,
+              heightFactor: visible ? 1.0 : 0.0,
               child: AnimatedOpacity(
                 opacity: visible ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),

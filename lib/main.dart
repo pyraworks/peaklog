@@ -5,13 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/services/analytics_service.dart';
 import 'firebase_options.dart';
 import 'providers/analytics_provider.dart';
+import 'providers/launch_screen_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final launchScreen = parseLaunchScreen(prefs.getString(launchScreenPrefsKey));
 
   AnalyticsService analytics = const AnalyticsService();
 
@@ -39,7 +44,10 @@ void main() async {
   unawaited(analytics.logAppOpen());
 
   runApp(ProviderScope(
-    overrides: [analyticsProvider.overrideWithValue(analytics)],
+    overrides: [
+      analyticsProvider.overrideWithValue(analytics),
+      resolvedLaunchScreenProvider.overrideWithValue(launchScreen),
+    ],
     child: const PeakLogApp(),
   ));
 }

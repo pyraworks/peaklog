@@ -447,6 +447,24 @@
   "feedbackNotAvailable": "Feedback form is not available yet.",
   "@feedbackNotAvailable": { "description": "Snackbar shown when the feedback URL placeholder has not been replaced" },
 
+  "categorySettingsLabel": "Category Settings",
+  "@categorySettingsLabel": { "description": "Settings menu row label to open category management" },
+
+  "launchScreenSettingsLabel": "Launch Screen Settings",
+  "@launchScreenSettingsLabel": { "description": "Settings menu row label to open the launch screen picker" },
+
+  "launchScreenLabel": "Launch Screen",
+  "@launchScreenLabel": { "description": "Heading shown at the top of the launch screen picker sheet" },
+
+  "launchScreenDescription": "Choose which screen opens when you launch the app.",
+  "@launchScreenDescription": { "description": "Descriptive text below the launch screen heading in the picker sheet" },
+
+  "preferredWeightUnitLabel": "Preferred Weight Unit",
+  "@preferredWeightUnitLabel": { "description": "Settings menu row label, and heading shown at the top of the weight unit picker sheet" },
+
+  "preferredWeightUnitDescription": "Used as the starting unit for new weight entries and calculators.",
+  "@preferredWeightUnitDescription": { "description": "Descriptive text below the preferred weight unit heading in the picker sheet" },
+
   "exportLabelRatio": "Ratio",
   "@exportLabelRatio": { "description": "Control label for aspect ratio selector on export screen" },
 

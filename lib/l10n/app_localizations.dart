@@ -884,6 +884,42 @@ abstract class AppLocalizations {
   /// **'Feedback form is not available yet.'**
   String get feedbackNotAvailable;
 
+  /// Settings menu row label to open category management
+  ///
+  /// In en, this message translates to:
+  /// **'Category Settings'**
+  String get categorySettingsLabel;
+
+  /// Settings menu row label to open the launch screen picker
+  ///
+  /// In en, this message translates to:
+  /// **'Launch Screen Settings'**
+  String get launchScreenSettingsLabel;
+
+  /// Heading shown at the top of the launch screen picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Launch Screen'**
+  String get launchScreenLabel;
+
+  /// Descriptive text below the launch screen heading in the picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which screen opens when you launch the app.'**
+  String get launchScreenDescription;
+
+  /// Settings menu row label, and heading shown at the top of the weight unit picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Weight Unit'**
+  String get preferredWeightUnitLabel;
+
+  /// Descriptive text below the preferred weight unit heading in the picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Used as the starting unit for new weight entries and calculators.'**
+  String get preferredWeightUnitDescription;
+
   /// Control label for aspect ratio selector on export screen
   ///
   /// In en, this message translates to:

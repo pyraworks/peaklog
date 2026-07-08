@@ -75,7 +75,9 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/calculators',
-      builder: (context, state) => const CalculatorHubScreen(),
+      builder: (context, state) => CalculatorHubScreen(
+        isLaunchScreen: state.extra == true,
+      ),
     ),
     GoRoute(
       path: '/calculators/1rm',

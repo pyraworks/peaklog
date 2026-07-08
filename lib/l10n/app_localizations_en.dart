@@ -425,6 +425,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackNotAvailable => 'Feedback form is not available yet.';
 
   @override
+  String get categorySettingsLabel => 'Category Settings';
+
+  @override
+  String get launchScreenSettingsLabel => 'Launch Screen Settings';
+
+  @override
+  String get launchScreenLabel => 'Launch Screen';
+
+  @override
+  String get launchScreenDescription =>
+      'Choose which screen opens when you launch the app.';
+
+  @override
+  String get preferredWeightUnitLabel => 'Preferred Weight Unit';
+
+  @override
+  String get preferredWeightUnitDescription =>
+      'Used as the starting unit for new weight entries and calculators.';
+
+  @override
   String get exportLabelRatio => 'Ratio';
 
   @override

@@ -417,6 +417,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get feedbackNotAvailable => '피드백 양식을 아직 사용할 수 없습니다.';
 
   @override
+  String get categorySettingsLabel => '카테고리 설정';
+
+  @override
+  String get launchScreenSettingsLabel => '시작 화면 설정';
+
+  @override
+  String get launchScreenLabel => '시작 화면';
+
+  @override
+  String get launchScreenDescription => '앱을 실행할 때 열릴 화면을 선택하세요.';
+
+  @override
+  String get preferredWeightUnitLabel => '선호 무게 단위';
+
+  @override
+  String get preferredWeightUnitDescription => '새로운 무게 입력과 계산기의 시작 단위로 사용됩니다.';
+
+  @override
   String get exportLabelRatio => '비율';
 
   @override
