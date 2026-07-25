@@ -27,6 +27,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.pyraworks.peaklog"
@@ -36,6 +40,20 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationId = "com.pyraworks.peaklog.dev"
+            resValue("string", "app_name", "PeakLog Dev")
+        }
+        create("prod") {
+            dimension = "environment"
+            applicationId = "com.pyraworks.peaklog"
+            resValue("string", "app_name", "PeakLog")
+        }
     }
 
     signingConfigs {
@@ -57,6 +75,16 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
+// google-services.json only registers the "prod" applicationId (com.pyraworks.peaklog).
+// Skip Google Services processing for the "dev" flavor so the build doesn't hard-fail
+// with "No matching client found" until a dev Firebase app is registered. Firebase
+// init already tolerates failure at the Dart layer (see lib/bootstrap.dart).
+tasks.whenTaskAdded {
+    if (name.contains("Dev") && name.endsWith("GoogleServices")) {
+        enabled = false
     }
 }
 

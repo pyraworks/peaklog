@@ -22,7 +22,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/health/ios"
 
 SPEC CHECKSUMS:
-  ffmpeg_kit_flutter_new: d6c4cd5009f6eb818e5899261dbae06f6e9c6c1b
+  ffmpeg_kit_flutter_new: 12426a19f10ac81186c67c6ebc4717f8f4364b7f
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   health: 4decf5d74e8f54c58a8c07a385fc72f629a831d9
 
