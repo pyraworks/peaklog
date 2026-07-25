@@ -8,11 +8,10 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/services/analytics_service.dart';
-import 'firebase_options.dart';
 import 'providers/analytics_provider.dart';
 import 'providers/launch_screen_provider.dart';
 
-Future<void> bootstrap() async {
+Future<void> bootstrap({required FirebaseOptions firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
@@ -21,9 +20,7 @@ Future<void> bootstrap() async {
   AnalyticsService analytics = const AnalyticsService();
 
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: firebaseOptions);
     analytics = AnalyticsService(FirebaseAnalytics.instance);
 
     if (!kDebugMode) {

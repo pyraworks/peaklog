@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "801409654516",
+    "project_id": "peaklog-79450",
+    "storage_bucket": "peaklog-79450.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801409654516:android:b9a39f7a4c8602b13008a1",
+        "android_client_info": {
+          "package_name": "com.pyraworks.peaklog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfbhavfcCR8eCAVVda3rGx8L9n_xKLguo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801409654516:android:fb570604d10842a33008a1",
+        "android_client_info": {
+          "package_name": "com.pyraworks.peaklog.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfbhavfcCR8eCAVVda3rGx8L9n_xKLguo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

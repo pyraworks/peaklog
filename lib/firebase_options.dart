@@ -31,6 +31,7 @@ class DefaultFirebaseOptions {
     projectId: 'peaklog-79450',
     storageBucket: 'peaklog-79450.firebasestorage.app',
   );
+
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDUjAxFqeqZgmBTSp6RmAGWYq8Yi_TUQfs',
     appId: '1:801409654516:ios:a7f5f1314074051c3008a1',

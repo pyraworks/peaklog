@@ -78,16 +78,6 @@ kotlin {
     }
 }
 
-// google-services.json only registers the "prod" applicationId (com.pyraworks.peaklog).
-// Skip Google Services processing for the "dev" flavor so the build doesn't hard-fail
-// with "No matching client found" until a dev Firebase app is registered. Firebase
-// init already tolerates failure at the Dart layer (see lib/bootstrap.dart).
-tasks.whenTaskAdded {
-    if (name.contains("Dev") && name.endsWith("GoogleServices")) {
-        enabled = false
-    }
-}
-
 flutter {
     source = "../.."
 }
