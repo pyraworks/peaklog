@@ -338,12 +338,10 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       ref
                           .read(recordsProvider(widget.exerciseId).notifier)
                           .deleteRecord(r.id);
-                      if (exercise.exerciseType == ExerciseType.complete) {
-                        final dt = DateTime.fromMillisecondsSinceEpoch(
-                            r.performedAt);
-                        ref.invalidate(calendarMonthProvider(
-                            (year: dt.year, month: dt.month)));
-                      }
+                      final dt =
+                          DateTime.fromMillisecondsSinceEpoch(r.performedAt);
+                      ref.invalidate(calendarMonthProvider(
+                          (year: dt.year, month: dt.month)));
                     },
                   ),
 

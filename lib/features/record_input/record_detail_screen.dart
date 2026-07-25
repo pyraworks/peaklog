@@ -9,6 +9,7 @@ import '../../core/design/app_typography.dart';
 import '../../core/models/exercise.dart';
 import '../../core/models/record.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../providers/calendar_month_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../widgets/pb_badge.dart';
@@ -301,9 +302,12 @@ class _RecordDetailScreenState extends ConsumerState<RecordDetailScreen> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    final performedAt = _record!.performedAt;
     await ref
         .read(recordsProvider(widget.exerciseId).notifier)
         .deleteRecord(widget.recordId);
+    final dt = DateTime.fromMillisecondsSinceEpoch(performedAt);
+    ref.invalidate(calendarMonthProvider((year: dt.year, month: dt.month)));
     if (!mounted) return;
     router.pop();
   }
