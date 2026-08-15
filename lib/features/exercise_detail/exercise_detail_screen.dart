@@ -397,7 +397,7 @@ class _ExerciseHeader extends ConsumerWidget {
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.only(left: 12),
-              child: Icon(AppIcons.settings, size: 20, color: AppColors.label2),
+              child: Icon(AppIcons.settings, size: 20, color: AppColors.label1),
             ),
           ),
         ],
