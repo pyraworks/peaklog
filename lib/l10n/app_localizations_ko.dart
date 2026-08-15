@@ -579,8 +579,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendarCardSwipeHint => '밀어서 캘린더 보기';
 
   @override
-  String calendarSummary(int workoutDays, int prCount) {
-    return '$workoutDays일 운동 · $prCount PR';
+  String calendarSummaryWorkoutDays(int workoutDays) {
+    return '$workoutDays일 운동';
+  }
+
+  @override
+  String calendarSummaryPrCount(int prCount) {
+    return '$prCount PR';
   }
 
   @override

@@ -1196,11 +1196,17 @@ abstract class AppLocalizations {
   /// **'Swipe to Calendar'**
   String get calendarCardSwipeHint;
 
-  /// Month summary line showing workout day count and PR count
+  /// Workout-day-count part of the month summary line, shown before the PR trophy icon
   ///
   /// In en, this message translates to:
-  /// **'{workoutDays} workouts · {prCount} PR'**
-  String calendarSummary(int workoutDays, int prCount);
+  /// **'{workoutDays} workouts'**
+  String calendarSummaryWorkoutDays(int workoutDays);
+
+  /// PR-count part of the month summary line, shown after the PR trophy icon
+  ///
+  /// In en, this message translates to:
+  /// **'{prCount} PR'**
+  String calendarSummaryPrCount(int prCount);
 
   /// Empty-state label shown when the selected month has no workout records
   ///

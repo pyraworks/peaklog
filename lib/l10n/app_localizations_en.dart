@@ -593,8 +593,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendarCardSwipeHint => 'Swipe to Calendar';
 
   @override
-  String calendarSummary(int workoutDays, int prCount) {
-    return '$workoutDays workouts · $prCount PR';
+  String calendarSummaryWorkoutDays(int workoutDays) {
+    return '$workoutDays workouts';
+  }
+
+  @override
+  String calendarSummaryPrCount(int prCount) {
+    return '$prCount PR';
   }
 
   @override

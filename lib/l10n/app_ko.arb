@@ -195,10 +195,15 @@
 
   "calendarLabel": "캘린더",
   "calendarCardSwipeHint": "밀어서 캘린더 보기",
-  "calendarSummary": "{workoutDays}일 운동 · {prCount} PR",
-  "@calendarSummary": {
+  "calendarSummaryWorkoutDays": "{workoutDays}일 운동",
+  "@calendarSummaryWorkoutDays": {
     "placeholders": {
-      "workoutDays": { "type": "int" },
+      "workoutDays": { "type": "int" }
+    }
+  },
+  "calendarSummaryPrCount": "{prCount} PR",
+  "@calendarSummaryPrCount": {
+    "placeholders": {
       "prCount": { "type": "int" }
     }
   },

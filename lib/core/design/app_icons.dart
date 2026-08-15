@@ -29,6 +29,7 @@ abstract class AppIcons {
   static IconData get dragHandle => Icons.drag_handle;
   static IconData get medal      => Icons.workspace_premium;
   static IconData get image      => Icons.image;
+  static IconData get gallery    => Icons.photo_library_outlined;
   static IconData get video      => Icons.videocam;
   static IconData get feedback   => Icons.chat_bubble_outline;
   // Status

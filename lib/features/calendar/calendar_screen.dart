@@ -22,6 +22,13 @@ import '../../providers/notes_provider.dart';
 import '../../providers/personal_best_provider.dart';
 import '../../widgets/destructive_action_button.dart';
 import '../../widgets/exercise_record_row.dart';
+import 'share/day_capture_sheet.dart';
+import 'share/day_share_builder.dart';
+import 'share/day_share_models.dart';
+import 'share/day_share_painter.dart';
+import 'share/month_share_builder.dart';
+import 'share/month_share_models.dart';
+import 'share/month_share_painter.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -76,6 +83,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   int? _selectedDay; // null = month view, non-null = day-detail (week) view
   int _weekStart = DateTime.monday; // Dart weekday: 1=Mon..7=Sun
   bool _weekStartReady = false;
+  bool _capturingImage = false;
 
   @override
   void initState() {
@@ -245,6 +253,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
           ],
         ),
       ),
+      floatingActionButton: dataAsync.hasValue
+          ? _CaptureFab(
+              capturing: _capturingImage,
+              onTap: () => _captureCalendarImage(dataAsync.requireValue, categories),
+            )
+          : null,
     );
   }
 
@@ -295,14 +309,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                       ),
                       const SizedBox(height: 2),
                       dataAsync.when(
-                        data: (d) => Text(
-                          d.workoutDays == 0
-                              ? l10n.calendarNoRecords
-                              : l10n.calendarSummary(
-                                  d.workoutDays, d.prCount),
-                          style: AppTypography.footnote
-                              .copyWith(color: AppColors.label2),
-                        ),
+                        data: (d) => d.workoutDays == 0
+                            ? Text(
+                                l10n.calendarNoRecords,
+                                style: AppTypography.footnote
+                                    .copyWith(color: AppColors.label2),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    l10n.calendarSummaryWorkoutDays(d.workoutDays),
+                                    style: AppTypography.footnote
+                                        .copyWith(color: AppColors.label2),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Icon(AppIcons.trophy, size: 13, color: AppColors.pbGold),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    l10n.calendarSummaryPrCount(d.prCount),
+                                    style: AppTypography.footnote
+                                        .copyWith(color: AppColors.label2),
+                                  ),
+                                ],
+                              ),
                         loading: () => const SizedBox(height: 16),
                         error: (_, __) => const SizedBox.shrink(),
                       ),
@@ -630,6 +660,147 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     );
   }
 
+  /// Single capture entry point for the whole screen. No day selected →
+  /// captures the displayed month (the exact same [CalendarMonthData]
+  /// already loaded for the grid). A day selected → captures that day's
+  /// records/notes. Never saves anything itself — only generates a PNG and
+  /// hands it to [DayCaptureSheet] for the user to confirm. "Capturing"
+  /// only covers generation, not the review sheet: the FAB returns to
+  /// normal as soon as the image is ready, matching how a camera app's
+  /// shutter button isn't "busy" while you review the shot.
+  Future<void> _captureCalendarImage(
+      CalendarMonthData data, List<Category> categories) async {
+    if (_capturingImage) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_selectedDay == null) {
+      await _captureMonthImage(data, categories, l10n);
+    } else {
+      await _captureDayImage(data, l10n);
+    }
+  }
+
+  Future<void> _captureMonthImage(
+      CalendarMonthData data, List<Category> categories, AppLocalizations l10n) async {
+    setState(() => _capturingImage = true);
+    final Uint8List bytes;
+    try {
+      // Split so the painter can place the existing PR trophy icon between
+      // the two parts, exactly like the on-screen summary — null when
+      // there's no activity, matching calendarNoRecords being a separate,
+      // unrelated message (not "0 workouts").
+      final workoutDaysLabel = data.workoutDays == 0
+          ? null
+          : l10n.calendarSummaryWorkoutDays(data.workoutDays);
+      final prCountLabel =
+          data.workoutDays == 0 ? null : l10n.calendarSummaryPrCount(data.prCount);
+      final countLabel = data.workoutDays == 0 ? l10n.calendarNoRecords : '';
+      // Same weekday-label ordering _buildWeekdayRow already uses, so the
+      // image matches the on-screen grid exactly.
+      final allWeekdayLabels = <String Function(AppLocalizations)>[
+        (l) => l.weekdaySun,
+        (l) => l.weekdayMon,
+        (l) => l.weekdayTue,
+        (l) => l.weekdayWed,
+        (l) => l.weekdayThu,
+        (l) => l.weekdayFri,
+        (l) => l.weekdaySat,
+      ];
+      final startIndex = _weekStart % 7;
+      final weekdayLabels =
+          List.generate(7, (i) => allWeekdayLabels[(startIndex + i) % 7](l10n));
+
+      final shareData = MonthShareData(
+        monthLabel: _monthTitle(l10n),
+        countLabel: countLabel,
+        workoutDaysLabel: workoutDaysLabel,
+        prCountLabel: prCountLabel,
+        weekdayLabels: weekdayLabels,
+        cells: buildMonthShareCells(
+          firstWeekdayOffset: _firstWeekdayOffset,
+          daysInMonth: _daysInMonth,
+          days: data.days,
+        ),
+        // Same records/exerciseMap already loaded for the grid, plus the
+        // same categories list already watched for the on-screen legend —
+        // no new category query.
+        usedCategories: buildMonthShareCategories(
+          records: data.records,
+          exerciseMap: data.exerciseMap,
+          categories: categories,
+        ),
+      );
+      bytes = await renderMonthShareToBytes(shareData);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _capturingImage = false);
+        _showSnack(l10n.saveFailed(e));
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _capturingImage = false);
+    await DayCaptureSheet.show(context, bytes, fileNamePrefix: 'peaklog_month_share_');
+  }
+
+  Future<void> _captureDayImage(CalendarMonthData data, AppLocalizations l10n) async {
+    final today = _selectedDay!;
+    final dayRecords = data.records
+        .where((r) => DateTime.fromMillisecondsSinceEpoch(r.performedAt).day == today)
+        .toList();
+    if (dayRecords.isEmpty) {
+      _showSnack(l10n.calendarNoRecords);
+      return;
+    }
+
+    setState(() => _capturingImage = true);
+    final Uint8List bytes;
+    try {
+      final prRecordIds = <String>{};
+      for (final exerciseId in dayRecords.map((r) => r.exerciseId).toSet()) {
+        final pb = ref.read(personalBestProvider(exerciseId));
+        if (pb != null) prRecordIds.add(pb.sourceRecordId);
+      }
+      final performedOn = DateTime(_year, _month, today).millisecondsSinceEpoch;
+      // Same notes Day Detail's own Notes section already loads — no
+      // separate query, sorting, or filtering logic.
+      final notes = ref.read(notesProvider(performedOn)).valueOrNull ?? [];
+
+      final shareData = DayShareData(
+        dateLabel: _selectedDayTitle(l10n),
+        recordsSectionLabel: l10n.calendarRecordsLabel,
+        records: buildDayShareRecords(
+          records: dayRecords,
+          exerciseMap: data.exerciseMap,
+          exerciseColorKeys: data.exerciseColorKeys,
+          prRecordIds: prRecordIds,
+          l10n: l10n,
+        ),
+        notesSectionLabel: l10n.calendarNotesLabel,
+        notes: buildDayShareNotes(notes),
+      );
+
+      bytes = await renderDayShareToBytes(shareData);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _capturingImage = false);
+        _showSnack(l10n.saveFailed(e));
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _capturingImage = false);
+    await DayCaptureSheet.show(context, bytes, fileNamePrefix: 'peaklog_day_share_');
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+    );
+  }
+
   void _showNoteEditSheet({required int performedOn, Note? note}) {
     showModalBottomSheet<void>(
       context: context,
@@ -886,9 +1057,11 @@ class _LegendItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Same 5px dot size as the grid's own category dots
+        // (_CategoryDots) — one consistent indicator system.
         Container(
-          width: 7,
-          height: 7,
+          width: 5,
+          height: 5,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
@@ -915,6 +1088,47 @@ class _SectionHeader extends StatelessWidget {
           fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppColors.label2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Single capture entry point for the whole Calendar screen: captures the
+/// displayed month (Month view or a selected day's collapsed grid) or the
+/// selected day's records/notes, depending on Calendar's own current state
+/// — see `_CalendarScreenState._captureCalendarImage`.
+class _CaptureFab extends StatelessWidget {
+  final bool capturing;
+  final VoidCallback onTap;
+  const _CaptureFab({required this.capturing, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: capturing ? null : onTap,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: const BoxDecoration(
+          color: AppColors.actionDark,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Center(
+          child: capturing
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Icon(AppIcons.gallery, size: 22, color: Colors.white),
         ),
       ),
     );

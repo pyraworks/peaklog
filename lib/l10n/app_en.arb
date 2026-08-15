@@ -619,11 +619,18 @@
   "calendarCardSwipeHint": "Swipe to Calendar",
   "@calendarCardSwipeHint": { "description": "Subtle swipe-direction hint on the calendar entry card at the bottom of the home screen" },
 
-  "calendarSummary": "{workoutDays} workouts · {prCount} PR",
-  "@calendarSummary": {
-    "description": "Month summary line showing workout day count and PR count",
+  "calendarSummaryWorkoutDays": "{workoutDays} workouts",
+  "@calendarSummaryWorkoutDays": {
+    "description": "Workout-day-count part of the month summary line, shown before the PR trophy icon",
     "placeholders": {
-      "workoutDays": { "type": "int", "description": "Number of days with at least one workout record" },
+      "workoutDays": { "type": "int", "description": "Number of days with at least one workout record" }
+    }
+  },
+
+  "calendarSummaryPrCount": "{prCount} PR",
+  "@calendarSummaryPrCount": {
+    "description": "PR-count part of the month summary line, shown after the PR trophy icon",
+    "placeholders": {
       "prCount": { "type": "int", "description": "Number of personal records set this month" }
     }
   },
