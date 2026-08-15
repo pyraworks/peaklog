@@ -145,6 +145,10 @@
   "launchScreenDescription": "앱을 실행할 때 열릴 화면을 선택하세요.",
   "preferredWeightUnitLabel": "선호 무게 단위",
   "preferredWeightUnitDescription": "새로운 무게 입력과 계산기의 시작 단위로 사용됩니다.",
+  "defaultBestTypeSettingsLabel": "선호 Best Type",
+  "defaultBestTypeDescription": "새 운동을 추가할 때 기본으로 선택될 항목을 선택하세요.",
+  "defaultBestTypePr": "PR",
+  "defaultBestTypePb": "PB",
 
   "exportLabelRatio": "비율",
   "exportLabelFrame": "프레임",

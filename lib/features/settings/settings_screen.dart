@@ -8,7 +8,9 @@ import '../../core/constants/app_constants.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_icons.dart';
 import '../../core/design/app_typography.dart';
+import '../../core/enums/best_type.dart';
 import '../../providers/app_info_provider.dart';
+import '../../providers/default_best_type_provider.dart';
 import '../../providers/launch_screen_provider.dart';
 import '../../providers/nickname_provider.dart';
 import '../../providers/unit_settings_provider.dart';
@@ -33,6 +35,13 @@ class SettingsScreen extends ConsumerWidget {
     final weightUnit =
         ref.watch(unitSettingsProvider).valueOrNull?.weightUnit ?? 'kg';
     final weightUnitValue = weightUnit == 'lbs' ? 'lb' : 'kg';
+
+    final defaultBestType =
+        ref.watch(defaultBestTypeProvider).valueOrNull ?? BestType.pr;
+    final defaultBestTypeValue = switch (defaultBestType) {
+      BestType.pr => l10n.defaultBestTypePr,
+      BestType.pb => l10n.defaultBestTypePb,
+    };
 
     void openFeedback() {
       launchUrl(
@@ -66,17 +75,8 @@ class SettingsScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       _MenuRow(
-                        title: l10n.categorySettingsLabel,
-                        leadingIcon: AppIcons.folder,
-                        onTap: () => context.push('/categories'),
-                      ),
-                      const Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: AppColors.separatorAlt),
-                      _MenuRow(
                         title: l10n.launchScreenSettingsLabel,
-                        leadingIcon: AppIcons.settings,
+                        leadingIcon: AppIcons.home,
                         trailingValue: launchScreenValue,
                         onTap: () => _showLaunchScreenPicker(context),
                       ),
@@ -89,6 +89,16 @@ class SettingsScreen extends ConsumerWidget {
                         leadingIcon: AppIcons.dumbbell,
                         trailingValue: weightUnitValue,
                         onTap: () => _showPreferredWeightUnitPicker(context),
+                      ),
+                      const Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.separatorAlt),
+                      _MenuRow(
+                        title: l10n.defaultBestTypeSettingsLabel,
+                        leadingIcon: AppIcons.trophy,
+                        trailingValue: defaultBestTypeValue,
+                        onTap: () => _showDefaultBestTypePicker(context),
                       ),
                       const Divider(
                           height: 1,
@@ -144,6 +154,17 @@ void _showPreferredWeightUnitPicker(BuildContext context) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
     builder: (_) => const _PreferredWeightUnitPickerSheet(),
+  );
+}
+
+void _showDefaultBestTypePicker(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.card,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (_) => const _DefaultBestTypePickerSheet(),
   );
 }
 
@@ -399,6 +420,66 @@ class _PreferredWeightUnitPickerSheet extends ConsumerWidget {
               label: 'lb',
               selected: selected == 'lbs',
               onTap: () => select('lbs'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Default Best Type picker — bottom sheet opened from its Settings row
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DefaultBestTypePickerSheet extends ConsumerWidget {
+  const _DefaultBestTypePickerSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final selected =
+        ref.watch(defaultBestTypeProvider).valueOrNull ?? BestType.pr;
+
+    void select(BestType value) {
+      if (value != selected) HapticFeedback.selectionClick();
+      ref.read(defaultBestTypeProvider.notifier).setDefaultBestType(value);
+      Navigator.pop(context);
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.defaultBestTypeSettingsLabel,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.label1,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.defaultBestTypeDescription,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: AppColors.label2),
+            ),
+            const SizedBox(height: 16),
+            _PickerOption(
+              label: l10n.defaultBestTypePr,
+              selected: selected == BestType.pr,
+              onTap: () => select(BestType.pr),
+            ),
+            const SizedBox(height: 8),
+            _PickerOption(
+              label: l10n.defaultBestTypePb,
+              selected: selected == BestType.pb,
+              onTap: () => select(BestType.pb),
             ),
           ],
         ),

@@ -920,6 +920,30 @@ abstract class AppLocalizations {
   /// **'Used as the starting unit for new weight entries and calculators.'**
   String get preferredWeightUnitDescription;
 
+  /// Settings menu row label, and heading shown at the top of the default best type picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Best Type'**
+  String get defaultBestTypeSettingsLabel;
+
+  /// Descriptive text below the default best type heading in the picker sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which type is preselected when you create a new exercise.'**
+  String get defaultBestTypeDescription;
+
+  /// Picker option: default new exercises to PR
+  ///
+  /// In en, this message translates to:
+  /// **'PR'**
+  String get defaultBestTypePr;
+
+  /// Picker option: default new exercises to PB
+  ///
+  /// In en, this message translates to:
+  /// **'PB'**
+  String get defaultBestTypePb;
+
   /// Control label for aspect ratio selector on export screen
   ///
   /// In en, this message translates to:

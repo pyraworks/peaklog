@@ -22,7 +22,6 @@ import '../home/add_exercise_sheet.dart';
 import '../record_input/add_record_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/analytics_provider.dart';
-import '../../providers/calendar_month_provider.dart';
 
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -75,8 +74,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
     await ref.read(recordsProvider(widget.exerciseId).notifier).addRecord(
       performedAt: performedAt.millisecondsSinceEpoch,
     );
-    ref.invalidate(
-        calendarMonthProvider((year: date.year, month: date.month)));
     // ignore: unawaited_futures
     ref.read(analyticsProvider).logRecordSaved(
       exerciseType: ExerciseType.complete,
@@ -338,10 +335,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen> {
                       ref
                           .read(recordsProvider(widget.exerciseId).notifier)
                           .deleteRecord(r.id);
-                      final dt =
-                          DateTime.fromMillisecondsSinceEpoch(r.performedAt);
-                      ref.invalidate(calendarMonthProvider(
-                          (year: dt.year, month: dt.month)));
                     },
                   ),
 

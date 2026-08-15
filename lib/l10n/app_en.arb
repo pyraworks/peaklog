@@ -465,6 +465,18 @@
   "preferredWeightUnitDescription": "Used as the starting unit for new weight entries and calculators.",
   "@preferredWeightUnitDescription": { "description": "Descriptive text below the preferred weight unit heading in the picker sheet" },
 
+  "defaultBestTypeSettingsLabel": "Preferred Best Type",
+  "@defaultBestTypeSettingsLabel": { "description": "Settings menu row label, and heading shown at the top of the default best type picker sheet" },
+
+  "defaultBestTypeDescription": "Choose which type is preselected when you create a new exercise.",
+  "@defaultBestTypeDescription": { "description": "Descriptive text below the default best type heading in the picker sheet" },
+
+  "defaultBestTypePr": "PR",
+  "@defaultBestTypePr": { "description": "Picker option: default new exercises to PR" },
+
+  "defaultBestTypePb": "PB",
+  "@defaultBestTypePb": { "description": "Picker option: default new exercises to PB" },
+
   "exportLabelRatio": "Ratio",
   "@exportLabelRatio": { "description": "Control label for aspect ratio selector on export screen" },
 

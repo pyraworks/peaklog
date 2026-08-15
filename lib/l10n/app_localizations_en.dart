@@ -445,6 +445,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Used as the starting unit for new weight entries and calculators.';
 
   @override
+  String get defaultBestTypeSettingsLabel => 'Preferred Best Type';
+
+  @override
+  String get defaultBestTypeDescription =>
+      'Choose which type is preselected when you create a new exercise.';
+
+  @override
+  String get defaultBestTypePr => 'PR';
+
+  @override
+  String get defaultBestTypePb => 'PB';
+
+  @override
   String get exportLabelRatio => 'Ratio';
 
   @override

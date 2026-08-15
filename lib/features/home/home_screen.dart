@@ -171,7 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => context.push('/settings'),
-                    child: _IconButton(icon: AppIcons.settings),
+                    child: _IconButton(icon: AppIcons.handyman),
                   ),
                 ],
               ),
@@ -239,6 +239,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       onTap: () => setState(() => _filterCategoryId = cat.id),
                     ),
                   )),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: _CategoryManageChip(
+                      onTap: () => context.push('/categories'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -400,6 +406,36 @@ class _CategoryChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Trailing chip in the category filter bar that opens category management.
+/// Matches _CategoryChip's shape/sizing but is never a filter option itself
+/// — it carries no category id and is never in a selected state.
+class _CategoryManageChip extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CategoryManageChip({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      label: l10n.categorySettingsLabel,
+      button: true,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.chip,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(AppIcons.settings, size: 14, color: AppColors.textPrimaryAlt),
         ),
       ),
     );

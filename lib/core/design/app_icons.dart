@@ -18,6 +18,8 @@ abstract class AppIcons {
   // Content
   static IconData get search     => Icons.search;
   static IconData get settings   => Icons.settings;
+  static IconData get handyman   => Icons.handyman;
+  static IconData get home       => Icons.home;
   static IconData get folder     => Icons.folder_outlined;
   static IconData get infoCircle => Icons.info_outline;
   static IconData get calculator => Icons.calculate_outlined;

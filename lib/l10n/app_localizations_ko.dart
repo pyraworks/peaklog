@@ -435,6 +435,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get preferredWeightUnitDescription => '새로운 무게 입력과 계산기의 시작 단위로 사용됩니다.';
 
   @override
+  String get defaultBestTypeSettingsLabel => '선호 Best Type';
+
+  @override
+  String get defaultBestTypeDescription => '새 운동을 추가할 때 기본으로 선택될 항목을 선택하세요.';
+
+  @override
+  String get defaultBestTypePr => 'PR';
+
+  @override
+  String get defaultBestTypePb => 'PB';
+
+  @override
   String get exportLabelRatio => '비율';
 
   @override

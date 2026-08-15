@@ -12,6 +12,7 @@ import '../../domain/models/category.dart';
 import '../../widgets/category_color_indicator.dart';
 import '../../providers/categories_provider.dart';
 import '../../providers/analytics_provider.dart';
+import '../../providers/default_best_type_provider.dart';
 import '../../providers/exercises_provider.dart';
 import '../../widgets/destructive_action_button.dart';
 import '../../widgets/screen_header.dart';
@@ -79,6 +80,7 @@ class _AddExerciseSheetState extends ConsumerState<AddExerciseSheet> {
     } else {
       _selectedCategoryId = widget.initialCategoryId;
       _etcUnitCtrl = TextEditingController();
+      _bestType = ref.read(defaultBestTypeProvider).valueOrNull ?? BestType.pr;
     }
   }
 
@@ -562,7 +564,7 @@ class _BestTypeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Segmented control
+          // Segmented control — order is permanently fixed as [PR, PB].
           Container(
             height: 34,
             decoration: BoxDecoration(
@@ -572,15 +574,15 @@ class _BestTypeCard extends StatelessWidget {
             child: Row(
               children: [
                 _Segment(
-                  label: 'PB',
-                  selected: value == BestType.pb,
-                  onTap: () => onChanged(BestType.pb),
-                  isFirst: true,
-                ),
-                _Segment(
                   label: 'PR',
                   selected: value == BestType.pr,
                   onTap: () => onChanged(BestType.pr),
+                  isFirst: true,
+                ),
+                _Segment(
+                  label: 'PB',
+                  selected: value == BestType.pb,
+                  onTap: () => onChanged(BestType.pb),
                   isFirst: false,
                 ),
               ],

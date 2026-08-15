@@ -5,6 +5,7 @@ import '../core/models/record.dart';
 import 'categories_provider.dart';
 import 'exercises_provider.dart';
 import 'personal_best_provider.dart';
+import 'records_provider.dart';
 
 typedef YearMonth = ({int year, int month});
 
@@ -40,6 +41,9 @@ class CalendarMonthNotifier
     extends AutoDisposeFamilyAsyncNotifier<CalendarMonthData, YearMonth> {
   @override
   Future<CalendarMonthData> build(YearMonth arg) async {
+    // Re-fetch whenever any record is added/updated/deleted, for any
+    // exercise, so this month's data can never go stale in memory.
+    ref.watch(recordsRevisionProvider);
     final exercises = await ref.watch(exercisesProvider.future);
     final categories = await ref.watch(categoriesProvider.future);
 
