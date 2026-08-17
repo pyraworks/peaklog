@@ -54,7 +54,6 @@ class CleanFrame extends StatelessWidget {
                   children: [
                     Text('PeakLog',
                         style: TextStyle(
-                            fontFamily: 'Pretendard',
                             color: accent,
                             fontSize: w * 0.038,
                             fontWeight: FontWeight.w800,
@@ -62,7 +61,6 @@ class CleanFrame extends StatelessWidget {
                     if (showPrBadge)
                       Text('NEW $badgeLabel',
                           style: TextStyle(
-                              fontFamily: 'Pretendard',
                               color: const Color(0xFF333333),
                               fontSize: w * 0.024,
                               fontWeight: FontWeight.w700,
@@ -74,7 +72,6 @@ class CleanFrame extends StatelessWidget {
                   Text(
                     titleText.toUpperCase(),
                     style: TextStyle(
-                        fontFamily: 'Pretendard',
                         color: const Color(0xFF444444),
                         fontSize: w * 0.030,
                         fontWeight: FontWeight.w700,
@@ -90,7 +87,6 @@ class CleanFrame extends StatelessWidget {
                     child: Text(
                       valueText,
                       style: TextStyle(
-                          fontFamily: 'Pretendard',
                           color: AppTheme.textPrimary,
                           fontSize: w * 0.155,
                           fontWeight: FontWeight.w800,
@@ -103,7 +99,6 @@ class CleanFrame extends StatelessWidget {
                   Text(
                     daysSinceStr,
                     style: TextStyle(
-                        fontFamily: 'Pretendard',
                         color: accent,
                         fontSize: w * 0.030,
                         fontWeight: FontWeight.w700),
@@ -119,7 +114,6 @@ class CleanFrame extends StatelessWidget {
                       Text(
                         l10n.personalBestLabel,
                         style: TextStyle(
-                            fontFamily: 'Pretendard',
                             color: accent,
                             fontSize: w * 0.022,
                             fontWeight: FontWeight.w700,

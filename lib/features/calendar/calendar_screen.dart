@@ -282,7 +282,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                       Text(
                         _selectedDayTitle(l10n),
                         style: const TextStyle(
-                          fontFamily: 'Pretendard',
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.4,
@@ -303,7 +302,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                       Text(
                         _monthTitle(l10n),
                         style: const TextStyle(
-                          fontFamily: 'Pretendard',
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.4,
@@ -1056,7 +1054,6 @@ class _CalendarCell extends StatelessWidget {
                       child: Text(
                         '$day',
                         style: TextStyle(
-                          fontFamily: 'Pretendard',
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                           color: numColor,

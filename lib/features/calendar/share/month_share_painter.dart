@@ -335,7 +335,6 @@ class _MonthShareLayout {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontFamily: 'Pretendard',
           fontSize: fontSize,
           fontWeight: weight,
           color: color,

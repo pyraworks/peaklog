@@ -86,17 +86,3 @@ flutter:
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
-
-  fonts:
-    - family: Pretendard
-      fonts:
-        - asset: assets/fonts/Pretendard-Regular.ttf
-          weight: 400
-        - asset: assets/fonts/Pretendard-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Pretendard-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Pretendard-Bold.ttf
-          weight: 700
-        - asset: assets/fonts/Pretendard-ExtraBold.ttf
-          weight: 800

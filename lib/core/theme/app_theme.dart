@@ -27,7 +27,6 @@ class AppTheme {
         onSurface: AppColors.label1,
       ),
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: 'Pretendard',
     );
 
     return base.copyWith(

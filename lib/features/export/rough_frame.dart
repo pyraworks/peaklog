@@ -50,7 +50,6 @@ class RoughFrame extends StatelessWidget {
                     child: Text(
                       badgeLabel,
                       style: TextStyle(
-                        fontFamily: 'Pretendard',
                         color: const Color(0xFF1D1D1D),
                         fontSize: w * 0.83,
                         fontWeight: FontWeight.w800,
@@ -72,7 +71,6 @@ class RoughFrame extends StatelessWidget {
                             child: Text(
                               'PeakLog',
                               style: TextStyle(
-                                  fontFamily: 'Pretendard',
                                   color: Colors.black,
                                   fontSize: w * 0.026,
                                   fontWeight: FontWeight.w800,
@@ -83,7 +81,6 @@ class RoughFrame extends StatelessWidget {
                             Text(
                               'NEW $badgeLabel',
                               style: TextStyle(
-                                  fontFamily: 'Pretendard',
                                   color: accent,
                                   fontSize: w * 0.022,
                                   fontWeight: FontWeight.w700,
@@ -102,7 +99,6 @@ class RoughFrame extends StatelessWidget {
                         Text(
                           '// ${titleText.toUpperCase()}',
                           style: TextStyle(
-                              fontFamily: 'Pretendard',
                               color: accent,
                               fontSize: w * 0.026,
                               fontWeight: FontWeight.w800,
@@ -118,7 +114,6 @@ class RoughFrame extends StatelessWidget {
                           child: Text(
                             valueText,
                             style: TextStyle(
-                                fontFamily: 'Pretendard',
                                 color: AppTheme.textPrimary,
                                 fontSize: w * 0.145,
                                 fontWeight: FontWeight.w800,
@@ -131,7 +126,6 @@ class RoughFrame extends StatelessWidget {
                         Text(
                           daysSinceStr,
                           style: TextStyle(
-                              fontFamily: 'Pretendard',
                               color: accent,
                               fontSize: w * 0.030,
                               fontWeight: FontWeight.w700),
@@ -142,7 +136,6 @@ class RoughFrame extends StatelessWidget {
                         Text(
                           dateStr,
                           style: TextStyle(
-                              fontFamily: 'Pretendard',
                               color: const Color(0xFF555555),
                               fontSize: w * 0.018),
                         ),
