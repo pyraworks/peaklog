@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'l10n/app_localizations.dart';
+import 'core/models/note.dart';
 import 'core/theme/app_theme.dart';
 import 'features/exercise_detail/exercise_detail_screen.dart';
+import 'features/export/export_screen.dart';
 import 'features/share/share_screen.dart';
 import 'features/home/add_exercise_sheet.dart';
 import 'features/home/home_page_view.dart';
@@ -109,6 +111,15 @@ final _router = GoRouter(
     GoRoute(
       path: '/share/:recordId',
       builder: (context, state) => const ShareScreen(),
+    ),
+    // Reuses the exact same visual share/customization screen and final
+    // SharePlus pipeline as workout Record/Activity sharing above — see
+    // ExportScreen's Note mode. The Note itself travels as `extra` (the
+    // established pattern for non-path-parameter route data in this app;
+    // see /calculators/1rm-table).
+    GoRoute(
+      path: '/share/note',
+      builder: (context, state) => ExportScreen(note: state.extra as Note),
     ),
     GoRoute(
       path: '/categories',

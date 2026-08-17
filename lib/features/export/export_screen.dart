@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/models/exercise.dart';
 import '../../core/models/health_workout.dart';
+import '../../core/models/note.dart';
 import '../../core/models/record.dart';
 import '../../core/design/app_colors.dart';
 import '../../core/design/app_radius.dart';
@@ -32,17 +33,24 @@ import 'rough_frame.dart';
 class ExportScreen extends ConsumerStatefulWidget {
   final Exercise? exercise;      // PeakLog Record mode: non-null
   final HealthWorkout? activity; // Activity mode: non-null
-  final double newValue;
-  final DateTime date;
+  final Note? note;              // Note mode: non-null
+  // Required for exercise/activity mode (a numeric achievement value and
+  // the date it was set on); unused in Note mode, which has no numeric
+  // value and derives its date from note.performedOn instead.
+  final double? newValue;
+  final DateTime? date;
 
   const ExportScreen({
     this.exercise,
     this.activity,
-    required this.newValue,
-    required this.date,
+    this.note,
+    this.newValue,
+    this.date,
     super.key,
-  }) : assert(exercise != null || activity != null,
-            'Either exercise or activity must be provided');
+  }) : assert(exercise != null || activity != null || note != null,
+            'One of exercise, activity, or note must be provided'),
+       assert(note != null || (newValue != null && date != null),
+            'newValue and date are required for exercise/activity mode');
 
   @override
   ConsumerState<ExportScreen> createState() => _ExportScreenState();
@@ -65,9 +73,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   }
 
   bool get _isActivityMode => widget.activity != null;
+  bool get _isNoteMode => widget.note != null;
 
-  Exercise _effectiveExercise() {
-    if (widget.exercise != null) return widget.exercise!;
+  /// Null in Note mode — Notes have no Exercise/RecordType/unit concept at
+  /// all, unlike Activity mode's synthetic Exercise (built below purely
+  /// so the existing value-formatting/PR-badge logic keeps working
+  /// unchanged for HealthWorkout activities).
+  Exercise? _effectiveExercise() {
+    if (widget.exercise != null) return widget.exercise;
+    if (widget.activity == null) return null;
     final act = widget.activity!;
     final hasDistance = act.distanceKm > 0;
     final label = _activityLabel(act.activityType);
@@ -83,6 +97,12 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       updatedAt: 0,
     );
   }
+
+  /// The date shown/used everywhere in this screen — the achievement date
+  /// for exercise/activity mode, or the Note's own date in Note mode.
+  DateTime get _effectiveDate => _isNoteMode
+      ? DateTime.fromMillisecondsSinceEpoch(widget.note!.performedOn)
+      : widget.date!;
 
   String _activityLabel(HealthActivityType type) {
     final l10n = AppLocalizations.of(context)!;
@@ -100,19 +120,34 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     final settings = ref.watch(unitSettingsProvider).valueOrNull;
     final distanceUnit = settings?.distanceUnit ?? 'km';
 
-    final exercise = _effectiveExercise();
-    final weightUnit = exercise.baseUnit;
+    final exercise = _effectiveExercise(); // null in Note mode
+    final weightUnit = exercise?.baseUnit ?? '';
 
-    final records = _isActivityMode
+    final records = (_isActivityMode || _isNoteMode)
         ? <Record>[]
-        : ref.watch(recordsProvider(exercise.id)).valueOrNull ?? [];
+        : ref.watch(recordsProvider(exercise!.id)).valueOrNull ?? [];
 
-    final prValueStr = _formatValue(
-        widget.newValue, exercise.recordType, weightUnit, distanceUnit);
-    final dateStr = _dateStr(widget.date);
-    final daysSinceStr = _isActivityMode
+    final dateStr = _dateStr(_effectiveDate);
+    final daysSinceStr = (_isActivityMode || _isNoteMode)
         ? ''
-        : _calcDaysSince(records, exercise.recordType, widget.newValue, widget.date);
+        : _calcDaysSince(
+            records, exercise!.recordType, widget.newValue!, _effectiveDate);
+
+    // titleText/valueText/badgeLabel/showPrBadge are the generic inputs
+    // CleanFrame/RoughFrame/renderFrameToBytes actually render — a Note's
+    // title/body stand in for an exercise's name/formatted value, and
+    // Notes never show the PR badge (same as Activity mode already
+    // doesn't). Everything below this point (frame style, aspect ratio,
+    // media background, stickers, save/share actions) is unchanged and
+    // shared by every content mode.
+    final titleText = _isNoteMode ? widget.note!.title : exercise!.displayName;
+    final valueText = _isNoteMode
+        ? widget.note!.body
+        : _formatValue(
+            widget.newValue!, exercise!.recordType, weightUnit, distanceUnit);
+    final badgeLabel = exercise?.bestTypeLabel ?? '';
+    final showPrBadge =
+        !_isActivityMode && !_isNoteMode && exercise?.recordType != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -169,24 +204,22 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                                 IgnorePointer(
                                   child: _frameStyle == FrameStyle.clean
                                       ? CleanFrame(
-                                          exercise: exercise,
-                                          valueInMetric: widget.newValue,
-                                          weightUnit: weightUnit,
-                                          distanceUnit: distanceUnit,
-                                          date: widget.date,
+                                          titleText: titleText,
+                                          valueText: valueText,
+                                          badgeLabel: badgeLabel,
+                                          date: _effectiveDate,
                                           daysSinceStr: daysSinceStr,
                                           options: _overlay,
-                                          showPrBadge: !_isActivityMode && exercise.recordType != null,
+                                          showPrBadge: showPrBadge,
                                         )
                                       : RoughFrame(
-                                          exercise: exercise,
-                                          valueInMetric: widget.newValue,
-                                          weightUnit: weightUnit,
-                                          distanceUnit: distanceUnit,
-                                          date: widget.date,
+                                          titleText: titleText,
+                                          valueText: valueText,
+                                          badgeLabel: badgeLabel,
+                                          date: _effectiveDate,
                                           daysSinceStr: daysSinceStr,
                                           options: _overlay,
-                                          showPrBadge: !_isActivityMode && exercise.recordType != null,
+                                          showPrBadge: showPrBadge,
                                         ),
                                 ),
                               ],
@@ -247,19 +280,28 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         exportLabel: _exportLabel,
                         canSaveVideo: _mediaFile != null && _isVideo,
                         onSaveImage: () => _saveImage(
-                          prValueStr: prValueStr,
+                          titleText: titleText,
+                          valueText: valueText,
+                          badgeLabel: badgeLabel,
+                          showPrBadge: showPrBadge,
                           dateStr: dateStr,
                           daysSinceStr: daysSinceStr,
                         ),
                         onSaveVideo: (_mediaFile != null && _isVideo)
                             ? () => _saveVideo(
-                                  prValueStr: prValueStr,
+                                  titleText: titleText,
+                                  valueText: valueText,
+                                  badgeLabel: badgeLabel,
+                                  showPrBadge: showPrBadge,
                                   dateStr: dateStr,
                                   daysSinceStr: daysSinceStr,
                                 )
                             : null,
                         onShare: () => _share(
-                          prValueStr: prValueStr,
+                          titleText: titleText,
+                          valueText: valueText,
+                          badgeLabel: badgeLabel,
+                          showPrBadge: showPrBadge,
                           dateStr: dateStr,
                           daysSinceStr: daysSinceStr,
                         ),
@@ -305,21 +347,24 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   // ── Export ────────────────────────────────────────────────────
 
   Future<void> _saveImage({
-    required String prValueStr,
+    required String titleText,
+    required String valueText,
+    required String badgeLabel,
+    required bool showPrBadge,
     required String dateStr,
     required String daysSinceStr,
   }) async {
     final l10n = AppLocalizations.of(context)!;
     setState(() { _exporting = true; _exportLabel = l10n.exportSavingImage; });
     try {
-      final ex = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
         style: _frameStyle, aspectRatio: _aspectRatio,
-        exerciseName: ex.displayName,
-        prValue: prValueStr, dateStr: dateStr,
+        exerciseName: titleText,
+        prValue: valueText, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay,
-        badgeLabel: ex.bestTypeLabel,
+        badgeLabel: badgeLabel,
         personalBestLabel: l10n.personalBestLabel,
+        showPrBadge: showPrBadge,
       );
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/peaklog_${DateTime.now().millisecondsSinceEpoch}.png';
@@ -334,7 +379,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   }
 
   Future<void> _saveVideo({
-    required String prValueStr,
+    required String titleText,
+    required String valueText,
+    required String badgeLabel,
+    required bool showPrBadge,
     required String dateStr,
     required String daysSinceStr,
   }) async {
@@ -343,14 +391,14 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     setState(() { _exporting = true; _exportLabel = l10n.exportSavingVideo; });
     try {
       final tempDir = await getTemporaryDirectory();
-      final exV = widget.exercise ?? _effectiveExercise();
       final overlayBytes = await renderFrameToBytes(
         style: _frameStyle, aspectRatio: _aspectRatio,
-        exerciseName: exV.displayName,
-        prValue: prValueStr, dateStr: dateStr,
+        exerciseName: titleText,
+        prValue: valueText, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay, overlayOnly: true,
-        badgeLabel: exV.bestTypeLabel,
+        badgeLabel: badgeLabel,
         personalBestLabel: l10n.personalBestLabel,
+        showPrBadge: showPrBadge,
       );
       final overlayPath = '${tempDir.path}/overlay_${DateTime.now().millisecondsSinceEpoch}.png';
       await File(overlayPath).writeAsBytes(overlayBytes);
@@ -386,7 +434,10 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   }
 
   Future<void> _share({
-    required String prValueStr,
+    required String titleText,
+    required String valueText,
+    required String badgeLabel,
+    required bool showPrBadge,
     required String dateStr,
     required String daysSinceStr,
   }) async {
@@ -394,24 +445,29 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     setState(() { _exporting = true; _exportLabel = l10n.exportPreparing; });
     final box = context.findRenderObject() as RenderBox?;
     try {
-      final exS = widget.exercise ?? _effectiveExercise();
       final bytes = await renderFrameToBytes(
         style: _frameStyle, aspectRatio: _aspectRatio,
-        exerciseName: exS.displayName,
-        prValue: prValueStr, dateStr: dateStr,
+        exerciseName: titleText,
+        prValue: valueText, dateStr: dateStr,
         daysSinceStr: daysSinceStr, options: _overlay,
-        badgeLabel: exS.bestTypeLabel,
+        badgeLabel: badgeLabel,
         personalBestLabel: l10n.personalBestLabel,
+        showPrBadge: showPrBadge,
       );
       final tempDir = await getTemporaryDirectory();
       final path = '${tempDir.path}/peaklog_share.png';
       await File(path).writeAsBytes(bytes);
 
-      final shareExercise = widget.exercise ?? _effectiveExercise();
-      final exerciseName = shareExercise.displayName;
-      final subject = _isActivityMode
-          ? l10n.shareSubjectActivity(exerciseName)
-          : l10n.shareSubjectRecord(exerciseName, shareExercise.bestTypeLabel);
+      // Same final subject-line/SharePlus/analytics layer for every
+      // content mode — Note mode reuses shareSubjectNote (already used by
+      // the old direct-SharePlus Note implementation this replaces), so
+      // this is still exactly one localized subject format per mode, not
+      // a new one.
+      final subject = _isNoteMode
+          ? l10n.shareSubjectNote(dateStr)
+          : _isActivityMode
+              ? l10n.shareSubjectActivity(titleText)
+              : l10n.shareSubjectRecord(titleText, badgeLabel);
       unawaited(ref.read(analyticsProvider).logShareUsed());
       await SharePlus.instance.share(
         ShareParams(

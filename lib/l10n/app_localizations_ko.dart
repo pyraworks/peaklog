@@ -511,6 +511,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String shareSubjectNote(String date) {
+    return 'PeakLog — $date';
+  }
+
+  @override
   String get oneRmTableTitle => '1RM 테이블';
 
   @override
@@ -592,6 +597,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendarNoRecords => '이번 달 운동 기록이 없습니다';
 
   @override
+  String get calendarDayCaptureNoRecords => '운동 기록이 없습니다';
+
+  @override
   String get calendarRecordsLabel => '운동 기록';
 
   @override
@@ -626,6 +634,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get calendarLegendPersonalBest => '개인 기록';
+
+  @override
+  String get calendarShowEmptyCategories => '운동 기록이 없는 카테고리 표시';
+
+  @override
+  String get calendarNoteLegendLabel => '메모';
 
   @override
   String get weekdaySun => '일';

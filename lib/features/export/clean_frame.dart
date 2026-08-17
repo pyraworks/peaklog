@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
-import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/unit_converter.dart';
 import '../../l10n/app_localizations.dart';
 import 'export_models.dart';
 
+/// Renders already-formatted display strings — [titleText]/[valueText]/
+/// [badgeLabel] — rather than a raw Exercise/value/unit, so this same
+/// visual frame can present either a workout PR/activity (exercise name +
+/// formatted value) or a Note (title + body) without this widget needing
+/// to know which kind of content it's showing. See ExportScreen for how
+/// each content source computes these strings.
 class CleanFrame extends StatelessWidget {
-  final Exercise exercise;
-  final double valueInMetric;
-  final String weightUnit;
-  final String distanceUnit;
+  final String titleText;
+  final String valueText;
+  final String badgeLabel;
   final DateTime date;
   final String daysSinceStr;
   final OverlayOptions options;
   final bool showPrBadge;
 
   const CleanFrame({
-    required this.exercise,
-    required this.valueInMetric,
-    required this.weightUnit,
-    required this.distanceUnit,
+    required this.titleText,
+    required this.valueText,
+    required this.badgeLabel,
     required this.date,
     this.daysSinceStr = '',
     this.options = const OverlayOptions(),
@@ -30,7 +32,6 @@ class CleanFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final displayValue = _formatValue();
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
     const accent = Color(0xFFFF9500);
@@ -59,7 +60,7 @@ class CleanFrame extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             letterSpacing: w * 0.006)),
                     if (showPrBadge)
-                      Text('NEW ${exercise.bestTypeLabel}',
+                      Text('NEW $badgeLabel',
                           style: TextStyle(
                               fontFamily: 'Pretendard',
                               color: const Color(0xFF333333),
@@ -71,7 +72,7 @@ class CleanFrame extends StatelessWidget {
                 const Spacer(),
                 if (options.showName)
                   Text(
-                    exercise.displayName.toUpperCase(),
+                    titleText.toUpperCase(),
                     style: TextStyle(
                         fontFamily: 'Pretendard',
                         color: const Color(0xFF444444),
@@ -87,7 +88,7 @@ class CleanFrame extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      displayValue,
+                      valueText,
                       style: TextStyle(
                           fontFamily: 'Pretendard',
                           color: AppTheme.textPrimary,
@@ -147,17 +148,5 @@ class CleanFrame extends StatelessWidget {
         },
       ),
     );
-  }
-
-  String _formatValue() {
-    switch (exercise.recordType!) {
-      case RecordType.weight:
-        return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case RecordType.etc:
-        return UnitConverter.formatEtc(valueInMetric, distanceUnit);
-      case RecordType.forTime:
-      case RecordType.amrap:
-        return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-    }
   }
 }

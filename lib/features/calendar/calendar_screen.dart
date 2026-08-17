@@ -84,6 +84,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
   int _weekStart = DateTime.monday; // Dart weekday: 1=Mon..7=Sun
   bool _weekStartReady = false;
   bool _capturingImage = false;
+  // Month View capture only — not persisted, resets on app restart. See
+  // _captureMonthImage/_renderMonthShareBytes.
+  bool _showEmptyCategoriesInCapture = false;
 
   @override
   void initState() {
@@ -240,7 +243,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                 child: _buildDayDetail(l10n, dataAsync.valueOrNull),
               )
             else ...[
-              _buildLegend(categories),
+              _buildLegend(l10n, categories),
               Padding(
                 padding: const EdgeInsets.fromLTRB(26, 10, 26, 0),
                 child: Text(
@@ -442,6 +445,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
                         categoryColorKeys:
                             dayData?.categoryColorKeys ?? [],
                         hasPr: dayData?.hasPr ?? false,
+                        hasNote: dayData?.hasNote ?? false,
                         onTap: isOut
                             ? null
                             : () =>
@@ -473,20 +477,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
   // ── Legend ──────────────────────────────────────────────────────────────────
 
-  Widget _buildLegend(List<Category> categories) {
+  Widget _buildLegend(AppLocalizations l10n, List<Category> categories) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       child: Wrap(
         spacing: 16,
         runSpacing: 10,
-        children: [
-          ...categories
-              .where((c) => c.id != Category.uncategorizedId)
-              .map((cat) => _LegendItem(
-                    color: CategoryColor.toColor(cat.color),
-                    label: cat.name,
-                  )),
-        ],
+        children: buildCalendarLegendItems(
+          categories: categories,
+          noteLegendLabel: l10n.calendarNoteLegendLabel,
+        ),
       ),
     );
   }
@@ -685,52 +685,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
     setState(() => _capturingImage = true);
     final Uint8List bytes;
     try {
-      // Split so the painter can place the existing PR trophy icon between
-      // the two parts, exactly like the on-screen summary — null when
-      // there's no activity, matching calendarNoRecords being a separate,
-      // unrelated message (not "0 workouts").
-      final workoutDaysLabel = data.workoutDays == 0
-          ? null
-          : l10n.calendarSummaryWorkoutDays(data.workoutDays);
-      final prCountLabel =
-          data.workoutDays == 0 ? null : l10n.calendarSummaryPrCount(data.prCount);
-      final countLabel = data.workoutDays == 0 ? l10n.calendarNoRecords : '';
-      // Same weekday-label ordering _buildWeekdayRow already uses, so the
-      // image matches the on-screen grid exactly.
-      final allWeekdayLabels = <String Function(AppLocalizations)>[
-        (l) => l.weekdaySun,
-        (l) => l.weekdayMon,
-        (l) => l.weekdayTue,
-        (l) => l.weekdayWed,
-        (l) => l.weekdayThu,
-        (l) => l.weekdayFri,
-        (l) => l.weekdaySat,
-      ];
-      final startIndex = _weekStart % 7;
-      final weekdayLabels =
-          List.generate(7, (i) => allWeekdayLabels[(startIndex + i) % 7](l10n));
-
-      final shareData = MonthShareData(
-        monthLabel: _monthTitle(l10n),
-        countLabel: countLabel,
-        workoutDaysLabel: workoutDaysLabel,
-        prCountLabel: prCountLabel,
-        weekdayLabels: weekdayLabels,
-        cells: buildMonthShareCells(
-          firstWeekdayOffset: _firstWeekdayOffset,
-          daysInMonth: _daysInMonth,
-          days: data.days,
-        ),
-        // Same records/exerciseMap already loaded for the grid, plus the
-        // same categories list already watched for the on-screen legend —
-        // no new category query.
-        usedCategories: buildMonthShareCategories(
-          records: data.records,
-          exerciseMap: data.exerciseMap,
-          categories: categories,
-        ),
+      bytes = await _renderMonthShareBytes(
+        data: data,
+        categories: categories,
+        l10n: l10n,
+        includeEmptyCategories: _showEmptyCategoriesInCapture,
       );
-      bytes = await renderMonthShareToBytes(shareData);
     } catch (e) {
       if (mounted) {
         setState(() => _capturingImage = false);
@@ -741,7 +701,90 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
 
     if (!mounted) return;
     setState(() => _capturingImage = false);
-    await DayCaptureSheet.show(context, bytes, fileNamePrefix: 'peaklog_month_share_');
+    await DayCaptureSheet.show(
+      context,
+      bytes,
+      fileNamePrefix: 'peaklog_month_share_',
+      initialShowEmptyCategories: _showEmptyCategoriesInCapture,
+      // Month View capture only — regenerates the image with/without
+      // categories that have no workout records this month. Never touches
+      // Calendar/category data or the on-screen grid, only this capture's
+      // own legend. Remembered for the rest of this Calendar session (not
+      // persisted to disk) so re-opening capture keeps the last choice.
+      onToggleShowEmptyCategories: (showEmpty) {
+        _showEmptyCategoriesInCapture = showEmpty;
+        return _renderMonthShareBytes(
+          data: data,
+          categories: categories,
+          l10n: l10n,
+          includeEmptyCategories: showEmpty,
+        );
+      },
+    );
+  }
+
+  Future<Uint8List> _renderMonthShareBytes({
+    required CalendarMonthData data,
+    required List<Category> categories,
+    required AppLocalizations l10n,
+    required bool includeEmptyCategories,
+  }) async {
+    // Split so the painter can place the existing PR trophy icon between
+    // the two parts, exactly like the on-screen summary — null when
+    // there's no activity, matching calendarNoRecords being a separate,
+    // unrelated message (not "0 workouts").
+    final workoutDaysLabel = data.workoutDays == 0
+        ? null
+        : l10n.calendarSummaryWorkoutDays(data.workoutDays);
+    final prCountLabel =
+        data.workoutDays == 0 ? null : l10n.calendarSummaryPrCount(data.prCount);
+    final countLabel = data.workoutDays == 0 ? l10n.calendarNoRecords : '';
+    // Same weekday-label ordering _buildWeekdayRow already uses, so the
+    // image matches the on-screen grid exactly.
+    final allWeekdayLabels = <String Function(AppLocalizations)>[
+      (l) => l.weekdaySun,
+      (l) => l.weekdayMon,
+      (l) => l.weekdayTue,
+      (l) => l.weekdayWed,
+      (l) => l.weekdayThu,
+      (l) => l.weekdayFri,
+      (l) => l.weekdaySat,
+    ];
+    final startIndex = _weekStart % 7;
+    final weekdayLabels =
+        List.generate(7, (i) => allWeekdayLabels[(startIndex + i) % 7](l10n));
+
+    final shareData = MonthShareData(
+      monthLabel: _monthTitle(l10n),
+      countLabel: countLabel,
+      workoutDaysLabel: workoutDaysLabel,
+      prCountLabel: prCountLabel,
+      weekdayLabels: weekdayLabels,
+      cells: buildMonthShareCells(
+        firstWeekdayOffset: _firstWeekdayOffset,
+        daysInMonth: _daysInMonth,
+        days: data.days,
+      ),
+      // Same records/exerciseMap already loaded for the grid, plus the
+      // same categories list already watched for the on-screen legend —
+      // no new category query.
+      usedCategories: buildMonthShareCategories(
+        records: data.records,
+        exerciseMap: data.exerciseMap,
+        categories: categories,
+        includeEmpty: includeEmptyCategories,
+      ),
+      // data.days already carries hasNote per day (the same per-day flag
+      // the on-screen grid's Note indicator uses) — no separate notes
+      // query needed to know whether this month has any.
+      noteLegendLabel: buildMonthShareShowNoteLegend(
+        hasAnyNotes: data.days.values.any((d) => d.hasNote),
+        includeEmpty: includeEmptyCategories,
+      )
+          ? l10n.calendarNoteLegendLabel
+          : null,
+    );
+    return renderMonthShareToBytes(shareData);
   }
 
   Future<void> _captureDayImage(CalendarMonthData data, AppLocalizations l10n) async {
@@ -750,7 +793,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         .where((r) => DateTime.fromMillisecondsSinceEpoch(r.performedAt).day == today)
         .toList();
     if (dayRecords.isEmpty) {
-      _showSnack(l10n.calendarNoRecords);
+      // Day View capture is a single date, never a month — a date-neutral
+      // message distinct from calendarNoRecords (which is Month View's
+      // "no workouts this month" wording, shared by the normal calendar
+      // header and day-detail records section).
+      _showSnack(l10n.calendarDayCaptureNoRecords);
       return;
     }
 
@@ -806,7 +853,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _NoteEditSheet(
+      builder: (_) => NoteEditSheet(
         initialNote: note,
         performedOn: performedOn,
       ),
@@ -909,6 +956,47 @@ class _ReturnToMonthButton extends StatelessWidget {
   }
 }
 
+/// Resolves the visual style of a Month/Week View date-cell number circle
+/// from its selection/today/in-month state. Pure and stateless — public
+/// (unlike _CalendarCell itself) specifically so this logic is unit
+/// testable without needing to render the full Calendar widget tree.
+class CalendarDateCellStyle {
+  final Color textColor;
+  final Color? fillColor;
+  final Color? borderColor;
+
+  const CalendarDateCellStyle({
+    required this.textColor,
+    this.fillColor,
+    this.borderColor,
+  });
+
+  factory CalendarDateCellStyle.resolve({
+    required bool isSelected,
+    required bool isOutOfMonth,
+    required bool isToday,
+  }) {
+    if (isSelected) {
+      return const CalendarDateCellStyle(
+        textColor: Colors.white,
+        fillColor: AppColors.actionDark,
+      );
+    }
+    if (isOutOfMonth) {
+      return const CalendarDateCellStyle(textColor: AppColors.label5);
+    }
+    if (isToday) {
+      // Today, unselected: same black used for the selected fill, but as
+      // an outline only — no red text treatment.
+      return const CalendarDateCellStyle(
+        textColor: AppColors.label1,
+        borderColor: AppColors.actionDark,
+      );
+    }
+    return const CalendarDateCellStyle(textColor: AppColors.label1);
+  }
+}
+
 class _CalendarCell extends StatelessWidget {
   final int day;
   final bool isOutOfMonth;
@@ -916,6 +1004,7 @@ class _CalendarCell extends StatelessWidget {
   final bool isSelected;
   final List<String> categoryColorKeys;
   final bool hasPr;
+  final bool hasNote;
   final VoidCallback? onTap;
 
   const _CalendarCell({
@@ -925,27 +1014,22 @@ class _CalendarCell extends StatelessWidget {
     required this.isSelected,
     required this.categoryColorKeys,
     required this.hasPr,
+    required this.hasNote,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final Color numColor;
-    final Color? numBg;
-
-    if (isSelected) {
-      numColor = Colors.white;
-      numBg = AppColors.actionDark;
-    } else if (isOutOfMonth) {
-      numColor = AppColors.label5;
-      numBg = null;
-    } else if (isToday) {
-      numColor = AppColors.todayAccent;
-      numBg = null;
-    } else {
-      numColor = AppColors.label1;
-      numBg = null;
-    }
+    final style = CalendarDateCellStyle.resolve(
+      isSelected: isSelected,
+      isOutOfMonth: isOutOfMonth,
+      isToday: isToday,
+    );
+    final numColor = style.textColor;
+    final numBg = style.fillColor;
+    final numBorder = style.borderColor != null
+        ? Border.all(color: style.borderColor!, width: 1.5)
+        : null;
 
     return GestureDetector(
       onTap: onTap,
@@ -966,6 +1050,7 @@ class _CalendarCell extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: numBg,
                       shape: BoxShape.circle,
+                      border: numBorder,
                     ),
                     child: Center(
                       child: Text(
@@ -980,8 +1065,8 @@ class _CalendarCell extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (!isOutOfMonth && categoryColorKeys.isNotEmpty)
-                    _CategoryDots(colorKeys: categoryColorKeys),
+                  if (!isOutOfMonth && (categoryColorKeys.isNotEmpty || hasNote))
+                    CalendarCategoryDots(colorKeys: categoryColorKeys, hasNote: hasNote),
                 ],
               ),
             ),
@@ -1002,9 +1087,14 @@ class _CalendarCell extends StatelessWidget {
   }
 }
 
-class _CategoryDots extends StatelessWidget {
+class CalendarCategoryDots extends StatelessWidget {
   final List<String> colorKeys;
-  const _CategoryDots({required this.colorKeys});
+  final bool hasNote;
+  const CalendarCategoryDots({
+    required this.colorKeys,
+    required this.hasNote,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1012,25 +1102,31 @@ class _CategoryDots extends StatelessWidget {
     final hasOverflow = colorKeys.length > 4;
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+      // Wrap, not Row: at the narrowest realistic cell widths, 4 dots +
+      // the "+" overflow + a note indicator can exceed the cell's width
+      // (verified: a fixed-width Row overflows by 1-9px at 375/360/320pt
+      // device widths). Wrap reflows the excess onto a second centered
+      // line instead of overlapping or clipping — there's ~20px of
+      // vertical headroom left in the 66px cell for that. When everything
+      // still fits on one line (the common, unchanged case), Wrap and Row
+      // render identically for the same spacing/alignment.
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        runAlignment: WrapAlignment.center,
+        spacing: 3,
+        runSpacing: 2,
         children: [
           ...visible.map(
-            (key) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1.5),
-              child: Container(
-                width: 5,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: CategoryColor.toColor(key),
-                  shape: BoxShape.circle,
-                ),
+            (key) => Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: CategoryColor.toColor(key),
+                shape: BoxShape.circle,
               ),
             ),
           ),
-          if (hasOverflow) ...[
-            const SizedBox(width: 1),
+          if (hasOverflow)
             const Text(
               '+',
               style: TextStyle(
@@ -1040,29 +1136,80 @@ class _CategoryDots extends StatelessWidget {
                 height: 1,
               ),
             ),
-          ],
+          // Notes are never a category — appended after every category dot
+          // (and the overflow "+") so it can never overlap either, and
+          // square/rounded (vs. the dots' circles) so it's never mistaken
+          // for one, regardless of category color.
+          if (hasNote)
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.label1,
+                borderRadius: BorderRadius.circular(1.5),
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-class _LegendItem extends StatelessWidget {
-  final Color color;
+/// Builds the normal Month View legend's items: one entry per category
+/// that currently exists (color dot + name, Uncategorized excluded —
+/// unchanged from before), followed by a permanent Note entry.
+///
+/// Unlike the Month View *capture* legend (`buildMonthShareCategories`/
+/// `buildMonthShareShowNoteLegend`, which conditionally include Note based
+/// on whether the captured month has notes and the "Show categories
+/// without workout records" toggle), this function takes no such inputs
+/// at all — the Note entry it appends is unconditional. That's not an
+/// oversight: the normal Month View legend is a permanent key explaining
+/// what the per-date Note indicator means, so it must remain visible
+/// whether or not the current month happens to have any notes, and is
+/// completely unaffected by the separate capture toggle. Pure and public
+/// (no BuildContext/State) so this is unit-testable without rendering the
+/// full Calendar widget tree.
+List<CalendarLegendItem> buildCalendarLegendItems({
+  required List<Category> categories,
+  required String noteLegendLabel,
+}) =>
+    [
+      for (final cat in categories.where((c) => c.id != Category.uncategorizedId))
+        CalendarLegendItem(color: CategoryColor.toColor(cat.color), label: cat.name),
+      CalendarLegendItem(label: noteLegendLabel, isNote: true),
+    ];
+
+class CalendarLegendItem extends StatelessWidget {
+  final Color? color;
   final String label;
-  const _LegendItem({required this.color, required this.label});
+  /// True for the permanent Note legend entry: draws the same rounded-
+  /// square marker as the date-cell Note indicator (CalendarCategoryDots)
+  /// instead of a category's colored circle. [color] is unused in that case.
+  final bool isNote;
+  const CalendarLegendItem({
+    this.color,
+    required this.label,
+    this.isNote = false,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Same 5px dot size as the grid's own category dots
-        // (_CategoryDots) — one consistent indicator system.
+        // Same 5px marker size as the grid's own indicators
+        // (CalendarCategoryDots) — one consistent indicator system.
         Container(
           width: 5,
           height: 5,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: isNote
+              ? BoxDecoration(
+                  color: AppColors.label1,
+                  borderRadius: BorderRadius.circular(1.5),
+                )
+              : BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
@@ -1181,34 +1328,145 @@ class _NoteCard extends StatelessWidget {
 
 // ── Note Edit Sheet ───────────────────────────────────────────────────────────
 
-class _NoteEditSheet extends ConsumerStatefulWidget {
-  final Note? initialNote;
-  final int performedOn;
-  const _NoteEditSheet({required this.performedOn, this.initialNote});
+/// One shared source of truth for both the Share and Save buttons'
+/// enabled state in the Edit Note popup — an editing-SESSION state
+/// machine, not a text-dirty comparison:
+///
+/// - [_Phase.initial] (popup just opened): Share enabled, Save enabled —
+///   nothing has happened in this session yet.
+/// - [_Phase.editing] (user focused/typed in any editable field, whether
+///   or not anything actually changed): Share disabled, Save enabled.
+///   [markInteracted] moves here from either other phase and is a no-op
+///   if already here — further edits, deletions, or restoring the
+///   original text never move it anywhere else. Only [markSaved] does.
+/// - [_Phase.saved] (a successful Save just committed the fields'
+///   content as the new saved Note): Share enabled, Save disabled — "the
+///   currently displayed content is already saved." [markSaved] moves
+///   here from [_Phase.editing].
+///
+/// [isAvailable] (Share) and [isSaveAvailable] (Save) are both simple
+/// projections of the same [_phase], so they can never disagree with
+/// each other about which phase the session is in. Pure and public (no
+/// BuildContext/Riverpod) specifically so this state machine is
+/// unit-testable without pumping the full Note Edit popup.
+enum _Phase { initial, editing, saved }
 
-  @override
-  ConsumerState<_NoteEditSheet> createState() => _NoteEditSheetState();
+class NoteShareAvailability {
+  _Phase _phase = _Phase.initial;
+
+  bool get isAvailable => _phase != _Phase.editing;
+  bool get isSaveAvailable => _phase != _Phase.saved;
+
+  void markInteracted() => _phase = _Phase.editing;
+  void markSaved() => _phase = _Phase.saved;
 }
 
-class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
+/// The Edit Note popup's Share button — sits immediately to the left of
+/// the existing Save button. Pure/stateless (no BuildContext/Riverpod) so
+/// its enabled/disabled rendering and tap-gating are unit-testable
+/// without pumping the full Note Edit popup. Disabled: [onTap] is never
+/// invoked (same null-onTap-means-inert convention as this file's other
+/// gesture-driven buttons), and the icon uses AppColors.label3 — the same
+/// muted token this popup's own field hint text already uses — rather
+/// than a new disabled color.
+class NoteShareButton extends StatelessWidget {
+  final bool enabled;
+  final VoidCallback onTap;
+  const NoteShareButton({required this.enabled, required this.onTap, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 48,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.separator),
+        ),
+        child: Center(
+          child: Icon(
+            AppIcons.share,
+            size: 18,
+            color: enabled ? AppColors.label1 : AppColors.label3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class NoteEditSheet extends ConsumerStatefulWidget {
+  final Note? initialNote;
+  final int performedOn;
+  const NoteEditSheet({required this.performedOn, this.initialNote, super.key});
+
+  @override
+  ConsumerState<NoteEditSheet> createState() => _NoteEditSheetState();
+}
+
+class _NoteEditSheetState extends ConsumerState<NoteEditSheet> {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _bodyCtrl;
+  late final FocusNode _titleFocus;
+  late final FocusNode _bodyFocus;
+  final _shareAvailability = NoteShareAvailability();
+  Note? _currentSavedNote;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _titleCtrl =
-        TextEditingController(text: widget.initialNote?.title ?? '');
-    _bodyCtrl =
-        TextEditingController(text: widget.initialNote?.body ?? '');
+    _titleCtrl = TextEditingController(text: widget.initialNote?.title ?? '')
+      ..addListener(_onFieldInteraction);
+    _bodyCtrl = TextEditingController(text: widget.initialNote?.body ?? '')
+      ..addListener(_onFieldInteraction);
+    _currentSavedNote = widget.initialNote;
+    _titleFocus = FocusNode()..addListener(_onFieldInteraction);
+    _bodyFocus = FocusNode()..addListener(_onFieldInteraction);
   }
 
   @override
   void dispose() {
     _titleCtrl.dispose();
     _bodyCtrl.dispose();
+    _titleFocus.dispose();
+    _bodyFocus.dispose();
     super.dispose();
+  }
+
+  // Share availability is an editing-session state, not a dirty-text
+  // comparison: the moment the user focuses EITHER field — even without
+  // typing anything — Share must disable, and it's never re-enabled by
+  // text matching the original (only a successful Save does that). The
+  // FocusNode listeners alone catch "focused but never typed"; the
+  // TextEditingController listeners are a second, independent trigger for
+  // the same one-way latch, needed because Save does not unfocus the
+  // field it was called from — a field can stay continuously focused
+  // across a Save, so a later keystroke in that same field would
+  // otherwise produce no focus-transition event at all. Neither listener
+  // ever looks at what the text says, only that something happened.
+  // New Notes (no initialNote) have no Share button at all, so this is a
+  // no-op there.
+  void _onFieldInteraction() {
+    if (widget.initialNote == null || !_shareAvailability.isAvailable) return;
+    setState(_shareAvailability.markInteracted);
+  }
+
+  // Enters the exact same visual share/customization screen and final
+  // SharePlus pipeline used by workout Record/Activity sharing
+  // (ExportScreen, routed via '/share/note') — this popup no longer
+  // calls SharePlus or the OS share sheet directly, and no longer logs
+  // logShareUsed() itself; ExportScreen's own _share() does both,
+  // exactly once, the same way it already does for workout content.
+  // Only the persisted _currentSavedNote is ever passed — never the live
+  // _titleCtrl/_bodyCtrl contents.
+  Future<void> _shareNote() async {
+    final note = _currentSavedNote;
+    if (note == null) return;
+    await context.push('/share/note', extra: note);
   }
 
   Future<void> _save() async {
@@ -1225,22 +1483,43 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
     final notifier =
         ref.read(notesProvider(widget.performedOn).notifier);
     if (widget.initialNote == null) {
+      // Add: unchanged — a new Note always closes the sheet on success,
+      // it has no Share button/state to preserve.
       await notifier.addNote(
         title: _titleCtrl.text.trim(),
         body: _bodyCtrl.text.trim(),
       );
       unawaited(ref.read(analyticsProvider).logNoteCreated());
-    } else {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await notifier.updateNote(
-        widget.initialNote!.copyWith(
-          title: _titleCtrl.text.trim(),
-          body: _bodyCtrl.text.trim(),
-          updatedAt: now,
-        ),
-      );
+      if (mounted) Navigator.pop(context);
+      return;
     }
-    if (mounted) Navigator.pop(context);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final updated = widget.initialNote!.copyWith(
+      title: _titleCtrl.text.trim(),
+      body: _bodyCtrl.text.trim(),
+      updatedAt: now,
+    );
+    await notifier.updateNote(updated);
+    // Edit: the sheet stays open (unlike Add) so the user can Share the
+    // just-saved content immediately, without reopening. The just-saved
+    // Note becomes the new Share source of truth, and the field-
+    // interaction latch resets exactly like a freshly opened Edit
+    // session — see NoteShareAvailability doc. _saving must be reset here
+    // (unlike Add, which never revisits this state after popping) so a
+    // second Save in the same still-open session isn't blocked by the
+    // guard at the top of this method.
+    //
+    // If updateNote above throws, none of this runs: _currentSavedNote,
+    // _shareAvailability, and the sheet's mounted state are all left
+    // untouched, so a failed save can never re-enable Share or share
+    // unsaved content.
+    if (mounted) {
+      setState(() {
+        _currentSavedNote = updated;
+        _shareAvailability.markSaved();
+        _saving = false;
+      });
+    }
   }
 
   Future<void> _delete() async {
@@ -1274,6 +1553,10 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isEditing = widget.initialNote != null;
+    // Add always stays enabled — it never reaches the "saved, still open"
+    // state Edit does, since a successful Add closes the sheet
+    // immediately.
+    final saveEnabled = !isEditing || _shareAvailability.isSaveAvailable;
     final insets = MediaQuery.viewInsetsOf(context);
 
     return Padding(
@@ -1334,12 +1617,14 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
                   children: [
                     _buildField(
                       controller: _titleCtrl,
+                      focusNode: _titleFocus,
                       hint: l10n.calendarNoteHintTitle,
                       maxLines: 1,
                     ),
                     const SizedBox(height: 10),
                     _buildField(
                       controller: _bodyCtrl,
+                      focusNode: _bodyFocus,
                       hint: l10n.calendarNoteHintBody,
                       minLines: 4,
                       maxLines: 8,
@@ -1350,22 +1635,42 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: GestureDetector(
-                onTap: _save,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.actionDark,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      l10n.save,
-                      style: AppTypography.button
-                          .copyWith(color: Colors.white, fontSize: 15),
+              child: Row(
+                children: [
+                  // Add Note has no Share button — a new Note is not
+                  // shareable until it's been saved at least once.
+                  if (isEditing) ...[
+                    NoteShareButton(
+                      enabled: _shareAvailability.isAvailable,
+                      onTap: _shareNote,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: saveEnabled ? _save : null,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          // Same existing disabled-button token used
+                          // elsewhere for a primary CTA (e.g. Add/Edit
+                          // Exercise's Save button) — not a new color.
+                          color: saveEnabled
+                              ? AppColors.actionDark
+                              : AppColors.disabled,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            l10n.save,
+                            style: AppTypography.button
+                                .copyWith(color: Colors.white, fontSize: 15),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
             if (isEditing) ...[
@@ -1386,11 +1691,13 @@ class _NoteEditSheetState extends ConsumerState<_NoteEditSheet> {
   Widget _buildField({
     required TextEditingController controller,
     required String hint,
+    FocusNode? focusNode,
     int? minLines,
     int maxLines = 1,
   }) {
     return TextField(
       controller: controller,
+      focusNode: focusNode,
       minLines: minLines,
       maxLines: maxLines,
       style: AppTypography.body.copyWith(color: AppColors.label1),

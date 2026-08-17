@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../core/models/exercise.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/unit_converter.dart';
 import 'export_models.dart';
 
+/// See CleanFrame's doc — same already-formatted-strings design so this
+/// frame style can present either a workout PR/activity or a Note.
 class RoughFrame extends StatelessWidget {
-  final Exercise exercise;
-  final double valueInMetric;
-  final String weightUnit;
-  final String distanceUnit;
+  final String titleText;
+  final String valueText;
+  final String badgeLabel;
   final DateTime date;
   final String daysSinceStr;
   final OverlayOptions options;
   final bool showPrBadge;
 
   const RoughFrame({
-    required this.exercise,
-    required this.valueInMetric,
-    required this.weightUnit,
-    required this.distanceUnit,
+    required this.titleText,
+    required this.valueText,
+    required this.badgeLabel,
     required this.date,
     this.daysSinceStr = '',
     this.options = const OverlayOptions(),
@@ -28,7 +26,6 @@ class RoughFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = _formatValue();
     final dateStr =
         '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
     const accent = Color(0xFFFF9500);
@@ -51,7 +48,7 @@ class RoughFrame extends StatelessWidget {
                     right: -w * 0.037,
                     top: -h * 0.060,
                     child: Text(
-                      exercise.bestTypeLabel,
+                      badgeLabel,
                       style: TextStyle(
                         fontFamily: 'Pretendard',
                         color: const Color(0xFF1D1D1D),
@@ -84,7 +81,7 @@ class RoughFrame extends StatelessWidget {
                           ),
                           if (showPrBadge)
                             Text(
-                              'NEW ${exercise.bestTypeLabel}',
+                              'NEW $badgeLabel',
                               style: TextStyle(
                                   fontFamily: 'Pretendard',
                                   color: accent,
@@ -103,7 +100,7 @@ class RoughFrame extends StatelessWidget {
                       ),
                       if (options.showName)
                         Text(
-                          '// ${exercise.displayName.toUpperCase()}',
+                          '// ${titleText.toUpperCase()}',
                           style: TextStyle(
                               fontFamily: 'Pretendard',
                               color: accent,
@@ -119,7 +116,7 @@ class RoughFrame extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
                           child: Text(
-                            displayValue,
+                            valueText,
                             style: TextStyle(
                                 fontFamily: 'Pretendard',
                                 color: AppTheme.textPrimary,
@@ -158,17 +155,5 @@ class RoughFrame extends StatelessWidget {
         },
       ),
     );
-  }
-
-  String _formatValue() {
-    switch (exercise.recordType!) {
-      case RecordType.weight:
-        return UnitConverter.formatWeight(valueInMetric, weightUnit);
-      case RecordType.etc:
-        return UnitConverter.formatEtc(valueInMetric, distanceUnit);
-      case RecordType.forTime:
-      case RecordType.amrap:
-        return UnitConverter.secondsToDisplay(valueInMetric.toInt());
-    }
   }
 }

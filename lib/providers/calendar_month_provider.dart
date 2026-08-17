@@ -4,6 +4,7 @@ import '../core/models/exercise.dart';
 import '../core/models/record.dart';
 import 'categories_provider.dart';
 import 'exercises_provider.dart';
+import 'notes_provider.dart';
 import 'personal_best_provider.dart';
 import 'records_provider.dart';
 
@@ -12,10 +13,12 @@ typedef YearMonth = ({int year, int month});
 class CalendarDayData {
   final List<String> categoryColorKeys; // color key per distinct category, max 4 + overflow
   final bool hasPr;
+  final bool hasNote; // Notes are a visual-only indicator — never a category.
 
   const CalendarDayData({
     required this.categoryColorKeys,
     required this.hasPr,
+    required this.hasNote,
   });
 }
 
@@ -41,9 +44,10 @@ class CalendarMonthNotifier
     extends AutoDisposeFamilyAsyncNotifier<CalendarMonthData, YearMonth> {
   @override
   Future<CalendarMonthData> build(YearMonth arg) async {
-    // Re-fetch whenever any record is added/updated/deleted, for any
-    // exercise, so this month's data can never go stale in memory.
+    // Re-fetch whenever any record or note is added/updated/deleted, so
+    // this month's data can never go stale in memory.
     ref.watch(recordsRevisionProvider);
+    ref.watch(notesRevisionProvider);
     final exercises = await ref.watch(exercisesProvider.future);
     final categories = await ref.watch(categoriesProvider.future);
 
@@ -51,6 +55,8 @@ class CalendarMonthNotifier
     final endMs = DateTime(arg.year, arg.month + 1).millisecondsSinceEpoch;
     final monthRecords =
         await DatabaseHelper.instance.getRecordsByDateRange(startMs, endMs);
+    final monthNotes =
+        await DatabaseHelper.instance.getNotesByDateRange(startMs, endMs);
 
     // categoryId → color key
     final catColorMap = {for (final c in categories) c.id: c.color};
@@ -85,23 +91,45 @@ class CalendarMonthNotifier
       );
     }
 
-    final days = acc.map((day, entry) {
-      final colorKeys = entry.catIds
-          .map((cid) => catColorMap[cid] ?? 'gray')
-          .toList();
-      return MapEntry(
+    // Notes are a Calendar-only visual indicator, entirely independent of
+    // Records/categories/PR — kept out of `acc` (which drives
+    // workoutDays/prCount below) so a note-only day never counts as a
+    // workout day.
+    final noteDays = <int>{
+      for (final note in monthNotes)
+        DateTime.fromMillisecondsSinceEpoch(note.performedOn).day,
+    };
+
+    final workoutDays = acc.length;
+    final prCount = acc.values.where((entry) => entry.hasPr).length;
+
+    final days = <int, CalendarDayData>{
+      for (final e in acc.entries)
+        e.key: CalendarDayData(
+          categoryColorKeys:
+              e.value.catIds.map((cid) => catColorMap[cid] ?? 'gray').toList(),
+          hasPr: e.value.hasPr,
+          hasNote: noteDays.contains(e.key),
+        ),
+    };
+    for (final day in noteDays) {
+      days.putIfAbsent(
         day,
-        CalendarDayData(categoryColorKeys: colorKeys, hasPr: entry.hasPr),
+        () => const CalendarDayData(
+          categoryColorKeys: [],
+          hasPr: false,
+          hasNote: true,
+        ),
       );
-    });
+    }
 
     return CalendarMonthData(
       days: days,
       records: monthRecords,
       exerciseMap: exMap,
       exerciseColorKeys: exerciseColorKeys,
-      workoutDays: days.length,
-      prCount: days.values.where((d) => d.hasPr).length,
+      workoutDays: workoutDays,
+      prCount: prCount,
     );
   }
 }

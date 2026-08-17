@@ -1064,6 +1064,12 @@ abstract class AppLocalizations {
   /// **'PeakLog — {name}'**
   String shareSubjectActivity(String name);
 
+  /// Share sheet subject line when sharing a saved Note from the Calendar Note Edit popup
+  ///
+  /// In en, this message translates to:
+  /// **'PeakLog — {date}'**
+  String shareSubjectNote(String date);
+
   /// Screen title for 1RM percentage table when no exercise context
   ///
   /// In en, this message translates to:
@@ -1214,6 +1220,12 @@ abstract class AppLocalizations {
   /// **'No workouts this month'**
   String get calendarNoRecords;
 
+  /// Date-neutral empty-state message shown when attempting to capture/share a single day (Day View) that has no workout records. Must not reference "today" or "this month" — the captured date can be any day.
+  ///
+  /// In en, this message translates to:
+  /// **'No workout records.'**
+  String get calendarDayCaptureNoRecords;
+
   /// Section header for the workout records list in the calendar day-detail panel
   ///
   /// In en, this message translates to:
@@ -1285,6 +1297,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Personal Best'**
   String get calendarLegendPersonalBest;
+
+  /// Toggle label in the Month View capture sheet: when on, the captured image's category legend includes categories with no workout records in that month
+  ///
+  /// In en, this message translates to:
+  /// **'Show categories without workout records'**
+  String get calendarShowEmptyCategories;
+
+  /// Label for the separate Note legend entry (distinct from workout category entries), used in two places with different visibility rules: always shown in the normal Month View legend, and conditionally shown in the Month View capture legend (when the captured month has notes, or always when "Show categories without workout records" is on)
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get calendarNoteLegendLabel;
 
   /// Single-letter weekday column header for Sunday in the calendar grid
   ///

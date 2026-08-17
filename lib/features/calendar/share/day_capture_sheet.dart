@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,9 +16,18 @@ import '../../../l10n/app_localizations.dart';
 class DayCaptureSheet extends StatefulWidget {
   final Uint8List imageBytes;
   final String fileNamePrefix;
+  /// Month View capture only — when provided, shows a "Show empty
+  /// categories" toggle that re-renders the image through this callback.
+  /// Day captures never pass this, so their sheet is unchanged.
+  final Future<Uint8List> Function(bool showEmptyCategories)?
+      onToggleShowEmptyCategories;
+  final bool initialShowEmptyCategories;
+
   const DayCaptureSheet({
     required this.imageBytes,
     required this.fileNamePrefix,
+    this.onToggleShowEmptyCategories,
+    this.initialShowEmptyCategories = false,
     super.key,
   });
 
@@ -28,13 +38,20 @@ class DayCaptureSheet extends StatefulWidget {
     BuildContext context,
     Uint8List imageBytes, {
     required String fileNamePrefix,
+    Future<Uint8List> Function(bool showEmptyCategories)?
+        onToggleShowEmptyCategories,
+    bool initialShowEmptyCategories = false,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          DayCaptureSheet(imageBytes: imageBytes, fileNamePrefix: fileNamePrefix),
+      builder: (_) => DayCaptureSheet(
+        imageBytes: imageBytes,
+        fileNamePrefix: fileNamePrefix,
+        onToggleShowEmptyCategories: onToggleShowEmptyCategories,
+        initialShowEmptyCategories: initialShowEmptyCategories,
+      ),
     );
   }
 
@@ -45,6 +62,33 @@ class DayCaptureSheet extends StatefulWidget {
 class _DayCaptureSheetState extends State<DayCaptureSheet> {
   bool _saving = false;
   bool _saved = false;
+  bool _regenerating = false;
+  late Uint8List _imageBytes;
+  late bool _showEmptyCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _imageBytes = widget.imageBytes;
+    _showEmptyCategories = widget.initialShowEmptyCategories;
+  }
+
+  Future<void> _toggleShowEmptyCategories(bool value) async {
+    final callback = widget.onToggleShowEmptyCategories;
+    if (callback == null || _regenerating) return;
+    setState(() {
+      _showEmptyCategories = value;
+      _regenerating = true;
+      // The previously-saved file no longer reflects the just-changed image.
+      _saved = false;
+    });
+    final bytes = await callback(value);
+    if (!mounted) return;
+    setState(() {
+      _imageBytes = bytes;
+      _regenerating = false;
+    });
+  }
 
   Future<void> _save() async {
     if (_saving) return;
@@ -57,7 +101,7 @@ class _DayCaptureSheetState extends State<DayCaptureSheet> {
       final tempDir = await getTemporaryDirectory();
       final path =
           '${tempDir.path}/${widget.fileNamePrefix}${DateTime.now().millisecondsSinceEpoch}.png';
-      await File(path).writeAsBytes(widget.imageBytes);
+      await File(path).writeAsBytes(_imageBytes);
       await Gal.putImage(path, album: 'PeakLog');
       // The in-sheet "Saved" button state is the single source of
       // save-success feedback — no snackbar here. (A Scaffold-anchored
@@ -126,11 +170,41 @@ class _DayCaptureSheetState extends State<DayCaptureSheet> {
                     aspectRatio: 9 / 16,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.card),
-                      child: Image.memory(widget.imageBytes, fit: BoxFit.contain),
+                      child: AnimatedOpacity(
+                        opacity: _regenerating ? 0.5 : 1,
+                        duration: const Duration(milliseconds: 150),
+                        child: Image.memory(_imageBytes, fit: BoxFit.contain),
+                      ),
                     ),
                   ),
                 ),
               ),
+              if (widget.onToggleShowEmptyCategories != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.calendarShowEmptyCategories,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.label1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      CupertinoSwitch(
+                        value: _showEmptyCategories,
+                        activeTrackColor: AppColors.label1,
+                        onChanged: _regenerating
+                            ? null
+                            : _toggleShowEmptyCategories,
+                      ),
+                    ],
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: Row(

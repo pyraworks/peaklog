@@ -185,7 +185,7 @@ class _MonthShareLayout {
       }
     }
 
-    if (data.usedCategories.isNotEmpty) {
+    if (data.usedCategories.isNotEmpty || data.noteLegendLabel != null) {
       // _contentPad is the exact x the summary text (workoutDaysText/
       // countText above) is painted at, so the legend's first dot lines up
       // with the left edge of "1일 운동" rather than the grid's day-circle
@@ -200,18 +200,48 @@ class _MonthShareLayout {
 
   // ── Legend ─────────────────────────────────────────────────────────────
 
-  /// Small "dot + name" legend, wrapped across lines as needed. Stops
+  /// Small "marker + name" legend, wrapped across lines as needed. Stops
   /// before crossing the bottom safe boundary rather than overlapping or
   /// overflowing — the calendar above is never shrunk to make room here.
   /// [startX] is the summary text's own left edge (see the caller), so the
-  /// first dot aligns exactly with "1일 운동".
+  /// first marker aligns exactly with "1일 운동".
+  ///
+  /// Category entries (circular dots, existing behavior) and the optional
+  /// Note entry (a rounded square, same marker language as the on-screen
+  /// Calendar's Note indicator — never a circle, so it's never mistaken
+  /// for a category regardless of color) share one combined, ordered list
+  /// so they wrap together using the exact same line-break logic — the
+  /// Note entry itself is never added to [MonthShareData.usedCategories].
   void _paintLegend(Canvas canvas, {required double top, required double startX}) {
+    final entries = <({String label, void Function(Offset center) paintMarker})>[
+      for (final category in data.usedCategories)
+        (
+          label: category.name,
+          paintMarker: (center) => canvas.drawCircle(
+            center,
+            _dotSize / 2,
+            Paint()..color = CategoryColor.toColor(category.colorKey),
+          ),
+        ),
+      if (data.noteLegendLabel != null)
+        (
+          label: data.noteLegendLabel!,
+          paintMarker: (center) => canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromCenter(center: center, width: _dotSize, height: _dotSize),
+              const Radius.circular(_dotSize * 0.3),
+            ),
+            Paint()..color = AppColors.label1,
+          ),
+        ),
+    ];
+
     var x = startX;
     var lineY = top;
     var lineHeight = 0.0;
 
-    for (final category in data.usedCategories) {
-      final label = _layoutText(category.name,
+    for (final entry in entries) {
+      final label = _layoutText(entry.label,
           fontSize: _legendFontSize, weight: FontWeight.w500, color: AppColors.label2);
       final itemWidth = _dotSize + _legendDotGap + label.width;
       final itemHeight = label.height > _dotSize ? label.height : _dotSize;
@@ -225,12 +255,8 @@ class _MonthShareLayout {
       }
       if (lineY + itemHeight > _bottomSafeY) break; // never cross the safe boundary
 
-      final dotCenterY = lineY + itemHeight / 2;
-      canvas.drawCircle(
-        Offset(x + _dotSize / 2, dotCenterY),
-        _dotSize / 2,
-        Paint()..color = CategoryColor.toColor(category.colorKey),
-      );
+      final markerCenterY = lineY + itemHeight / 2;
+      entry.paintMarker(Offset(x + _dotSize / 2, markerCenterY));
       label.paint(
           canvas, Offset(x + _dotSize + _legendDotGap, lineY + (itemHeight - label.height) / 2));
 
@@ -257,18 +283,37 @@ class _MonthShareLayout {
       Offset(centerX - dayLabel.width / 2, circleTop + (_dayCircleSize - dayLabel.height) / 2),
     );
 
-    if (cell.categoryColorKeys.isNotEmpty) {
+    // Category dots and the Note marker share one centered row, dots
+    // first then Note last — same relative order as the on-screen grid's
+    // CalendarCategoryDots. Note is independent of category count: it's
+    // never one of the (max 4) dots, never affects how many dots are
+    // shown, and renders even when categoryColorKeys is empty (a Note
+    // used as a workout-completed marker with no Record).
+    if (cell.categoryColorKeys.isNotEmpty || cell.hasNote) {
       final dots = cell.categoryColorKeys.take(4).toList();
-      final dotsWidth = dots.length * _dotSize + (dots.length - 1) * _dotGap;
-      var dotX = centerX - dotsWidth / 2;
-      final dotY = circleTop + _dayCircleSize + _dotsBelowCircleGap;
+      final markerCount = dots.length + (cell.hasNote ? 1 : 0);
+      final rowWidth = markerCount * _dotSize + (markerCount - 1) * _dotGap;
+      var markerX = centerX - rowWidth / 2;
+      final markerY = circleTop + _dayCircleSize + _dotsBelowCircleGap;
       for (final key in dots) {
         canvas.drawCircle(
-          Offset(dotX + _dotSize / 2, dotY + _dotSize / 2),
+          Offset(markerX + _dotSize / 2, markerY + _dotSize / 2),
           _dotSize / 2,
           Paint()..color = CategoryColor.toColor(key),
         );
-        dotX += _dotSize + _dotGap;
+        markerX += _dotSize + _dotGap;
+      }
+      if (cell.hasNote) {
+        // Same rounded-square/AppColors.label1 marker language as the
+        // on-screen date indicator and the legend's Note entry — never a
+        // circle, so it can't be mistaken for a category dot.
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(markerX, markerY, _dotSize, _dotSize),
+            const Radius.circular(_dotSize * 0.3),
+          ),
+          Paint()..color = AppColors.label1,
+        );
       }
     }
 

@@ -65,7 +65,7 @@ void main() {
         firstWeekdayOffset: 0,
         daysInMonth: 3,
         days: const {
-          2: CalendarDayData(categoryColorKeys: ['gold', 'teal'], hasPr: false),
+          2: CalendarDayData(categoryColorKeys: ['gold', 'teal'], hasPr: false, hasNote: false),
         },
       );
       final day2 = cells.firstWhere((c) => c.day == 2);
@@ -77,8 +77,8 @@ void main() {
         firstWeekdayOffset: 0,
         daysInMonth: 3,
         days: const {
-          1: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true),
-          2: CalendarDayData(categoryColorKeys: ['teal'], hasPr: false),
+          1: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true, hasNote: false),
+          2: CalendarDayData(categoryColorKeys: ['teal'], hasPr: false, hasNote: false),
         },
       );
       expect(cells.firstWhere((c) => c.day == 1).hasPr, isTrue);
@@ -96,7 +96,7 @@ void main() {
           // A day with many categories (i.e. many records) is still a
           // single map entry, exactly as calendar_month_provider.dart
           // already groups by day-of-month.
-          1: CalendarDayData(categoryColorKeys: ['gold', 'teal', 'ocean', 'olive'], hasPr: true),
+          1: CalendarDayData(categoryColorKeys: ['gold', 'teal', 'ocean', 'olive'], hasPr: true, hasNote: false),
         },
       );
       expect(cells.where((c) => c.day == 1), hasLength(1));
@@ -152,18 +152,109 @@ void main() {
       final a = buildMonthShareCells(
         firstWeekdayOffset: 1,
         daysInMonth: 15,
-        days: const {5: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true)},
+        days: const {5: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true, hasNote: false)},
       );
       final b = buildMonthShareCells(
         firstWeekdayOffset: 1,
         daysInMonth: 15,
-        days: const {5: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true)},
+        days: const {5: CalendarDayData(categoryColorKeys: ['gold'], hasPr: true, hasNote: false)},
       );
       expect(a.map((c) => c.day).toList(), b.map((c) => c.day).toList());
       expect(a.map((c) => c.hasPr).toList(), b.map((c) => c.hasPr).toList());
       for (var i = 0; i < a.length; i++) {
         expect(a[i].categoryColorKeys, b[i].categoryColorKeys);
       }
+    });
+  });
+
+  group('buildMonthShareCells — hasNote (capture date Note indicator)', () {
+    // Regression coverage for the actual root cause of the missing capture
+    // Note indicator: buildMonthShareCells previously read
+    // categoryColorKeys/hasPr from CalendarDayData but silently dropped
+    // hasNote, so MonthShareCell (and the painter) never knew a date had
+    // a note at all — even though CalendarDayData.hasNote was already
+    // computed correctly for the on-screen grid. No new database query or
+    // Note-loading logic is involved here — this is purely carrying an
+    // already-loaded flag one step further through the same pipeline.
+
+    test('a note-only day (no workout Record) produces hasNote: true with '
+        'empty categoryColorKeys — the "오운완 via Note" use case: a workout '
+        'logged only as a Note, no Record, no fake category', () {
+      final cells = buildMonthShareCells(
+        firstWeekdayOffset: 0,
+        daysInMonth: 3,
+        days: const {
+          2: CalendarDayData(categoryColorKeys: [], hasPr: false, hasNote: true),
+        },
+      );
+      final day2 = cells.firstWhere((c) => c.day == 2);
+      expect(day2.hasNote, isTrue);
+      expect(day2.categoryColorKeys, isEmpty);
+    });
+
+    test('a workout + note day produces both category indicators and '
+        'hasNote: true', () {
+      final cells = buildMonthShareCells(
+        firstWeekdayOffset: 0,
+        daysInMonth: 3,
+        days: const {
+          2: CalendarDayData(categoryColorKeys: ['gold'], hasPr: false, hasNote: true),
+        },
+      );
+      final day2 = cells.firstWhere((c) => c.day == 2);
+      expect(day2.hasNote, isTrue);
+      expect(day2.categoryColorKeys, ['gold']);
+    });
+
+    test('a workout-only day (no note) has hasNote: false', () {
+      final cells = buildMonthShareCells(
+        firstWeekdayOffset: 0,
+        daysInMonth: 3,
+        days: const {
+          2: CalendarDayData(categoryColorKeys: ['gold'], hasPr: false, hasNote: false),
+        },
+      );
+      expect(cells.firstWhere((c) => c.day == 2).hasNote, isFalse);
+    });
+
+    test('a day with no activity at all has hasNote: false, matching the '
+        'default MonthShareCell', () {
+      final cells = buildMonthShareCells(
+        firstWeekdayOffset: 0,
+        daysInMonth: 3,
+        days: const {},
+      );
+      expect(cells.every((c) => c.day == null || !c.hasNote), isTrue);
+    });
+
+    test('multiple notes on one date are already collapsed to a single '
+        'hasNote flag before this layer (CalendarDayData.hasNote is a '
+        'bool, not a count) — carried through as exactly one indicator, '
+        'never duplicated', () {
+      final cells = buildMonthShareCells(
+        firstWeekdayOffset: 0,
+        daysInMonth: 3,
+        days: const {
+          2: CalendarDayData(categoryColorKeys: [], hasPr: false, hasNote: true),
+        },
+      );
+      expect(cells.where((c) => c.day == 2), hasLength(1));
+      expect(cells.firstWhere((c) => c.day == 2).hasNote, isTrue);
+    });
+
+    test('buildMonthShareCells has no includeEmpty-style parameter at all — '
+        'the capture toggle structurally cannot affect per-date Note '
+        'indicators, only the separate category legend '
+        '(buildMonthShareCategories) does', () {
+      // Calling it identically twice always produces identical hasNote
+      // values — nothing resembling a toggle exists in its signature.
+      const days = {
+        2: CalendarDayData(categoryColorKeys: [], hasPr: false, hasNote: true),
+        3: CalendarDayData(categoryColorKeys: ['gold'], hasPr: false, hasNote: false),
+      };
+      final a = buildMonthShareCells(firstWeekdayOffset: 0, daysInMonth: 3, days: days);
+      final b = buildMonthShareCells(firstWeekdayOffset: 0, daysInMonth: 3, days: days);
+      expect(a.map((c) => c.hasNote).toList(), b.map((c) => c.hasNote).toList());
     });
   });
 
@@ -253,6 +344,160 @@ void main() {
         categories: [cat],
       );
       expect(out, isEmpty);
+    });
+
+    group('includeEmpty toggle ("Show empty categories")', () {
+      test('OFF (default) excludes categories with no records this month, '
+          'matching the pre-toggle behavior exactly', () {
+        final used = category(id: 'c1', name: 'Strength', sortOrder: 0);
+        final empty = category(id: 'c2', name: 'Cardio', sortOrder: 1);
+        final ex = exercise(id: 'e1', categoryId: 'c1');
+        final out = buildMonthShareCategories(
+          records: [record(id: 'r1', exerciseId: 'e1')],
+          exerciseMap: {'e1': ex},
+          categories: [used, empty],
+        );
+        expect(out.map((c) => c.name).toList(), ['Strength']);
+      });
+
+      test('ON includes categories with no records this month too', () {
+        final used = category(id: 'c1', name: 'Strength', sortOrder: 0);
+        final empty = category(id: 'c2', name: 'Cardio', sortOrder: 1);
+        final ex = exercise(id: 'e1', categoryId: 'c1');
+        final out = buildMonthShareCategories(
+          records: [record(id: 'r1', exerciseId: 'e1')],
+          exerciseMap: {'e1': ex},
+          categories: [used, empty],
+          includeEmpty: true,
+        );
+        expect(out.map((c) => c.name).toList(), ['Strength', 'Cardio']);
+      });
+
+      test('ON still lists a category with records exactly once, not '
+          'duplicated with its empty-category entry', () {
+        final used = category(id: 'c1', name: 'Strength');
+        final ex = exercise(id: 'e1', categoryId: 'c1');
+        final out = buildMonthShareCategories(
+          records: [
+            record(id: 'r1', exerciseId: 'e1'),
+            record(id: 'r2', exerciseId: 'e1'),
+          ],
+          exerciseMap: {'e1': ex},
+          categories: [used],
+          includeEmpty: true,
+        );
+        expect(out, hasLength(1));
+      });
+
+      test('ON still excludes Uncategorized, same as OFF', () {
+        final uncategorized =
+            category(id: Category.uncategorizedId, name: 'Uncategorized');
+        final out = buildMonthShareCategories(
+          records: const [],
+          exerciseMap: const {},
+          categories: [uncategorized],
+          includeEmpty: true,
+        );
+        expect(out, isEmpty);
+      });
+
+      test('ON with an empty month lists every available category', () {
+        final cat1 = category(id: 'c1', name: 'Strength', sortOrder: 0);
+        final cat2 = category(id: 'c2', name: 'Cardio', sortOrder: 1);
+        final out = buildMonthShareCategories(
+          records: const [],
+          exerciseMap: const {},
+          categories: [cat1, cat2],
+          includeEmpty: true,
+        );
+        expect(out.map((c) => c.name).toList(), ['Strength', 'Cardio']);
+      });
+    });
+  });
+
+  group('buildMonthShareShowNoteLegend (separate Note legend entry)', () {
+    // The four required combinations from the OFF/ON x Notes/no-Notes
+    // truth table. Deliberately asymmetric with category filtering — see
+    // the function's own doc comment for why.
+    test('OFF + notes exist -> Note legend is shown', () {
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: true, includeEmpty: false),
+        isTrue,
+      );
+    });
+
+    test('OFF + no notes -> Note legend is hidden', () {
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: false, includeEmpty: false),
+        isFalse,
+      );
+    });
+
+    test('ON + notes exist -> Note legend is shown', () {
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: true, includeEmpty: true),
+        isTrue,
+      );
+    });
+
+    test(
+        'ON + no notes -> Note legend is STILL shown (intentional: ON always '
+        'shows it, independent of whether any notes actually exist)', () {
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: false, includeEmpty: true),
+        isTrue,
+      );
+    });
+
+    test(
+        'the Note-legend decision is independent of, and does not alter, '
+        'the existing category-filtering decision for the same call', () {
+      final used = category(id: 'c1', name: 'Strength', sortOrder: 0);
+      final empty = category(id: 'c2', name: 'Cardio', sortOrder: 1);
+      final ex = exercise(id: 'e1', categoryId: 'c1');
+      final records = [record(id: 'r1', exerciseId: 'e1')];
+
+      // OFF + notes exist: categories still filtered to used-only, even
+      // though the Note legend is shown.
+      final categoriesOff = buildMonthShareCategories(
+        records: records,
+        exerciseMap: {'e1': ex},
+        categories: [used, empty],
+      );
+      expect(categoriesOff.map((c) => c.name).toList(), ['Strength']);
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: true, includeEmpty: false),
+        isTrue,
+      );
+
+      // ON + no notes: all categories still included, even though the
+      // Note legend is shown for an unrelated reason (ON, not notes).
+      final categoriesOn = buildMonthShareCategories(
+        records: records,
+        exerciseMap: {'e1': ex},
+        categories: [used, empty],
+        includeEmpty: true,
+      );
+      expect(categoriesOn.map((c) => c.name).toList(), ['Strength', 'Cardio']);
+      expect(
+        buildMonthShareShowNoteLegend(hasAnyNotes: false, includeEmpty: true),
+        isTrue,
+      );
+    });
+
+    test('a MonthShareCategory list never contains a Note entry — the Note '
+        'legend is carried on MonthShareData.noteLegendLabel, a separate '
+        'field, never appended to usedCategories', () {
+      final cat = category(id: 'c1', name: 'Strength');
+      final ex = exercise(id: 'e1', categoryId: 'c1');
+      final out = buildMonthShareCategories(
+        records: [record(id: 'r1', exerciseId: 'e1')],
+        exerciseMap: {'e1': ex},
+        categories: [cat],
+        includeEmpty: true,
+      );
+      expect(out.every((c) => c.name != 'Note'), isTrue);
+      expect(out, hasLength(1));
     });
   });
 }

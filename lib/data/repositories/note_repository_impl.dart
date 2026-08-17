@@ -11,6 +11,10 @@ class NoteRepositoryImpl implements NoteRepository {
       DatabaseHelper.instance.getNotesByDate(dayEpoch);
 
   @override
+  Future<List<Note>> getNotesByDateRange(int startMs, int endMs) =>
+      DatabaseHelper.instance.getNotesByDateRange(startMs, endMs);
+
+  @override
   Future<Note> insert(Note note) async {
     await DatabaseHelper.instance.insertNote(note);
     return note;

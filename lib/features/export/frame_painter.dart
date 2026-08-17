@@ -17,6 +17,7 @@ Future<Uint8List> renderFrameToBytes({
   String badgeLabel = 'PR',
   String personalBestLabel = 'Personal Best',
   bool overlayOnly = false,
+  bool showPrBadge = true,
 }) async {
   final size = aspectRatio.exportSize;
   final recorder = ui.PictureRecorder();
@@ -34,6 +35,7 @@ Future<Uint8List> renderFrameToBytes({
     badgeLabel: badgeLabel,
     personalBestLabel: personalBestLabel,
     overlayOnly: overlayOnly,
+    showPrBadge: showPrBadge,
   );
 
   if (style == FrameStyle.clean) {
@@ -61,6 +63,7 @@ class _FrameData {
   final String badgeLabel;
   final String personalBestLabel;
   final bool overlayOnly;
+  final bool showPrBadge;
 
   const _FrameData({
     required this.exerciseName,
@@ -71,6 +74,7 @@ class _FrameData {
     this.badgeLabel = 'PR',
     this.personalBestLabel = 'Personal Best',
     required this.overlayOnly,
+    this.showPrBadge = true,
   });
 }
 
@@ -92,10 +96,12 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
       size: w * 0.038, weight: FontWeight.w900,
       color: accent, spacing: w * 0.006);
 
-  _text(canvas, 'NEW ${d.badgeLabel}',
-      x: w - pad - w * 0.18, y: pad * 1.05,
-      size: w * 0.024, weight: FontWeight.w700,
-      color: const Color(0xFF333333), spacing: w * 0.004);
+  if (d.showPrBadge) {
+    _text(canvas, 'NEW ${d.badgeLabel}',
+        x: w - pad - w * 0.18, y: pad * 1.05,
+        size: w * 0.024, weight: FontWeight.w700,
+        color: const Color(0xFF333333), spacing: w * 0.004);
+  }
 
   final midY = h * 0.58;
 
@@ -120,15 +126,17 @@ void _paintClean(Canvas canvas, ui.Size size, _FrameData d) {
         color: accent, spacing: 0);
   }
 
-  final barY = h * 0.83;
-  canvas.drawRect(
-    Rect.fromLTWH(pad, barY, w * 0.011, w * 0.042),
-    Paint()..color = accent,
-  );
-  _text(canvas, d.personalBestLabel,
-      x: pad + w * 0.018, y: barY + w * 0.006,
-      size: w * 0.022, weight: FontWeight.w700,
-      color: accent, spacing: w * 0.002);
+  if (d.showPrBadge) {
+    final barY = h * 0.83;
+    canvas.drawRect(
+      Rect.fromLTWH(pad, barY, w * 0.011, w * 0.042),
+      Paint()..color = accent,
+    );
+    _text(canvas, d.personalBestLabel,
+        x: pad + w * 0.018, y: barY + w * 0.006,
+        size: w * 0.022, weight: FontWeight.w700,
+        color: accent, spacing: w * 0.002);
+  }
 
   if (d.options.showDate) {
     _text(canvas, d.dateStr,
@@ -148,10 +156,12 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
       Rect.fromLTWH(0, 0, w, h),
       Paint()..color = const Color(0xFF111111),
     );
-    _text(canvas, d.badgeLabel,
-        x: w * 0.4, y: -h * 0.06,
-        size: w * 0.83, weight: FontWeight.w900,
-        color: const Color(0xFF1D1D1D));
+    if (d.showPrBadge) {
+      _text(canvas, d.badgeLabel,
+          x: w * 0.4, y: -h * 0.06,
+          size: w * 0.83, weight: FontWeight.w900,
+          color: const Color(0xFF1D1D1D));
+    }
   }
 
   final boxW = w * 0.17;
@@ -165,10 +175,12 @@ void _paintRough(Canvas canvas, ui.Size size, _FrameData d) {
       size: w * 0.026, weight: FontWeight.w900,
       color: Colors.black, spacing: w * 0.003);
 
-  _text(canvas, 'NEW ${d.badgeLabel}',
-      x: w - pad - w * 0.17, y: pad * 1.05,
-      size: w * 0.022, weight: FontWeight.w700,
-      color: accent, spacing: w * 0.003);
+  if (d.showPrBadge) {
+    _text(canvas, 'NEW ${d.badgeLabel}',
+        x: w - pad - w * 0.17, y: pad * 1.05,
+        size: w * 0.022, weight: FontWeight.w700,
+        color: accent, spacing: w * 0.003);
+  }
 
   final midY = h * 0.58;
 

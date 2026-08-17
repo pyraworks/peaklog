@@ -843,6 +843,17 @@ class DatabaseHelper {
     return maps.map(Note.fromMap).toList();
   }
 
+  Future<List<Note>> getNotesByDateRange(int startMs, int endMs) async {
+    final db = await database;
+    final maps = await db.query(
+      'notes',
+      where: 'performed_on >= ? AND performed_on < ? AND is_deleted = 0',
+      whereArgs: [startMs, endMs],
+      orderBy: 'performed_on ASC',
+    );
+    return maps.map(Note.fromMap).toList();
+  }
+
   Future<List<Record>> getRecordsByDateRange(int startMs, int endMs) async {
     final db = await database;
     final maps = await db.query(
