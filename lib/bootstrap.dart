@@ -9,7 +9,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/services/analytics_service.dart';
 import 'providers/analytics_provider.dart';
+import 'providers/default_best_type_provider.dart';
 import 'providers/launch_screen_provider.dart';
+import 'providers/unit_settings_provider.dart';
 
 Future<void> bootstrap({required FirebaseOptions firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,11 +42,27 @@ Future<void> bootstrap({required FirebaseOptions firebaseOptions}) async {
 
   unawaited(analytics.logAppOpen());
 
-  runApp(ProviderScope(
+  final container = ProviderContainer(
     overrides: [
       analyticsProvider.overrideWithValue(analytics),
       resolvedLaunchScreenProvider.overrideWithValue(launchScreen),
     ],
+  );
+
+  // Persisted preferences (Preferred Weight Unit, Default Best Type) are
+  // each their own AsyncNotifier that awaits SharedPreferences.getInstance()
+  // in build(). SharedPreferences itself is already warmed above, but each
+  // provider's own build() still needs a turn of the event loop to resolve
+  // — same reasoning as resolvedLaunchScreenProvider above (resolved before
+  // runApp() so no consumer's first frame ever observes a pre-persistence
+  // default).
+  await Future.wait([
+    container.read(unitSettingsProvider.future),
+    container.read(defaultBestTypeProvider.future),
+  ]);
+
+  runApp(UncontrolledProviderScope(
+    container: container,
     child: const PeakLogApp(),
   ));
 }

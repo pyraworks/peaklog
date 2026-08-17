@@ -32,6 +32,8 @@ class _OneRmCalculatorScreenState
     super.initState();
     // Each new session starts from the Preferred Weight Unit, not whatever
     // unit was left selected the last time this calculator was opened.
+    // unitSettingsProvider is pre-loaded in bootstrap() before runApp(), so
+    // it's always already resolved by the time any screen's initState runs.
     final prefUnit = ref.read(unitSettingsProvider).valueOrNull?.weightUnit;
     if (prefUnit == 'lbs') _unit = 'lbs';
   }

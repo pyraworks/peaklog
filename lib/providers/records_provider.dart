@@ -46,7 +46,11 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
       sets: sets,
     );
     await RecordRepositoryImpl.instance.insert(record);
-    final current = state.valueOrNull ?? [];
+    // `await future` (not `state.valueOrNull ?? []`): if this notifier's
+    // initial build() hasn't resolved yet, valueOrNull would be null and
+    // silently drop every record loaded by that pending build once it
+    // lands, instead of waiting for it and merging on top of it.
+    final current = await future;
     final updated = [record, ...current]
       ..sort((a, b) => b.performedAt.compareTo(a.performedAt));
     state = AsyncData(updated);
@@ -56,7 +60,7 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
 
   Future<void> updateRecord(Record record) async {
     await RecordRepositoryImpl.instance.update(record);
-    final current = state.valueOrNull ?? [];
+    final current = await future;
     state = AsyncData(
       (current.map((r) => r.id == record.id ? record : r).toList())
         ..sort((a, b) => b.performedAt.compareTo(a.performedAt)),
@@ -66,7 +70,7 @@ class RecordsNotifier extends FamilyAsyncNotifier<List<Record>, String> {
 
   Future<void> deleteRecord(String id) async {
     await RecordRepositoryImpl.instance.softDelete(id);
-    final current = state.valueOrNull ?? [];
+    final current = await future;
     state = AsyncData(current.where((r) => r.id != id).toList());
     ref.read(recordsRevisionProvider.notifier).state++;
   }
