@@ -984,11 +984,10 @@ class CalendarDateCellStyle {
       return const CalendarDateCellStyle(textColor: AppColors.label5);
     }
     if (isToday) {
-      // Today, unselected: same black used for the selected fill, but as
-      // an outline only — no red text treatment.
+      // Today, unselected: same solid black fill as the selected style.
       return const CalendarDateCellStyle(
-        textColor: AppColors.label1,
-        borderColor: AppColors.actionDark,
+        textColor: Colors.white,
+        fillColor: AppColors.actionDark,
       );
     }
     return const CalendarDateCellStyle(textColor: AppColors.label1);

@@ -23,20 +23,17 @@ void main() {
       expect(style.borderColor, isNull);
     });
 
-    test('today, unselected: black outline, no fill, and — critically — no '
-        'red text treatment', () {
+    test('today, unselected: solid filled black circle, white text, no '
+        'border — same treatment as today selected', () {
       final style = CalendarDateCellStyle.resolve(
         isSelected: false,
         isOutOfMonth: false,
         isToday: true,
       );
-      expect(style.textColor, AppColors.label1,
-          reason: 'must not use AppColors.todayAccent (red) anymore');
-      expect(style.fillColor, isNull,
-          reason: 'unselected today must not use the filled-selection style');
-      expect(style.borderColor, isNotNull,
-          reason: 'unselected today shows an outline');
-      expect(style.borderColor, AppColors.actionDark);
+      expect(style.textColor, Colors.white);
+      expect(style.fillColor, AppColors.actionDark);
+      expect(style.borderColor, isNull,
+          reason: 'today must not use the outline-only style anymore');
     });
 
     test('today, selected: existing filled black circle style is preserved',
